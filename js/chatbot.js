@@ -487,6 +487,17 @@ Need specific recommendations or PC build advice? Let me know!`;
     }
   }
 
+  // ── Clear Chat History ────────────────────────────────────
+  function clearChat() {
+    state.history = [];
+    try { sessionStorage.removeItem("et_history"); } catch (e) { }
+    const list = document.getElementById("et-messages");
+    if (list) {
+      list.innerHTML = "";
+    }
+    appendBotBubble(ET_CONFIG.WELCOME_MESSAGE);
+  }
+
   // ── Build the UI ──────────────────────────────────────────
   function initUI() {
     const cfg = ET_CONFIG;
@@ -548,9 +559,9 @@ Need specific recommendations or PC build advice? Let me know!`;
         bottom: 94px;
         right: 24px;
         z-index: 9998;
-        width: 380px;
+        width: 440px;
         max-width: calc(100vw - 32px);
-        height: 540px;
+        height: 560px;
         max-height: calc(100vh - 140px);
         border-radius: 20px;
         background: #0f172a;
@@ -595,6 +606,21 @@ Need specific recommendations or PC build advice? Let me know!`;
         background: #22c55e;
         display: inline-block;
       }
+      .et-header-actions { display: flex; align-items: center; gap: 4px; }
+      .et-header-btn {
+        background: transparent;
+        border: none;
+        color: #94a3b8;
+        cursor: pointer;
+        padding: 6px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+      }
+      .et-header-btn:hover { color: #ffffff; background: rgba(255, 255, 255, 0.1); }
+      .et-header-btn-danger:hover { color: #f87171; background: rgba(239, 68, 68, 0.15); }
 
       /* ── Messages ── */
       .et-messages {
@@ -860,9 +886,16 @@ Need specific recommendations or PC build advice? Let me know!`;
             <div class="et-header-name">${cfg.BOT_NAME}</div>
             <div class="et-header-status">${cfg.BOT_TAGLINE}</div>
           </div>
-          <button onclick="document.getElementById('et-chatbot').__toggle()" style="background:none;border:none;color:#64748b;cursor:pointer;padding:4px;">
-            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-          </button>
+          <div class="et-header-actions">
+            <button onclick="document.getElementById('et-chatbot').__clearChat()" class="et-header-btn et-header-btn-danger" title="Clear Chat History">
+              <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+              </svg>
+            </button>
+            <button onclick="document.getElementById('et-chatbot').__toggle()" class="et-header-btn" title="Minimize Chat">
+              <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+          </div>
         </div>
 
         <!-- Messages -->
@@ -887,6 +920,7 @@ Need specific recommendations or PC build advice? Let me know!`;
 
     // Wire up public methods on the DOM node
     wrapper.__toggle = toggleChat;
+    wrapper.__clearChat = clearChat;
     wrapper.__send = (text) => handleSend(text);
     wrapper.__sendInput = () => {
       const input = document.getElementById("et-input");
