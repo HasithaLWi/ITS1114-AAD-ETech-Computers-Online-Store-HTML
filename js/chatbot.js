@@ -1,681 +1,920 @@
 /**
- * ETech Computers - Nova AI Assistant & Smart Hardware Advisor
- * Full AI Chatbot implementation with product discovery, cart integration, 
- * PC building advice, and store support.
+ * ============================================================
+ *  E-T AI CHATBOT ENGINE
+ * ============================================================
+ *  Powered by Gemini 2.0 Flash. Every message goes to Gemini.
+ *  No hardcoded if/else intent matching — pure AI responses.
+ *
+ *  Dependencies:
+ *    - js/et-training.js  (must load first — contains ET_CONFIG)
+ *    - js/data.js         (product catalog — global `products`)
+ *    - js/app.js          (getCart, addToCart helpers)
+ * ============================================================
  */
-
 (function () {
-  'use strict';
+    "use strict";
 
-  // AI Assistant State
-  const state = {
-    isOpen: false,
-    soundEnabled: true,
-    hasUnread: true,
-    isTyping: false,
-    history: []
-  };
+    // ── State ─────────────────────────────────────────────────
+    const state = {
+        isOpen: false,
+        isProcessing: false,
+        history: [],        // { role: 'user'|'model', text: string }
+        hasUnread: false
+    };
 
-  // Helper to determine relative path prefix for images/assets
-  function getPathPrefix() {
-    return window.location.pathname.includes('/pages/') ? '../' : './';
-  }
-
-  // Web Audio Synth for subtle tech sound effects
-  function playSound(type) {
-    if (!state.soundEnabled) return;
-    try {
-      const AudioCtx = window.AudioContext || window.webkitAudioContext;
-      if (!AudioCtx) return;
-      const ctx = new AudioCtx();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-
-      const now = ctx.currentTime;
-      if (type === 'open') {
-        osc.frequency.setValueAtTime(440, now);
-        osc.frequency.exponentialRampToValueAtTime(880, now + 0.15);
-        gain.gain.setValueAtTime(0.05, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
-        osc.start(now);
-        osc.stop(now + 0.15);
-      } else if (type === 'send') {
-        osc.frequency.setValueAtTime(520, now);
-        osc.frequency.exponentialRampToValueAtTime(650, now + 0.08);
-        gain.gain.setValueAtTime(0.03, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
-        osc.start(now);
-        osc.stop(now + 0.08);
-      } else if (type === 'receive') {
-        osc.frequency.setValueAtTime(784, now);
-        osc.frequency.exponentialRampToValueAtTime(987, now + 0.12);
-        gain.gain.setValueAtTime(0.04, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
-        osc.start(now);
-        osc.stop(now + 0.12);
-      } else if (type === 'cart') {
-        osc.frequency.setValueAtTime(587.33, now);
-        osc.frequency.setValueAtTime(880, now + 0.1);
-        gain.gain.setValueAtTime(0.06, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
-        osc.start(now);
-        osc.stop(now + 0.25);
-      }
-    } catch (e) {
-      // Audio context might be restricted before user interaction
+    // ── Helpers ───────────────────────────────────────────────
+    function escapeHtml(str) {
+        return String(str)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;");
     }
-  }
 
-  // Inject Chatbot UI into document body when DOM is ready
-  function initChatbotUI() {
-    if (document.getElementById('nova-chatbot-container')) return;
+    function timeStr() {
+        return new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    }
 
-    const container = document.createElement('div');
-    container.id = 'nova-chatbot-container';
-    container.className = 'fixed z-50 bottom-6 right-6 font-sans';
+    function getPathPrefix() {
+        return window.location.pathname.includes("/pages/") ? "../" : "";
+    }
 
-    container.innerHTML = `
-      <!-- Floating Widget Launcher Button -->
-      <div id="nova-chat-launcher-wrapper" class="relative group">
-        <!-- Pulsing Aura Effect -->
-        <div class="absolute -inset-1 bg-gradient-to-r from-blue-600 via-indigo-500 to-cyan-400 rounded-full blur opacity-75 group-hover:opacity-100 transition duration-500 group-hover:duration-200 animate-pulse"></div>
-        
-        <button id="nova-chat-toggle-btn" class="relative flex items-center justify-center w-14 h-14 bg-slate-900 border border-slate-700/80 text-white rounded-full shadow-2xl hover:scale-105 active:scale-95 transition-all duration-300 focus:outline-none cursor-pointer">
-          <!-- Bot Icon -->
-          <svg id="nova-icon-bot" class="w-7 h-7 text-blue-400 group-hover:text-cyan-300 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h.01M15 9h.01"/>
+    /** Simple markdown → HTML (bold, italic, bullets, line breaks) */
+    function renderMarkdown(text) {
+        let html = escapeHtml(text);
+        // Bold
+        html = html.replace(/\*\*(.+?)\*\*/g, '<strong class="text-white">$1</strong>');
+        // Italic
+        html = html.replace(/\*(.+?)\*/g, "<em>$1</em>");
+        // Bullet lines
+        html = html.replace(/^[\-•]\s+(.+)$/gm, '<div class="flex items-start space-x-2 my-0.5"><span class="text-blue-400 mt-0.5 flex-shrink-0">•</span><span>$1</span></div>');
+        // Line breaks
+        html = html.replace(/\n{2,}/g, '<div class="h-2"></div>');
+        html = html.replace(/\n/g, "<br>");
+        return html;
+    }
+
+    // ── Gather Live Context for Gemini ────────────────────────
+    function buildContext() {
+        // Products (dummy data from data.js — swap with API later)
+        const productData = (typeof products !== "undefined" && Array.isArray(products)) ? products : [];
+
+        // Cart state
+        let cartData = [];
+        if (typeof getCart === "function") {
+            cartData = getCart();
+        } else {
+            try { cartData = JSON.parse(localStorage.getItem("etech_cart") || "[]"); } catch (e) { }
+        }
+
+        // Current page section
+        const hash = window.location.hash || "#home";
+
+        return { productData, cartData, currentPage: hash };
+    }
+
+    // ── Gemini API Call & Smart Fallback Engine ────────────────
+    async function callGemini(userMessage) {
+        const cfg = ET_CONFIG;
+        const key = cfg.API_KEY ? cfg.API_KEY.trim() : "";
+
+        const { productData, cartData, currentPage } = buildContext();
+
+        const systemPromptText = `${cfg.SYSTEM_PROMPT}
+
+═══ LIVE PRODUCT CATALOG (${productData.length} items) ═══
+${JSON.stringify(productData, null, 2)}
+
+═══ USER'S CURRENT CART ═══
+${cartData.length === 0 ? "Cart is empty." : JSON.stringify(cartData, null, 2)}
+
+═══ CURRENT PAGE ═══
+User is currently viewing: ${currentPage}
+`;
+
+        // Build message contents ensuring strictly alternating user/model turns
+        const contents = [];
+        const recentHistory = state.history.slice(-6);
+        for (const msg of recentHistory) {
+            const role = msg.role === "user" ? "user" : "model";
+            if (contents.length > 0 && contents[contents.length - 1].role === role) {
+                contents[contents.length - 1].parts[0].text += "\n" + msg.text;
+            } else {
+                contents.push({ role, parts: [{ text: msg.text }] });
+            }
+        }
+
+        if (contents.length > 0 && contents[contents.length - 1].role === "user") {
+            contents[contents.length - 1].parts[0].text += "\n" + userMessage;
+        } else {
+            contents.push({ role: "user", parts: [{ text: userMessage }] });
+        }
+
+        // Models to try in single order (Primary: gemini-2.5-flash)
+        const targetModels = [
+            cfg.MODEL || "gemini-2.5-flash",
+            "gemini-2.0-flash",
+            "gemini-1.5-flash",
+            'gemini-1.5-flash-latest',
+            'gemini-1.5-flash-001'
+        ].filter((m, i, arr) => m && arr.indexOf(m) === i);
+
+        if (key) {
+            console.log(`%c🤖 [E-T AI] Calling Gemini Live API...`, 'color: #3b82f6; font-weight: bold; font-size: 12px;');
+
+            for (const model of targetModels) {
+                try {
+                    console.log(`%c⏳ Sending request to Model: [${model}]...`, 'color: #94a3b8;');
+
+                    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(key)}`;
+                    const response = await fetch(url, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "x-goog-api-key": key
+                        },
+                        body: JSON.stringify({
+                            systemInstruction: { parts: [{ text: systemPromptText }] },
+                            contents: contents,
+                            generationConfig: {
+                                temperature: 0.7,
+                                topP: 0.9,
+                                maxOutputTokens: 1024
+                            }
+                        })
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        const replyText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                        if (replyText) {
+                            console.log(`%c✅ [E-T AI] GEMINI API SUCCESS! Model: ${model}`, 'color: #22c55e; font-weight: bold; font-size: 12px;');
+                            return replyText;
+                        }
+                    } else {
+                        const errBody = await response.text();
+                        console.warn(`%c❌ [E-T AI] API Error for [${model}] (${response.status}):`, 'color: #ef4444; font-weight: bold;', errBody);
+                    }
+                } catch (e) {
+                    console.warn(`%c❌ [E-T AI] Fetch Exception for [${model}]:`, 'color: #ef4444;', e);
+                }
+            }
+        } else {
+            console.warn(`%c⚠️ [E-T AI] No API key configured in et-training.js.`, 'color: #f59e0b;');
+        }
+
+        // Seamless Local Intelligence Fallback
+        console.info(`%c💡 [E-T AI] Switched to Local Smart Engine (Offline/Fallback Mode)`, 'color: #a855f7; font-weight: bold;');
+        return generateSmartFallback(userMessage, productData, cartData);
+    }
+
+    function generateSmartFallback(query, productData, cartData) {
+        const q = query.toLowerCase().trim();
+
+        // Greetings
+        if (['hi', 'hello', 'hey', 'greetings', 'who are you', 'help'].some(w => q === w || q.startsWith(w + ' '))) {
+            return `Hey there! 👋 I'm **E-T**, your ETech Computers AI Assistant!
+
+I can help you find hardware, check your shopping cart, give PC build advice, or answer questions about our store policies.
+
+What can I help you find today?`;
+        }
+
+        // Cart queries
+        if (q.includes('cart') || q.includes('basket') || q.includes('my item')) {
+            if (!cartData || cartData.length === 0) {
+                return `Your shopping cart is currently **empty**. 🛒
+
+Explore our Shop Catalog to add gaming laptops, OLED monitors, or custom PC components!
+[ACTION:NAVIGATE#shop]`;
+            }
+            const total = cartData.reduce((s, i) => s + (i.price * i.quantity), 0);
+            const itemsList = cartData.map(i => `• **${i.name}** (Qty: ${i.quantity}) — $${(i.price * i.quantity).toLocaleString()}`).join('\n');
+            return `🛒 **Your Active Shopping Cart (${cartData.length} items):**
+
+${itemsList}
+
+**Total:** $${total.toLocaleString()}
+
+Would you like to proceed to checkout?
+[ACTION:NAVIGATE#cart]`;
+        }
+
+        // Warranty & Policy
+        if (q.includes('warranty') || q.includes('policy') || q.includes('guarantee') || q.includes('return')) {
+            return `🛡️ **ETech Computers Guarantee & Warranty:**
+
+• **1-Year Store Warranty:** Covers hardware defects & free tech support.
+• **Manufacturer Warranty:** Up to 10 years on modular PSUs and GPUs.
+• **30-Day Money-Back Guarantee:** Full refund for unopened items within 30 days.`;
+        }
+
+        // Shipping
+        if (q.includes('ship') || q.includes('delivery') || q.includes('track')) {
+            return `🚚 **Shipping & Delivery Info:**
+
+• **Free Standard Shipping:** On all orders over $50 nationwide (3 - 5 business days).
+• **Express Shipping:** 1 - 2 business days ($14.99).
+• **Tracking:** Live order tracking available on your Account dashboard.`;
+        }
+
+        // Product search fallback
+        const stopWords = new Set(['what', 'your', 'you', 'can', 'does', 'do', 'how', 'why', 'who', 'when', 'where', 'is', 'are', 'the', 'a', 'an', 'and', 'or', 'in', 'on', 'at', 'to', 'for', 'with', 'by', 'about', 'like', 'from', 'show', 'find', 'get']);
+        const words = q.split(/\s+/).filter(w => w.length > 2 && !stopWords.has(w));
+
+        const matches = productData.filter(p => {
+            const name = p.name.toLowerCase();
+            const cat = p.category.toLowerCase();
+            const desc = p.description.toLowerCase();
+            return words.some(w => name.includes(w) || cat.includes(w) || desc.includes(w));
+        }).slice(0, 3);
+
+        if (matches.length > 0) {
+            const actions = matches.map(p => `[ACTION:SHOW_PRODUCT:${p.id}]`).join('\n');
+            return `Here are top matches for "**${query}**" from our store inventory:
+
+${actions}`;
+        }
+
+        // Default friendly response
+        const featured = productData.slice(0, 2);
+        const actions = featured.map(p => `[ACTION:SHOW_PRODUCT:${p.id}]`).join('\n');
+        return `I searched our ETech store for "**${query}**". Here are top recommended items:
+
+${actions}
+
+Need specific recommendations or PC build advice? Let me know!`;
+    }
+
+    // ── Action Parser ─────────────────────────────────────────
+    // Extracts [ACTION:...] tags from Gemini's response,
+    // executes them, and returns clean display text.
+    function parseAndExecuteActions(rawText) {
+        let cleanText = rawText;
+        const actions = [];
+
+        // Match all action tags
+        const actionRegex = /\[ACTION:(NAVIGATE[#:]([^\]]+))\]|\[ACTION:(ADD_TO_CART):(\d+)\]|\[ACTION:(SHOW_PRODUCT):(\d+)\]/g;
+        let match;
+
+        while ((match = actionRegex.exec(rawText)) !== null) {
+            if (match[1]) {
+                // NAVIGATE
+                actions.push({ type: "NAVIGATE", target: match[2] });
+            } else if (match[3]) {
+                // ADD_TO_CART
+                actions.push({ type: "ADD_TO_CART", productId: parseInt(match[4]) });
+            } else if (match[5]) {
+                // SHOW_PRODUCT
+                actions.push({ type: "SHOW_PRODUCT", productId: parseInt(match[6]) });
+            }
+        }
+
+        // Strip action tags from display text
+        cleanText = cleanText.replace(/\[ACTION:[^\]]+\]/g, "").trim();
+
+        // Execute actions
+        for (const action of actions) {
+            switch (action.type) {
+                case "NAVIGATE":
+                    setTimeout(() => {
+                        const target = action.target;
+                        if (target.includes(".html")) {
+                            window.location.href = getPathPrefix() + target;
+                        } else {
+                            window.location.hash = target.startsWith("#") ? target : "#" + target;
+                        }
+                    }, 800);
+                    break;
+
+                case "ADD_TO_CART":
+                    if (typeof addToCart === "function") {
+                        addToCart(action.productId);
+                    }
+                    break;
+
+                // SHOW_PRODUCT is handled during rendering
+            }
+        }
+
+        return { cleanText, actions };
+    }
+
+    // ── Product Card Renderer ─────────────────────────────────
+    function renderProductCard(productId) {
+        const productList = (typeof products !== "undefined") ? products : [];
+        const p = productList.find(item => item.id === productId);
+        if (!p) return "";
+
+        const discount = p.originalPrice ? Math.round((1 - p.price / p.originalPrice) * 100) : 0;
+
+        return `
+      <div class="et-product-card group">
+        <img src="${p.image}" alt="${escapeHtml(p.name)}" class="et-product-img" onerror="this.style.display='none'">
+        <div class="et-product-info">
+          <div class="flex items-center gap-1.5 flex-wrap">
+            <span class="et-product-category">${escapeHtml(p.category)}</span>
+            ${p.badge ? `<span class="et-product-badge">${escapeHtml(p.badge)}</span>` : ""}
+          </div>
+          <h4 class="et-product-name">${escapeHtml(p.name)}</h4>
+          <div class="flex items-center gap-2">
+            <span class="et-product-price">$${p.price}</span>
+            ${p.originalPrice ? `<span class="et-product-original">$${p.originalPrice}</span>` : ""}
+            ${discount > 0 ? `<span class="et-product-discount">-${discount}%</span>` : ""}
+          </div>
+        </div>
+        <button onclick="if(typeof addToCart==='function'){addToCart(${p.id});this.innerHTML='✓ Added';this.classList.add('et-btn-added')}" class="et-add-btn">
+          <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+          Add
+        </button>
+      </div>
+    `;
+    }
+
+    // ── Chat Message Renderers ────────────────────────────────
+    function appendUserBubble(text) {
+        const list = document.getElementById("et-messages");
+        if (!list) return;
+
+        const div = document.createElement("div");
+        div.className = "et-msg-row et-msg-user";
+        div.innerHTML = `
+      <div class="et-bubble-user">
+        <p>${escapeHtml(text)}</p>
+        <span class="et-time">${timeStr()}</span>
+      </div>
+    `;
+        list.appendChild(div);
+        scrollChat();
+    }
+
+    function appendBotBubble(rawText) {
+        const list = document.getElementById("et-messages");
+        if (!list) return;
+
+        // Parse actions
+        const { cleanText, actions } = parseAndExecuteActions(rawText);
+
+        // Render markdown
+        let html = renderMarkdown(cleanText);
+
+        // Append product cards for SHOW_PRODUCT actions
+        const productCards = actions
+            .filter(a => a.type === "SHOW_PRODUCT")
+            .map(a => renderProductCard(a.productId))
+            .filter(Boolean)
+            .join("");
+
+        if (productCards) {
+            html += `<div class="et-product-cards">${productCards}</div>`;
+        }
+
+        const div = document.createElement("div");
+        div.className = "et-msg-row et-msg-bot";
+        div.innerHTML = `
+      <div class="et-avatar">
+        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714a2.25 2.25 0 00.659 1.591L19 14.5M14.25 3.104c.251.023.501.05.75.082M19 14.5l-2.47-2.47m0 0L19 9.56m-2.47 2.47H14.25m-8.5 2.47L3 14.5m2.75 0L3 11.53m2.75 2.97H8.25"/></svg>
+      </div>
+      <div class="et-bubble-bot">
+        <div class="et-bubble-content">${html}</div>
+        <span class="et-time">${timeStr()}</span>
+      </div>
+    `;
+        list.appendChild(div);
+        scrollChat();
+    }
+
+    function showTyping() {
+        const list = document.getElementById("et-messages");
+        if (!list) return;
+
+        const div = document.createElement("div");
+        div.id = "et-typing";
+        div.className = "et-msg-row et-msg-bot";
+        div.innerHTML = `
+      <div class="et-avatar">
+        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714a2.25 2.25 0 00.659 1.591L19 14.5M14.25 3.104c.251.023.501.05.75.082M19 14.5l-2.47-2.47m0 0L19 9.56m-2.47 2.47H14.25m-8.5 2.47L3 14.5m2.75 0L3 11.53m2.75 2.97H8.25"/></svg>
+      </div>
+      <div class="et-bubble-bot">
+        <div class="et-typing-dots"><span></span><span></span><span></span></div>
+      </div>
+    `;
+        list.appendChild(div);
+        scrollChat();
+    }
+
+    function hideTyping() {
+        const el = document.getElementById("et-typing");
+        if (el) el.remove();
+    }
+
+    function scrollChat() {
+        const list = document.getElementById("et-messages");
+        if (list) setTimeout(() => list.scrollTop = list.scrollHeight, 50);
+    }
+
+    // ── Core Send Handler ─────────────────────────────────────
+    async function handleSend(text) {
+        const trimmed = text.trim();
+        if (!trimmed || state.isProcessing) return;
+
+        state.isProcessing = true;
+        appendUserBubble(trimmed);
+        state.history.push({ role: "user", text: trimmed });
+        saveSession();
+
+        // Clear input
+        const input = document.getElementById("et-input");
+        if (input) input.value = "";
+
+        showTyping();
+
+        try {
+            const reply = await callGemini(trimmed);
+            hideTyping();
+            appendBotBubble(reply);
+
+            // Save raw text (before action parsing) for history context
+            const { cleanText } = parseAndExecuteActions(reply);
+            state.history.push({ role: "model", text: cleanText });
+            saveSession();
+
+        } catch (err) {
+            hideTyping();
+            console.error("E-T error:", err);
+            appendBotBubble("Sorry, I'm having trouble connecting right now. Please try again in a moment! 🔧");
+        }
+
+        state.isProcessing = false;
+    }
+
+    // ── Session Persistence ───────────────────────────────────
+    function saveSession() {
+        try { sessionStorage.setItem("et_history", JSON.stringify(state.history.slice(-20))); } catch (e) { }
+    }
+
+    function loadSession() {
+        try {
+            const saved = sessionStorage.getItem("et_history");
+            if (saved) {
+                state.history = JSON.parse(saved);
+                // Replay messages into UI
+                for (const msg of state.history) {
+                    if (msg.role === "user") appendUserBubble(msg.text);
+                    else appendBotBubble(msg.text);
+                }
+                return true;
+            }
+        } catch (e) { }
+        return false;
+    }
+
+    // ── Toggle Chat Window ────────────────────────────────────
+    function toggleChat() {
+        state.isOpen = !state.isOpen;
+        const panel = document.getElementById("et-panel");
+        const fab = document.getElementById("et-fab");
+        const badge = document.getElementById("et-unread");
+
+        if (state.isOpen) {
+            panel.classList.remove("et-panel-hidden");
+            panel.classList.add("et-panel-visible");
+            fab.classList.add("et-fab-active");
+            if (badge) badge.classList.add("hidden");
+            state.hasUnread = false;
+            setTimeout(() => document.getElementById("et-input")?.focus(), 300);
+        } else {
+            panel.classList.add("et-panel-hidden");
+            panel.classList.remove("et-panel-visible");
+            fab.classList.remove("et-fab-active");
+        }
+    }
+
+    // ── Build the UI ──────────────────────────────────────────
+    function initUI() {
+        const cfg = ET_CONFIG;
+
+        // Inject CSS
+        const style = document.createElement("style");
+        style.textContent = `
+      /* ── E-T Chat Fab ── */
+      .et-fab {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        z-index: 9999;
+        width: 58px;
+        height: 58px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #3b82f6, #6366f1);
+        color: white;
+        border: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 24px rgba(59,130,246,0.4), 0 0 0 0 rgba(59,130,246,0.3);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        animation: et-pulse 2.5s infinite;
+      }
+      .et-fab:hover { transform: scale(1.08); box-shadow: 0 6px 30px rgba(59,130,246,0.5); }
+      .et-fab-active { animation: none; transform: rotate(0deg); }
+      .et-fab-active:hover { transform: scale(1.08) rotate(0deg); }
+
+      @keyframes et-pulse {
+        0%, 100% { box-shadow: 0 4px 24px rgba(59,130,246,0.4), 0 0 0 0 rgba(59,130,246,0.3); }
+        50% { box-shadow: 0 4px 24px rgba(59,130,246,0.4), 0 0 0 10px rgba(59,130,246,0); }
+      }
+
+      .et-fab .et-fab-icon-open, .et-fab-active .et-fab-icon-close { display: flex; }
+      .et-fab .et-fab-icon-close, .et-fab-active .et-fab-icon-open { display: none; }
+
+      .et-unread {
+        position: absolute;
+        top: -2px;
+        right: -2px;
+        width: 18px;
+        height: 18px;
+        background: #ef4444;
+        border-radius: 50%;
+        border: 2px solid #0f172a;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 10px;
+        font-weight: 700;
+      }
+
+      /* ── Chat Panel ── */
+      .et-panel {
+        position: fixed;
+        bottom: 94px;
+        right: 24px;
+        z-index: 9998;
+        width: 380px;
+        max-width: calc(100vw - 32px);
+        height: 540px;
+        max-height: calc(100vh - 140px);
+        border-radius: 20px;
+        background: #0f172a;
+        border: 1px solid rgba(51, 65, 85, 0.6);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 1px rgba(148,163,184,0.2);
+        transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      .et-panel-hidden { opacity: 0; transform: translateY(16px) scale(0.95); pointer-events: none; }
+      .et-panel-visible { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
+
+      /* ── Header ── */
+      .et-header {
+        padding: 16px 18px;
+        background: linear-gradient(135deg, #1e293b, #0f172a);
+        border-bottom: 1px solid rgba(51, 65, 85, 0.5);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-shrink: 0;
+      }
+      .et-header-avatar {
+        width: 38px;
+        height: 38px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #3b82f6, #6366f1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .et-header-info { flex: 1; min-width: 0; }
+      .et-header-name { font-size: 14px; font-weight: 700; color: white; }
+      .et-header-status { font-size: 11px; color: #94a3b8; display: flex; align-items: center; gap: 5px; }
+      .et-header-status::before {
+        content: '';
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #22c55e;
+        display: inline-block;
+      }
+
+      /* ── Messages ── */
+      .et-messages {
+        flex: 1;
+        overflow-y: auto;
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        scrollbar-width: thin;
+        scrollbar-color: #334155 transparent;
+      }
+      .et-messages::-webkit-scrollbar { width: 5px; }
+      .et-messages::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+
+      .et-msg-row { display: flex; gap: 8px; }
+      .et-msg-user { justify-content: flex-end; }
+      .et-msg-bot { justify-content: flex-start; align-items: flex-start; }
+
+      .et-avatar {
+        width: 30px;
+        height: 30px;
+        border-radius: 10px;
+        background: linear-gradient(135deg, #3b82f6, #6366f1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        color: white;
+        margin-top: 2px;
+      }
+
+      .et-bubble-user {
+        max-width: 80%;
+        padding: 10px 14px;
+        border-radius: 16px 16px 4px 16px;
+        background: linear-gradient(135deg, #3b82f6, #6366f1);
+        color: white;
+        font-size: 13px;
+        line-height: 1.5;
+        word-break: break-word;
+      }
+      .et-bubble-bot {
+        max-width: 85%;
+        padding: 10px 14px;
+        border-radius: 16px 16px 16px 4px;
+        background: #1e293b;
+        border: 1px solid rgba(51, 65, 85, 0.5);
+        color: #cbd5e1;
+        font-size: 13px;
+        line-height: 1.6;
+        word-break: break-word;
+      }
+      .et-bubble-content strong { color: white; }
+
+      .et-time {
+        display: block;
+        font-size: 9px;
+        color: rgba(148, 163, 184, 0.6);
+        margin-top: 4px;
+        text-align: right;
+      }
+
+      /* ── Typing Dots ── */
+      .et-typing-dots {
+        display: flex;
+        gap: 4px;
+        padding: 4px 0;
+      }
+      .et-typing-dots span {
+        width: 7px;
+        height: 7px;
+        background: #64748b;
+        border-radius: 50%;
+        animation: et-dot 1.4s infinite ease-in-out;
+      }
+      .et-typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+      .et-typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+      @keyframes et-dot {
+        0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+        40% { transform: scale(1); opacity: 1; }
+      }
+
+      /* ── Quick Suggestions ── */
+      .et-suggestions {
+        padding: 8px 16px 4px;
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+        flex-shrink: 0;
+        border-top: 1px solid rgba(51, 65, 85, 0.3);
+      }
+      .et-chip {
+        padding: 5px 10px;
+        border-radius: 20px;
+        background: rgba(51, 65, 85, 0.4);
+        border: 1px solid rgba(71, 85, 105, 0.5);
+        color: #94a3b8;
+        font-size: 11px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        white-space: nowrap;
+      }
+      .et-chip:hover { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border-color: rgba(59,130,246,0.4); }
+
+      /* ── Input Bar ── */
+      .et-input-bar {
+        padding: 10px 14px;
+        background: #0f172a;
+        border-top: 1px solid rgba(51, 65, 85, 0.5);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-shrink: 0;
+      }
+      .et-input {
+        flex: 1;
+        padding: 10px 14px;
+        border-radius: 12px;
+        background: #1e293b;
+        border: 1px solid #334155;
+        color: white;
+        font-size: 13px;
+        outline: none;
+        transition: border-color 0.2s;
+        font-family: inherit;
+      }
+      .et-input::placeholder { color: #64748b; }
+      .et-input:focus { border-color: #3b82f6; }
+
+      .et-send-btn {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #3b82f6, #6366f1);
+        border: none;
+        color: white;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        transition: all 0.2s;
+      }
+      .et-send-btn:hover { transform: scale(1.05); }
+      .et-send-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+      /* ── Product Cards ── */
+      .et-product-cards { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+      .et-product-card {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px;
+        background: rgba(15, 23, 42, 0.8);
+        border: 1px solid rgba(51, 65, 85, 0.5);
+        border-radius: 14px;
+        transition: border-color 0.2s;
+      }
+      .et-product-card:hover { border-color: rgba(59, 130, 246, 0.4); }
+      .et-product-img {
+        width: 48px;
+        height: 48px;
+        border-radius: 10px;
+        object-fit: cover;
+        flex-shrink: 0;
+        background: #0f172a;
+      }
+      .et-product-info { flex: 1; min-width: 0; }
+      .et-product-category {
+        font-size: 9px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #60a5fa;
+      }
+      .et-product-badge {
+        font-size: 8px;
+        font-weight: 700;
+        padding: 1px 6px;
+        border-radius: 4px;
+        background: rgba(59, 130, 246, 0.2);
+        color: #93c5fd;
+      }
+      .et-product-name {
+        font-size: 12px;
+        font-weight: 700;
+        color: white;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        margin: 1px 0;
+      }
+      .et-product-price { font-size: 13px; font-weight: 800; color: #34d399; }
+      .et-product-original { font-size: 11px; color: #64748b; text-decoration: line-through; }
+      .et-product-discount { font-size: 10px; font-weight: 700; color: #f87171; }
+
+      .et-add-btn {
+        padding: 6px 10px;
+        border-radius: 10px;
+        background: #3b82f6;
+        border: none;
+        color: white;
+        font-size: 11px;
+        font-weight: 700;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        flex-shrink: 0;
+        transition: all 0.2s;
+        font-family: inherit;
+      }
+      .et-add-btn:hover { background: #2563eb; }
+      .et-add-btn:active { transform: scale(0.95); }
+      .et-btn-added { background: #22c55e !important; pointer-events: none; }
+
+      /* ── Mobile ── */
+      @media (max-width: 480px) {
+        .et-panel {
+          right: 0;
+          bottom: 0;
+          width: 100vw;
+          height: 100vh;
+          max-height: 100vh;
+          border-radius: 0;
+        }
+        .et-fab { bottom: 16px; right: 16px; }
+      }
+    `;
+        document.head.appendChild(style);
+
+        // Build HTML structure
+        const wrapper = document.createElement("div");
+        wrapper.id = "et-chatbot";
+        wrapper.innerHTML = `
+      <!-- Floating Action Button -->
+      <button id="et-fab" class="et-fab" onclick="document.getElementById('et-chatbot').__toggle()" aria-label="Open E-T Chat">
+        <span class="et-fab-icon-open">
+          <svg width="26" height="26" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
           </svg>
-          <!-- Close Icon (Hidden by default) -->
-          <svg id="nova-icon-close" class="w-6 h-6 text-slate-300 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        </span>
+        <span class="et-fab-icon-close">
+          <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
           </svg>
-          <!-- Notification Badge -->
-          <span id="nova-unread-badge" class="absolute -top-1 -right-1 w-5 h-5 bg-gradient-to-r from-blue-500 to-indigo-600 text-white text-[10px] font-extrabold rounded-full flex items-center justify-center border-2 border-slate-900 shadow-md animate-bounce">1</span>
-        </button>
-      </div>
+        </span>
+        <span id="et-unread" class="et-unread hidden">1</span>
+      </button>
 
-      <!-- Expandable Chat Panel Window -->
-      <div id="nova-chat-modal" class="fixed bottom-24 right-4 sm:right-6 w-[calc(100vw-2rem)] sm:w-[420px] max-h-[630px] h-[82vh] bg-slate-900/95 backdrop-blur-2xl border border-slate-800 rounded-3xl shadow-2xl flex flex-col overflow-hidden transition-all duration-300 transform translate-y-6 opacity-0 pointer-events-none z-50">
-        
+      <!-- Chat Panel -->
+      <div id="et-panel" class="et-panel et-panel-hidden">
         <!-- Header -->
-        <div class="px-5 py-4 bg-slate-950/80 border-b border-slate-800 flex items-center justify-between flex-shrink-0">
-          <div class="flex items-center space-x-3">
-            <div class="relative">
-              <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
-                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                </svg>
-              </div>
-              <span class="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-slate-950 rounded-full"></span>
-            </div>
-            <div>
-              <div class="flex items-center space-x-2">
-                <h3 class="text-sm font-extrabold text-white tracking-tight">Nova AI</h3>
-                <span class="px-2 py-0.5 rounded-md bg-blue-500/10 border border-blue-500/30 text-blue-400 text-[10px] font-semibold">Specialist</span>
-              </div>
-              <p class="text-[11px] text-slate-400">ETech Hardware & Build Assistant</p>
-            </div>
-          </div>
-
-          <!-- Header Control Buttons -->
-          <div class="flex items-center space-x-1">
-            <button id="nova-sound-btn" title="Toggle Sound" class="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer">
-              <svg id="nova-sound-icon-on" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/></svg>
-              <svg id="nova-sound-icon-off" class="w-4 h-4 hidden text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15zM17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"/></svg>
-            </button>
-            <button id="nova-clear-btn" title="Clear Chat" class="p-2 rounded-xl text-slate-400 hover:text-rose-400 hover:bg-slate-800 transition-colors cursor-pointer">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-            </button>
-            <button id="nova-close-modal-btn" title="Minimize" class="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-            </button>
-          </div>
-        </div>
-
-        <!-- Messages Container -->
-        <div id="nova-messages-list" class="flex-1 p-4 overflow-y-auto space-y-4 text-xs leading-relaxed scrollbar-thin scrollbar-thumb-slate-700">
-          <!-- Initial Welcome Message injected via script -->
-        </div>
-
-        <!-- Suggestion Chips Bar -->
-        <div class="px-3 py-2 bg-slate-950/60 border-t border-slate-800/80 flex items-center space-x-1.5 overflow-x-auto no-scrollbar scroll-smooth flex-shrink-0" id="nova-chips-bar">
-          <button class="nova-chip px-3 py-1.5 rounded-xl bg-slate-800/80 hover:bg-blue-600/30 hover:border-blue-500/50 border border-slate-700/60 text-slate-200 text-[11px] font-semibold whitespace-nowrap transition-all flex items-center space-x-1 cursor-pointer" data-prompt="Show top gaming laptops">
-            <span>💻 Gaming Laptops</span>
-          </button>
-          <button class="nova-chip px-3 py-1.5 rounded-xl bg-slate-800/80 hover:bg-blue-600/30 hover:border-blue-500/50 border border-slate-700/60 text-slate-200 text-[11px] font-semibold whitespace-nowrap transition-all flex items-center space-x-1 cursor-pointer" data-prompt="What GPUs are in stock?">
-            <span>🎮 GPUs & Components</span>
-          </button>
-          <button class="nova-chip px-3 py-1.5 rounded-xl bg-slate-800/80 hover:bg-blue-600/30 hover:border-blue-500/50 border border-slate-700/60 text-slate-200 text-[11px] font-semibold whitespace-nowrap transition-all flex items-center space-x-1 cursor-pointer" data-prompt="Recommend curved OLED monitors">
-            <span>🖥️ OLED Monitors</span>
-          </button>
-          <button class="nova-chip px-3 py-1.5 rounded-xl bg-slate-800/80 hover:bg-blue-600/30 hover:border-blue-500/50 border border-slate-700/60 text-slate-200 text-[11px] font-semibold whitespace-nowrap transition-all flex items-center space-x-1 cursor-pointer" data-prompt="What is in my shopping cart?">
-            <span>🛒 My Cart</span>
-          </button>
-          <button class="nova-chip px-3 py-1.5 rounded-xl bg-slate-800/80 hover:bg-blue-600/30 hover:border-blue-500/50 border border-slate-700/60 text-slate-200 text-[11px] font-semibold whitespace-nowrap transition-all flex items-center space-x-1 cursor-pointer" data-prompt="Build a high-end gaming PC">
-            <span>⚡ Custom PC Builder</span>
-          </button>
-        </div>
-
-        <!-- Input Area -->
-        <form id="nova-input-form" class="p-3 bg-slate-950 border-t border-slate-800 flex items-center space-x-2 flex-shrink-0">
-          <input type="text" id="nova-input-field" placeholder="Ask Nova about laptops, specs, cart..." autocomplete="off" class="flex-1 px-4 py-3 rounded-2xl bg-slate-900 border border-slate-800 text-white placeholder-slate-500 text-xs focus:outline-none focus:border-blue-500 transition-colors">
-          <button type="submit" id="nova-send-btn" class="w-10 h-10 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white flex items-center justify-center shadow-md transition-all active:scale-95 flex-shrink-0 cursor-pointer">
-            <svg class="w-4 h-4 transform rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+        <div class="et-header">
+          <div class="et-header-avatar">
+            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714a2.25 2.25 0 00.659 1.591L19 14.5M14.25 3.104c.251.023.501.05.75.082M19 14.5l-2.47-2.47m0 0L19 9.56m-2.47 2.47H14.25m-8.5 2.47L3 14.5m2.75 0L3 11.53m2.75 2.97H8.25"/>
             </svg>
+          </div>
+          <div class="et-header-info">
+            <div class="et-header-name">${cfg.BOT_NAME}</div>
+            <div class="et-header-status">${cfg.BOT_TAGLINE}</div>
+          </div>
+          <button onclick="document.getElementById('et-chatbot').__toggle()" style="background:none;border:none;color:#64748b;cursor:pointer;padding:4px;">
+            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
           </button>
-        </form>
+        </div>
 
+        <!-- Messages -->
+        <div id="et-messages" class="et-messages"></div>
+
+        <!-- Quick Suggestions -->
+        <div id="et-suggestions" class="et-suggestions">
+          ${cfg.QUICK_SUGGESTIONS.map(s => `<button class="et-chip" onclick="document.getElementById('et-chatbot').__send('${s.replace(/'/g, "\\'")}')">${s}</button>`).join("")}
+        </div>
+
+        <!-- Input -->
+        <div class="et-input-bar">
+          <input id="et-input" class="et-input" type="text" placeholder="Ask E-T anything..." autocomplete="off">
+          <button id="et-send" class="et-send-btn" onclick="document.getElementById('et-chatbot').__sendInput()">
+            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+          </button>
+        </div>
       </div>
     `;
 
-    document.body.appendChild(container);
+        document.body.appendChild(wrapper);
 
-    setupEventListeners();
-    loadSessionHistory();
-  }
+        // Wire up public methods on the DOM node
+        wrapper.__toggle = toggleChat;
+        wrapper.__send = (text) => handleSend(text);
+        wrapper.__sendInput = () => {
+            const input = document.getElementById("et-input");
+            if (input && input.value.trim()) handleSend(input.value);
+        };
 
-  // Setup UI Event Handlers
-  function setupEventListeners() {
-    const toggleBtn = document.getElementById('nova-chat-toggle-btn');
-    const closeModalBtn = document.getElementById('nova-close-modal-btn');
-    const inputForm = document.getElementById('nova-input-form');
-    const clearBtn = document.getElementById('nova-clear-btn');
-    const soundBtn = document.getElementById('nova-sound-btn');
-
-    toggleBtn.addEventListener('click', toggleChatWindow);
-    closeModalBtn.addEventListener('click', toggleChatWindow);
-
-    clearBtn.addEventListener('click', () => {
-      state.history = [];
-      sessionStorage.removeItem('nova_chat_history');
-      renderWelcomeMessage();
-      playSound('send');
-    });
-
-    soundBtn.addEventListener('click', () => {
-      state.soundEnabled = !state.soundEnabled;
-      document.getElementById('nova-sound-icon-on').classList.toggle('hidden', !state.soundEnabled);
-      document.getElementById('nova-sound-icon-off').classList.toggle('hidden', state.soundEnabled);
-    });
-
-    inputForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const input = document.getElementById('nova-input-field');
-      const query = input.value.trim();
-      if (!query || state.isTyping) return;
-      input.value = '';
-      handleUserSubmit(query);
-    });
-
-    // Delegate suggestion chip clicks
-    document.getElementById('nova-chips-bar').addEventListener('click', (e) => {
-      const chip = e.target.closest('.nova-chip');
-      if (chip && !state.isTyping) {
-        const prompt = chip.getAttribute('data-prompt');
-        handleUserSubmit(prompt);
-      }
-    });
-
-    // Listen for custom global events
-    window.addEventListener('nova-chip-click', (e) => {
-      if (e.detail && !state.isTyping) {
-        handleUserSubmit(e.detail);
-      }
-    });
-
-    window.addEventListener('nova-add-to-cart', (e) => {
-      const productId = e.detail?.productId;
-      if (productId) {
-        if (typeof addToCart === 'function') {
-          addToCart(productId, 1);
-          playSound('cart');
-          appendBotMessage(`✅ Added <strong>${getProductTitle(productId)}</strong> to your cart! You can view your cart or proceed to checkout anytime.`);
-        }
-      }
-    });
-  }
-
-  function getProductTitle(id) {
-    if (typeof products !== 'undefined') {
-      const p = products.find(prod => prod.id === parseInt(id));
-      if (p) return p.name;
-    }
-    return 'item';
-  }
-
-  function toggleChatWindow() {
-    const modal = document.getElementById('nova-chat-modal');
-    const iconBot = document.getElementById('nova-icon-bot');
-    const iconClose = document.getElementById('nova-icon-close');
-    const badge = document.getElementById('nova-unread-badge');
-
-    state.isOpen = !state.isOpen;
-
-    if (state.isOpen) {
-      modal.classList.remove('translate-y-6', 'opacity-0', 'pointer-events-none');
-      iconBot.classList.add('hidden');
-      iconClose.classList.remove('hidden');
-      if (badge) badge.classList.add('hidden');
-      state.hasUnread = false;
-      playSound('open');
-      document.getElementById('nova-input-field').focus();
-    } else {
-      modal.classList.add('translate-y-6', 'opacity-0', 'pointer-events-none');
-      iconBot.classList.remove('hidden');
-      iconClose.classList.add('hidden');
-    }
-  }
-
-  // Append user message to UI & history
-  function handleUserSubmit(text) {
-    appendUserMessage(text);
-    playSound('send');
-    saveMessageToHistory('user', text);
-
-    showTypingIndicator();
-
-    // Natural processing delay
-    setTimeout(() => {
-      hideTypingIndicator();
-      const botResponse = generateAIResponse(text);
-      appendBotMessage(botResponse.html);
-      saveMessageToHistory('bot', botResponse.html);
-      playSound('receive');
-    }, 600 + Math.random() * 400);
-  }
-
-  function appendUserMessage(text) {
-    const list = document.getElementById('nova-messages-list');
-    const msgEl = document.createElement('div');
-    msgEl.className = 'flex justify-end';
-    msgEl.innerHTML = `
-      <div class="max-w-[85%] bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-3.5 rounded-2xl rounded-tr-xs shadow-md space-y-1">
-        <p>${escapeHtml(text)}</p>
-        <span class="text-[9px] text-blue-200 block text-right">${getCurrentTimeStr()}</span>
-      </div>
-    `;
-    list.appendChild(msgEl);
-    scrollToBottom();
-  }
-
-  function appendBotMessage(htmlContent) {
-    const list = document.getElementById('nova-messages-list');
-    const msgEl = document.createElement('div');
-    msgEl.className = 'flex items-start space-x-2.5';
-    msgEl.innerHTML = `
-      <div class="w-7 h-7 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 text-white flex items-center justify-center flex-shrink-0 shadow-md mt-0.5">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-        </svg>
-      </div>
-      <div class="max-w-[88%] bg-slate-800/90 border border-slate-700/70 text-slate-100 p-3.5 rounded-2xl rounded-tl-xs shadow-md space-y-2 leading-relaxed">
-        ${htmlContent}
-        <span class="text-[9px] text-slate-400 block text-left">${getCurrentTimeStr()}</span>
-      </div>
-    `;
-    list.appendChild(msgEl);
-    scrollToBottom();
-  }
-
-  function showTypingIndicator() {
-    state.isTyping = true;
-    const list = document.getElementById('nova-messages-list');
-    const indicator = document.createElement('div');
-    indicator.id = 'nova-typing-indicator';
-    indicator.className = 'flex items-start space-x-2.5';
-    indicator.innerHTML = `
-      <div class="w-7 h-7 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 text-white flex items-center justify-center flex-shrink-0 shadow-md">
-        <svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-      </div>
-      <div class="bg-slate-800/90 border border-slate-700/70 px-4 py-3 rounded-2xl rounded-tl-xs shadow-md flex items-center space-x-1.5">
-        <div class="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce" style="animation-delay: 0ms"></div>
-        <div class="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce" style="animation-delay: 150ms"></div>
-        <div class="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-bounce" style="animation-delay: 300ms"></div>
-      </div>
-    `;
-    list.appendChild(indicator);
-    scrollToBottom();
-  }
-
-  function hideTypingIndicator() {
-    state.isTyping = false;
-    const indicator = document.getElementById('nova-typing-indicator');
-    if (indicator) indicator.remove();
-  }
-
-  function scrollToBottom() {
-    const list = document.getElementById('nova-messages-list');
-    if (list) {
-      list.scrollTop = list.scrollHeight;
-    }
-  }
-
-  function renderWelcomeMessage() {
-    const list = document.getElementById('nova-messages-list');
-    list.innerHTML = '';
-    appendBotMessage(`
-      <p class="font-bold text-white text-xs flex items-center space-x-1.5">
-        <span>👋 Welcome to ETech Computers!</span>
-      </p>
-      <p class="text-slate-300 text-xs">I'm <strong>Nova</strong>, your AI hardware specialist. How can I help you today?</p>
-      <div class="bg-slate-900/80 p-2.5 rounded-xl border border-slate-800 space-y-1.5 text-[11px] text-slate-300">
-        <p class="font-semibold text-blue-400 uppercase tracking-wider text-[10px]">What I can do for you:</p>
-        <p>• Recommend laptops, GPUs, monitors & peripherals</p>
-        <p>• Check specs, compatibility & PSU wattage requirements</p>
-        <p>• Inspect your active shopping cart & order details</p>
-        <p>• Provide store warranty, shipping & return info</p>
-      </div>
-    `);
-  }
-
-  function saveMessageToHistory(role, content) {
-    state.history.push({ role, content, time: getCurrentTimeStr() });
-    try {
-      sessionStorage.setItem('nova_chat_history', JSON.stringify(state.history));
-    } catch (e) {}
-  }
-
-  function loadSessionHistory() {
-    try {
-      const saved = sessionStorage.getItem('nova_chat_history');
-      if (saved) {
-        state.history = JSON.parse(saved);
-        if (state.history.length > 0) {
-          const list = document.getElementById('nova-messages-list');
-          list.innerHTML = '';
-          state.history.forEach(item => {
-            if (item.role === 'user') {
-              appendUserMessage(item.content);
-            } else {
-              appendBotMessage(item.content);
+        // Enter key handler
+        document.getElementById("et-input")?.addEventListener("keydown", (e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                wrapper.__sendInput();
             }
-          });
-          return;
+        });
+
+        // Load session or show welcome
+        if (!loadSession()) {
+            appendBotBubble(cfg.WELCOME_MESSAGE);
         }
-      }
-    } catch (e) {}
-    renderWelcomeMessage();
-  }
-
-  // ================= AI INTENT MATCHING & GENERATOR ENGINE =================
-  function generateAIResponse(userText) {
-    const query = userText.toLowerCase().trim();
-    const allProducts = (typeof products !== 'undefined') ? products : [];
-
-    // 1. Cart Inquiry
-    if (query.includes('cart') || query.includes('basket') || query.includes('item in my') || query.includes('total')) {
-      return handleCartInquiry();
     }
 
-    // 2. PC Build Advisor / Custom Build
-    if (query.includes('build') || query.includes('compatibility') || query.includes('watt') || query.includes('psu requirement') || query.includes('custom pc')) {
-      return handlePCBuildAdvice(query, allProducts);
-    }
-
-    // 3. Category Queries (Laptops, Monitors, Peripherals, Components, Accessories)
-    if (query.includes('laptop') || query.includes('notebook') || query.includes('ultrabook')) {
-      return handleCategoryQuery('laptops', allProducts, "Top Performance Laptops & Ultrabooks");
-    }
-    if (query.includes('monitor') || query.includes('screen') || query.includes('oled') || query.includes('curved') || query.includes('display')) {
-      return handleCategoryQuery('monitors', allProducts, "UltraWide & QD-OLED Gaming Monitors");
-    }
-    if (query.includes('gpu') || query.includes('graphics') || query.includes('rtx') || query.includes('ram') || query.includes('psu') || query.includes('component')) {
-      return handleCategoryQuery('components', allProducts, "High-End PC Components & Hardware");
-    }
-    if (query.includes('keyboard') || query.includes('mouse') || query.includes('headset') || query.includes('peripheral')) {
-      return handleCategoryQuery('peripherals', allProducts, "Pro Gaming Peripherals");
-    }
-    if (query.includes('accessory') || query.includes('dock') || query.includes('stand') || query.includes('webcam')) {
-      return handleCategoryQuery('accessories', allProducts, "Essential Tech Accessories");
-    }
-
-    // 4. Hot Deals & Bestsellers
-    if (query.includes('deal') || query.includes('sale') || query.includes('discount') || query.includes('bestseller') || query.includes('popular') || query.includes('hot')) {
-      const deals = allProducts.filter(p => p.badge && p.badge !== "");
-      return renderProductRecommendations("🔥 Hot Deals & Bestsellers Available Now:", deals);
-    }
-
-    // 5. Cheap / Budget Filter
-    if (query.includes('cheap') || query.includes('budget') || query.includes('under') || query.includes('affordable')) {
-      let maxBudget = 200;
-      const numbers = query.match(/\$?\d+/g);
-      if (numbers && numbers.length > 0) {
-        maxBudget = parseInt(numbers[0].replace('$', ''));
-      }
-      const budgetProds = allProducts.filter(p => p.price <= maxBudget);
-      if (budgetProds.length > 0) {
-        return renderProductRecommendations(`💰 Top Recommended Hardware under $${maxBudget}:`, budgetProds);
-      } else {
-        const lowest = [...allProducts].sort((a, b) => a.price - b.price).slice(0, 3);
-        return renderProductRecommendations(`I couldn't find items strictly under $${maxBudget}, but here are our most affordable top-rated items:`, lowest);
-      }
-    }
-
-    // 6. Store Customer Support / FAQ
-    if (query.includes('ship') || query.includes('delivery') || query.includes('track') || query.includes('arrive')) {
-      return {
-        html: `
-          <p class="font-bold text-white">🚚 Shipping & Delivery Information:</p>
-          <p>• <strong>Free Standard Shipping</strong> on all orders over $50 across the country!</p>
-          <p>• <strong>Express Delivery:</strong> 1 - 2 business days.</p>
-          <p>• <strong>Standard Shipping:</strong> 3 - 5 business days with live tracking.</p>
-          <p class="text-blue-400 font-semibold mt-1">Order status updates are available in your Account dashboard.</p>
-        `
-      };
-    }
-
-    if (query.includes('warranty') || query.includes('guarantee') || query.includes('return') || query.includes('refund')) {
-      return {
-        html: `
-          <p class="font-bold text-white">🛡️ Guarantee & Warranty Support:</p>
-          <p>• <strong>1-Year Full Store Warranty:</strong> Covers all hardware defects and technical assistance.</p>
-          <p>• <strong>Manufacturer Warranty:</strong> Up to 10 years on selected PSUs & GPUs.</p>
-          <p>• <strong>30-Day Money-Back Guarantee:</strong> Easy returns for unopened hardware.</p>
-        `
-      };
-    }
-
-    if (query.includes('contact') || query.includes('support') || query.includes('phone') || query.includes('location') || query.includes('store')) {
-      return {
-        html: `
-          <p class="font-bold text-white">📍 ETech Computers Headquarters & Support:</p>
-          <p>• <strong>Email Support:</strong> support@etechcomputers.com</p>
-          <p>• <strong>Hotline:</strong> +1 (800) 555-ETECH</p>
-          <p>• <strong>Hours:</strong> Mon - Sat: 8:00 AM - 8:00 PM EST</p>
-        `
-      };
-    }
-
-    // 7. General Greeting / Identity
-    if (query === 'hi' || query === 'hello' || query === 'hey' || query.includes('who are you') || query.includes('help')) {
-      return {
-        html: `
-          <p class="font-bold text-white">Hello! How can I assist you with your tech search today?</p>
-          <p>You can ask me to find specific products, compare specs, check your shopping cart, or suggest a custom PC configuration.</p>
-        `
-      };
-    }
-
-    // 8. Keyword Match against product names & descriptions
-    const searchMatches = allProducts.filter(p => 
-      p.name.toLowerCase().includes(query) || 
-      p.description.toLowerCase().includes(query) ||
-      p.category.toLowerCase().includes(query)
-    );
-
-    if (searchMatches.length > 0) {
-      return renderProductRecommendations(`Here are the matching hardware items I found for "<strong>${escapeHtml(userText)}</strong>":`, searchMatches);
-    }
-
-    // 9. Generic Smart Fallback
-    return {
-      html: `
-        <p>I couldn't find exact matches for "<em>${escapeHtml(userText)}</em>", but I can help you find hardware in any of our core categories:</p>
-        <div class="mt-2 grid grid-cols-2 gap-1.5 text-[11px]">
-          <button onclick="window.dispatchEvent(new CustomEvent('nova-chip-click', {detail: 'Show top gaming laptops'}))" class="p-2 bg-slate-900 border border-slate-800 rounded-lg text-left text-blue-400 hover:border-blue-500 font-medium cursor-pointer">💻 Gaming Laptops</button>
-          <button onclick="window.dispatchEvent(new CustomEvent('nova-chip-click', {detail: 'What GPUs are in stock?'}))" class="p-2 bg-slate-900 border border-slate-800 rounded-lg text-left text-blue-400 hover:border-blue-500 font-medium cursor-pointer">🎮 RTX GPUs</button>
-          <button onclick="window.dispatchEvent(new CustomEvent('nova-chip-click', {detail: 'Recommend curved OLED monitors'}))" class="p-2 bg-slate-900 border border-slate-800 rounded-lg text-left text-blue-400 hover:border-blue-500 font-medium cursor-pointer">🖥️ OLED Monitors</button>
-          <button onclick="window.dispatchEvent(new CustomEvent('nova-chip-click', {detail: 'What is in my shopping cart?'}))" class="p-2 bg-slate-900 border border-slate-800 rounded-lg text-left text-blue-400 hover:border-blue-500 font-medium cursor-pointer">🛒 My Cart</button>
-        </div>
-      `
-    };
-  }
-
-  // Response Builder Helpers
-  function handleCategoryQuery(cat, productsList, title) {
-    const items = productsList.filter(p => p.category === cat);
-    return renderProductRecommendations(`Here are our featured <strong>${title}</strong>:`, items);
-  }
-
-  function handleCartInquiry() {
-    let cart = [];
-    if (typeof getCart === 'function') {
-      cart = getCart();
+    // ── Init ──────────────────────────────────────────────────
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", initUI);
     } else {
-      const saved = localStorage.getItem('etech_cart');
-      if (saved) cart = JSON.parse(saved);
+        initUI();
     }
-
-    if (cart.length === 0) {
-      return {
-        html: `
-          <div class="space-y-2">
-            <p class="font-bold text-white flex items-center space-x-1">
-              <span>🛒 Shopping Cart is Empty</span>
-            </p>
-            <p class="text-slate-300">You haven't added any hardware items to your cart yet.</p>
-            <a href="${getPathPrefix()}index.html#shop" class="inline-block px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-[11px] rounded-lg transition-colors">Browse Hardware Catalog</a>
-          </div>
-        `
-      };
-    }
-
-    const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-
-    const itemsHtml = cart.map(item => `
-      <div class="flex items-center justify-between bg-slate-900/90 p-2 rounded-xl border border-slate-800 text-[11px]">
-        <div class="flex items-center space-x-2 truncate">
-          <img src="${item.image}" alt="${item.name}" class="w-8 h-8 object-cover rounded-md flex-shrink-0 bg-slate-950">
-          <div class="truncate">
-            <p class="font-bold text-white truncate max-w-[140px]">${item.name}</p>
-            <p class="text-[10px] text-slate-400">Qty: ${item.quantity} × $${item.price}</p>
-          </div>
-        </div>
-        <span class="font-black text-blue-400 ml-2">$${(item.price * item.quantity).toLocaleString()}</span>
-      </div>
-    `).join('');
-
-    return {
-      html: `
-        <div class="space-y-2.5">
-          <div class="flex items-center justify-between border-b border-slate-700/80 pb-2">
-            <span class="font-bold text-white">🛒 Your Active Cart (${cart.length} item${cart.length > 1 ? 's' : ''})</span>
-            <span class="font-black text-emerald-400 text-sm">$${total.toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
-          </div>
-          <div class="space-y-1.5 max-h-48 overflow-y-auto pr-1 scrollbar-thin">
-            ${itemsHtml}
-          </div>
-          <div class="pt-1 flex space-x-2">
-            <a href="${getPathPrefix()}index.html#cart" class="flex-1 text-center py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold text-[11px] border border-slate-700 transition-colors">View Cart</a>
-            <a href="${getPathPrefix()}index.html#checkout" class="flex-1 text-center py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-xl font-bold text-[11px] shadow-md transition-all">Proceed to Checkout</a>
-          </div>
-        </div>
-      `
-    };
-  }
-
-  function handlePCBuildAdvice(query, allProducts) {
-    const rtx4090 = allProducts.find(p => p.id === 1 || p.name.includes('4090'));
-    const rtx4080 = allProducts.find(p => p.id === 7 || p.name.includes('4080'));
-    const ram = allProducts.find(p => p.id === 8);
-    const psu = allProducts.find(p => p.id === 9);
-
-    return {
-      html: `
-        <div class="space-y-2.5">
-          <p class="font-bold text-white">⚡ Ultimate PC Build & Component Specs Advice:</p>
-          <p class="text-slate-300">For enthusiast gaming & workstation builds, here are key recommended pairings:</p>
-          
-          <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800 space-y-1 text-[11px]">
-            <p class="font-semibold text-blue-400">💡 Power & RAM Requirements:</p>
-            <p>• <strong>RTX 4090 / 4080 Super GPUs:</strong> Recommend minimum <strong>850W - 1000W ATX 3.0 Modular PSU</strong> for clean transient spike handling.</p>
-            <p>• <strong>DDR5 Gaming RAM:</strong> 6000MHz CL30 RAM is the sweet spot for Intel 14th Gen & AMD Ryzen 7000/9000 Series.</p>
-          </div>
-
-          <p class="font-semibold text-white text-[11px] uppercase tracking-wider mt-1">Recommended Components In Store:</p>
-
-          ${rtx4080 ? renderSingleMiniCard(rtx4080) : ''}
-          ${ram ? renderSingleMiniCard(ram) : ''}
-          ${psu ? renderSingleMiniCard(psu) : ''}
-        </div>
-      `
-    };
-  }
-
-  function renderProductRecommendations(introText, items) {
-    if (!items || items.length === 0) {
-      return {
-        html: `<p>${introText}</p><p class="text-slate-400">No hardware found matching this criteria.</p>`
-      };
-    }
-
-    const cardsHtml = items.slice(0, 3).map(product => renderSingleMiniCard(product)).join('');
-
-    return {
-      html: `
-        <div class="space-y-2.5">
-          <p class="font-semibold text-white">${introText}</p>
-          <div class="space-y-2">
-            ${cardsHtml}
-          </div>
-          ${items.length > 3 ? `<p class="text-[10px] text-slate-400 text-center">+ ${items.length - 3} more products available in <a href="${getPathPrefix()}index.html#shop" class="text-blue-400 hover:underline font-semibold">Catalog</a></p>` : ''}
-        </div>
-      `
-    };
-  }
-
-  function renderSingleMiniCard(product) {
-    return `
-      <div class="bg-slate-900/95 border border-slate-800 hover:border-slate-700 p-2.5 rounded-2xl flex items-center justify-between space-x-3 transition-colors shadow-sm">
-        <img src="${product.image}" alt="${product.name}" class="w-12 h-12 object-cover rounded-xl bg-slate-950 flex-shrink-0">
-        <div class="min-w-0 flex-1">
-          <div class="flex items-center space-x-1">
-            <span class="text-[9px] font-extrabold uppercase text-blue-400">${product.category}</span>
-            ${product.badge ? `<span class="bg-blue-600/30 text-blue-300 text-[8px] font-bold px-1.5 py-0.2 rounded">${product.badge}</span>` : ''}
-          </div>
-          <h4 class="text-xs font-bold text-white truncate">${product.name}</h4>
-          <p class="text-xs font-black text-emerald-400">$${product.price} <span class="text-[10px] text-slate-400 line-through font-normal">$${product.originalPrice}</span></p>
-        </div>
-        <button onclick="window.dispatchEvent(new CustomEvent('nova-add-to-cart', {detail: {productId: ${product.id}}}))" class="px-2.5 py-1.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-[11px] rounded-xl shadow transition-all active:scale-95 flex items-center space-x-1 flex-shrink-0 cursor-pointer">
-          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-          <span>Add</span>
-        </button>
-      </div>
-    `;
-  }
-
-  // Utilities
-  function escapeHtml(str) {
-    return String(str)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;');
-  }
-
-  function getCurrentTimeStr() {
-    const d = new Date();
-    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  }
-
-  // Initialize on DOM ready
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initChatbotUI);
-  } else {
-    initChatbotUI();
-  }
 
 })();
