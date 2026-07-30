@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In & Register - ETech Computers</title>
+    <meta name="description" content="Log in or create an account with ETech Computers to complete purchases and track orders.">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS v4 CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Plus Jakarta Sans', 'sans-serif'],
+            }
+          }
+        }
+      }
+    </script>
+</head>
+<body class="bg-slate-950 text-slate-100 flex flex-col min-h-screen font-sans antialiased selection:bg-blue-600 selection:text-white">
+
+    <!-- Header Navigation -->
+    <header class="sticky top-0 z-50 backdrop-blur-md bg-slate-900/90 border-b border-slate-800 text-white shadow-lg">
+      <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between h-20">
+          
+          <!-- Brand Logo -->
+          <a href="../index.html#home" class="flex items-center space-x-3 group">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center shadow-lg shadow-blue-500/30 group-hover:scale-105 transition-transform duration-300">
+              <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"/>
+              </svg>
+            </div>
+            <div class="flex flex-col">
+              <span class="text-xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-100 to-blue-400">ETech<span class="text-blue-500">Computers</span></span>
+              <span class="text-[10px] tracking-widest uppercase text-slate-400 font-medium">Next-Gen Tech Store</span>
+            </div>
+          </a>
+
+          <!-- Back to Shop Link -->
+          <a href="../index.html#shop" class="inline-flex items-center space-x-2 text-xs font-semibold text-slate-300 hover:text-white bg-slate-800/80 px-4 py-2 rounded-xl border border-slate-700/60 transition-all hover:border-slate-600">
+            <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+            </svg>
+            <span>Back to Store</span>
+          </a>
+
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-grow flex items-center justify-center p-4 sm:p-6 lg:p-8 relative overflow-hidden my-8">
+      
+      <!-- Background Ambient Glow Effects -->
+      <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[400px] bg-blue-600/15 blur-[140px] rounded-full pointer-events-none"></div>
+      <div class="absolute top-1/3 right-10 w-[350px] h-[300px] bg-indigo-600/10 blur-[130px] rounded-full pointer-events-none"></div>
+
+      <div class="w-full max-w-md relative z-10">
+        
+        <!-- Optional Redirect Alert Message -->
+        <div id="redirect-banner" class="hidden mb-6 p-4 rounded-2xl bg-blue-950/60 border border-blue-500/40 text-blue-200 text-xs flex items-start space-x-3 shadow-xl backdrop-blur-md">
+          <svg class="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          <span id="redirect-banner-text">Sign up or log in to complete your checkout.</span>
+        </div>
+
+        <!-- Auth Card Container -->
+        <div class="bg-slate-900/90 backdrop-blur-xl border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl shadow-blue-950/20">
+          
+          <!-- Tab Navigation Switcher -->
+          <div class="flex rounded-xl bg-slate-950 p-1 border border-slate-800 mb-8">
+            <button id="tab-login-btn" onclick="switchTab('login')" class="flex-1 py-2.5 text-xs font-bold rounded-lg transition-all text-white bg-blue-600 shadow-md">
+              Sign In
+            </button>
+            <button id="tab-signup-btn" onclick="switchTab('signup')" class="flex-1 py-2.5 text-xs font-bold rounded-lg transition-all text-slate-400 hover:text-white">
+              Create Account
+            </button>
+          </div>
+
+          <!-- Alert Container for Errors/Success -->
+          <div id="auth-alert" class="hidden mb-6 p-3.5 rounded-xl text-xs font-medium border flex items-center space-x-2">
+            <span id="auth-alert-text"></span>
+          </div>
+
+          <!-- ================= TAB 1: LOGIN FORM ================= -->
+          <form id="login-form" onsubmit="handleLoginSubmit(event)" class="space-y-5">
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Email Address</label>
+              <div class="relative">
+                <input type="email" id="login-email" required placeholder="name@example.com" class="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-blue-500 transition-colors">
+                <svg class="w-5 h-5 text-slate-500 absolute right-3.5 top-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"/>
+                </svg>
+              </div>
+            </div>
+
+            <div>
+              <div class="flex items-center justify-between mb-1.5">
+                <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider">Password</label>
+                <a href="#" onclick="alert('Password reset link has been sent to your email.')" class="text-xs text-blue-400 hover:underline">Forgot?</a>
+              </div>
+              <div class="relative">
+                <input type="password" id="login-password" required placeholder="••••••••" class="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-blue-500 transition-colors">
+                <svg class="w-5 h-5 text-slate-500 absolute right-3.5 top-3.5 cursor-pointer hover:text-slate-300" onclick="togglePasswordVisibility('login-password')" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                </svg>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between pt-1">
+              <label class="flex items-center space-x-2 text-xs text-slate-400 cursor-pointer">
+                <input type="checkbox" checked class="rounded bg-slate-950 border-slate-700 text-blue-600 focus:ring-blue-500 w-4 h-4">
+                <span>Remember me</span>
+              </label>
+            </div>
+
+            <button type="submit" class="w-full py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-extrabold text-sm rounded-xl shadow-lg shadow-blue-600/30 hover:shadow-blue-600/50 hover:scale-[1.01] active:scale-95 transition-all">
+              Sign In to Account
+            </button>
+          </form>
+
+          <!-- ================= TAB 2: SIGNUP FORM ================= -->
+          <form id="signup-form" onsubmit="handleSignupSubmit(event)" class="hidden space-y-5">
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Full Name *</label>
+              <input type="text" id="signup-name" required placeholder="John Doe" class="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-blue-500 transition-colors">
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Email Address *</label>
+              <input type="email" id="signup-email" required placeholder="name@example.com" class="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-blue-500 transition-colors">
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Password *</label>
+              <div class="relative">
+                <input type="password" id="signup-password" required minlength="6" placeholder="Min. 6 characters" class="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-blue-500 transition-colors">
+                <svg class="w-5 h-5 text-slate-500 absolute right-3.5 top-3.5 cursor-pointer hover:text-slate-300" onclick="togglePasswordVisibility('signup-password')" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                </svg>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Confirm Password *</label>
+              <input type="password" id="signup-confirm-password" required placeholder="Repeat password" class="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-blue-500 transition-colors">
+            </div>
+
+            <div class="pt-1">
+              <label class="flex items-start space-x-2 text-xs text-slate-400 cursor-pointer">
+                <input type="checkbox" required class="rounded bg-slate-950 border-slate-700 text-blue-600 focus:ring-blue-500 w-4 h-4 mt-0.5">
+                <span>I agree to ETech Store terms, warranty conditions & privacy policy.</span>
+              </label>
+            </div>
+
+            <button type="submit" class="w-full py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-extrabold text-sm rounded-xl shadow-lg shadow-blue-600/30 hover:shadow-blue-600/50 hover:scale-[1.01] active:scale-95 transition-all">
+              Create Account & Sign In
+            </button>
+          </form>
+
+        </div>
+
+        <p class="text-center text-xs text-slate-500 mt-6">
+          &copy; 2026 ETech Computers Inc. Safe 256-bit SSL Auth System.
+        </p>
+
+      </div>
+    </main>
+
+    <!-- Global Auth Script & AI Chatbot -->
+    <script src="../js/data.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/chatbot.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        // Parse URL params for redirect target or tab option
+        const urlParams = new URLSearchParams(window.location.search);
+        const redirectParam = urlParams.get('redirect');
+        const tabParam = urlParams.get('tab');
+
+        // Check if already logged in
+        if (typeof isLoggedIn === 'function' && isLoggedIn()) {
+          const destination = redirectParam ? `../index.html#${redirectParam}` : '../index.html#account';
+          window.location.href = destination;
+          return;
+        }
+
+        // Show banner if redirected
+        if (redirectParam) {
+          const banner = document.getElementById('redirect-banner');
+          const bannerText = document.getElementById('redirect-banner-text');
+          if (banner && bannerText) {
+            banner.classList.remove('hidden');
+            if (redirectParam === 'checkout') {
+              bannerText.textContent = 'Please log in or create an account to finish your order checkout.';
+            } else if (redirectParam === 'account') {
+              bannerText.textContent = 'You must sign up or log in first to view your Account & Order history.';
+            }
+          }
+        }
+
+        // Auto switch tab if tab=signup
+        if (tabParam === 'signup') {
+          switchTab('signup');
+        }
+      });
+
+      function switchTab(tab) {
+        const loginForm = document.getElementById('login-form');
+        const signupForm = document.getElementById('signup-form');
+        const loginBtn = document.getElementById('tab-login-btn');
+        const signupBtn = document.getElementById('tab-signup-btn');
+        const alertBox = document.getElementById('auth-alert');
+
+        if (alertBox) alertBox.classList.add('hidden');
+
+        if (tab === 'login') {
+          loginForm.classList.remove('hidden');
+          signupForm.classList.add('hidden');
+          loginBtn.className = 'flex-1 py-2.5 text-xs font-bold rounded-lg transition-all text-white bg-blue-600 shadow-md';
+          signupBtn.className = 'flex-1 py-2.5 text-xs font-bold rounded-lg transition-all text-slate-400 hover:text-white';
+        } else {
+          loginForm.classList.add('hidden');
+          signupForm.classList.remove('hidden');
+          signupBtn.className = 'flex-1 py-2.5 text-xs font-bold rounded-lg transition-all text-white bg-blue-600 shadow-md';
+          loginBtn.className = 'flex-1 py-2.5 text-xs font-bold rounded-lg transition-all text-slate-400 hover:text-white';
+        }
+      }
+
+      function togglePasswordVisibility(fieldId) {
+        const field = document.getElementById(fieldId);
+        if (field) {
+          field.type = field.type === 'password' ? 'text' : 'password';
+        }
+      }
+
+      function showAlert(message, isError = true) {
+        const alertBox = document.getElementById('auth-alert');
+        const alertText = document.getElementById('auth-alert-text');
+        if (!alertBox || !alertText) return;
+
+        alertBox.classList.remove('hidden', 'bg-rose-950/80', 'border-rose-800', 'text-rose-300', 'bg-emerald-950/80', 'border-emerald-800', 'text-emerald-300');
+        
+        if (isError) {
+          alertBox.classList.add('bg-rose-950/80', 'border-rose-800', 'text-rose-300');
+        } else {
+          alertBox.classList.add('bg-emerald-950/80', 'border-emerald-800', 'text-emerald-300');
+        }
+
+        alertText.textContent = message;
+      }
+
+      function getRedirectTarget() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const redirectParam = urlParams.get('redirect');
+        if (redirectParam) {
+          return `../index.html#${redirectParam}`;
+        }
+        return '../index.html#account';
+      }
+
+      function handleLoginSubmit(e) {
+        e.preventDefault();
+        const email = document.getElementById('login-email').value;
+        const password = document.getElementById('login-password').value;
+
+        const res = loginUser(email, password);
+        if (res.success) {
+          showAlert(res.message, false);
+          setTimeout(() => {
+            window.location.href = getRedirectTarget();
+          }, 800);
+        } else {
+          showAlert(res.message, true);
+        }
+      }
+
+      function handleSignupSubmit(e) {
+        e.preventDefault();
+        const name = document.getElementById('signup-name').value;
+        const email = document.getElementById('signup-email').value;
+        const password = document.getElementById('signup-password').value;
+        const confirmPassword = document.getElementById('signup-confirm-password').value;
+
+        if (password !== confirmPassword) {
+          showAlert("Passwords do not match. Please re-enter your password.", true);
+          return;
+        }
+
+        const res = registerUser(name, email, password);
+        if (res.success) {
+          showAlert(res.message, false);
+          setTimeout(() => {
+            window.location.href = getRedirectTarget();
+          }, 800);
+        } else {
+          showAlert(res.message, true);
+        }
+      }
+    </script>
+</body>
+</html>
