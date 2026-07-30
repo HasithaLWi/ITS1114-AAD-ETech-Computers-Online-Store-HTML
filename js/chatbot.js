@@ -12,75 +12,75 @@
  * ============================================================
  */
 (function () {
-    "use strict";
+  "use strict";
 
-    // ── State ─────────────────────────────────────────────────
-    const state = {
-        isOpen: false,
-        isProcessing: false,
-        history: [],        // { role: 'user'|'model', text: string }
-        hasUnread: false
-    };
+  // ── State ─────────────────────────────────────────────────
+  const state = {
+    isOpen: false,
+    isProcessing: false,
+    history: [],        // { role: 'user'|'model', text: string }
+    hasUnread: false
+  };
 
-    // ── Helpers ───────────────────────────────────────────────
-    function escapeHtml(str) {
-        return String(str)
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;");
+  // ── Helpers ───────────────────────────────────────────────
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function timeStr() {
+    return new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  }
+
+  function getPathPrefix() {
+    return window.location.pathname.includes("/pages/") ? "../" : "";
+  }
+
+  /** Simple markdown → HTML (bold, italic, bullets, line breaks) */
+  function renderMarkdown(text) {
+    let html = escapeHtml(text);
+    // Bold
+    html = html.replace(/\*\*(.+?)\*\*/g, '<strong class="text-white">$1</strong>');
+    // Italic
+    html = html.replace(/\*(.+?)\*/g, "<em>$1</em>");
+    // Bullet lines
+    html = html.replace(/^[\-•]\s+(.+)$/gm, '<div class="flex items-start space-x-2 my-0.5"><span class="text-blue-400 mt-0.5 flex-shrink-0">•</span><span>$1</span></div>');
+    // Line breaks
+    html = html.replace(/\n{2,}/g, '<div class="h-2"></div>');
+    html = html.replace(/\n/g, "<br>");
+    return html;
+  }
+
+  // ── Gather Live Context for Gemini ────────────────────────
+  function buildContext() {
+    // Products (dummy data from data.js — swap with API later)
+    const productData = (typeof products !== "undefined" && Array.isArray(products)) ? products : [];
+
+    // Cart state
+    let cartData = [];
+    if (typeof getCart === "function") {
+      cartData = getCart();
+    } else {
+      try { cartData = JSON.parse(localStorage.getItem("etech_cart") || "[]"); } catch (e) { }
     }
 
-    function timeStr() {
-        return new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-    }
+    // Current page section
+    const hash = window.location.hash || "#home";
 
-    function getPathPrefix() {
-        return window.location.pathname.includes("/pages/") ? "../" : "";
-    }
+    return { productData, cartData, currentPage: hash };
+  }
 
-    /** Simple markdown → HTML (bold, italic, bullets, line breaks) */
-    function renderMarkdown(text) {
-        let html = escapeHtml(text);
-        // Bold
-        html = html.replace(/\*\*(.+?)\*\*/g, '<strong class="text-white">$1</strong>');
-        // Italic
-        html = html.replace(/\*(.+?)\*/g, "<em>$1</em>");
-        // Bullet lines
-        html = html.replace(/^[\-•]\s+(.+)$/gm, '<div class="flex items-start space-x-2 my-0.5"><span class="text-blue-400 mt-0.5 flex-shrink-0">•</span><span>$1</span></div>');
-        // Line breaks
-        html = html.replace(/\n{2,}/g, '<div class="h-2"></div>');
-        html = html.replace(/\n/g, "<br>");
-        return html;
-    }
+  // ── Gemini API Call & Smart Fallback Engine ────────────────
+  async function callGemini(userMessage) {
+    const cfg = ET_CONFIG;
+    const key = cfg.API_KEY ? cfg.API_KEY.trim() : "";
 
-    // ── Gather Live Context for Gemini ────────────────────────
-    function buildContext() {
-        // Products (dummy data from data.js — swap with API later)
-        const productData = (typeof products !== "undefined" && Array.isArray(products)) ? products : [];
+    const { productData, cartData, currentPage } = buildContext();
 
-        // Cart state
-        let cartData = [];
-        if (typeof getCart === "function") {
-            cartData = getCart();
-        } else {
-            try { cartData = JSON.parse(localStorage.getItem("etech_cart") || "[]"); } catch (e) { }
-        }
-
-        // Current page section
-        const hash = window.location.hash || "#home";
-
-        return { productData, cartData, currentPage: hash };
-    }
-
-    // ── Gemini API Call & Smart Fallback Engine ────────────────
-    async function callGemini(userMessage) {
-        const cfg = ET_CONFIG;
-        const key = cfg.API_KEY ? cfg.API_KEY.trim() : "";
-
-        const { productData, cartData, currentPage } = buildContext();
-
-        const systemPromptText = `${cfg.SYSTEM_PROMPT}
+    const systemPromptText = `${cfg.SYSTEM_PROMPT}
 
 ═══ LIVE PRODUCT CATALOG (${productData.length} items) ═══
 ${JSON.stringify(productData, null, 2)}
@@ -92,105 +92,102 @@ ${cartData.length === 0 ? "Cart is empty." : JSON.stringify(cartData, null, 2)}
 User is currently viewing: ${currentPage}
 `;
 
-        // Build message contents ensuring strictly alternating user/model turns
-        const contents = [];
-        const recentHistory = state.history.slice(-6);
-        for (const msg of recentHistory) {
-            const role = msg.role === "user" ? "user" : "model";
-            if (contents.length > 0 && contents[contents.length - 1].role === role) {
-                contents[contents.length - 1].parts[0].text += "\n" + msg.text;
-            } else {
-                contents.push({ role, parts: [{ text: msg.text }] });
-            }
-        }
-
-        if (contents.length > 0 && contents[contents.length - 1].role === "user") {
-            contents[contents.length - 1].parts[0].text += "\n" + userMessage;
-        } else {
-            contents.push({ role: "user", parts: [{ text: userMessage }] });
-        }
-
-        // Models to try in single order (Primary: gemini-2.5-flash)
-        const targetModels = [
-            cfg.MODEL || "gemini-2.5-flash",
-            "gemini-2.0-flash",
-            "gemini-1.5-flash",
-            'gemini-1.5-flash-latest',
-            'gemini-1.5-flash-001'
-        ].filter((m, i, arr) => m && arr.indexOf(m) === i);
-
-        if (key) {
-            console.log(`%c🤖 [E-T AI] Calling Gemini Live API...`, 'color: #3b82f6; font-weight: bold; font-size: 12px;');
-
-            for (const model of targetModels) {
-                try {
-                    console.log(`%c⏳ Sending request to Model: [${model}]...`, 'color: #94a3b8;');
-
-                    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(key)}`;
-                    const response = await fetch(url, {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json",
-                            "x-goog-api-key": key
-                        },
-                        body: JSON.stringify({
-                            systemInstruction: { parts: [{ text: systemPromptText }] },
-                            contents: contents,
-                            generationConfig: {
-                                temperature: 0.7,
-                                topP: 0.9,
-                                maxOutputTokens: 1024
-                            }
-                        })
-                    });
-
-                    if (response.ok) {
-                        const data = await response.json();
-                        const replyText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-                        if (replyText) {
-                            console.log(`%c✅ [E-T AI] GEMINI API SUCCESS! Model: ${model}`, 'color: #22c55e; font-weight: bold; font-size: 12px;');
-                            return replyText;
-                        }
-                    } else {
-                        const errBody = await response.text();
-                        console.warn(`%c❌ [E-T AI] API Error for [${model}] (${response.status}):`, 'color: #ef4444; font-weight: bold;', errBody);
-                    }
-                } catch (e) {
-                    console.warn(`%c❌ [E-T AI] Fetch Exception for [${model}]:`, 'color: #ef4444;', e);
-                }
-            }
-        } else {
-            console.warn(`%c⚠️ [E-T AI] No API key configured in et-training.js.`, 'color: #f59e0b;');
-        }
-
-        // Seamless Local Intelligence Fallback
-        console.info(`%c💡 [E-T AI] Switched to Local Smart Engine (Offline/Fallback Mode)`, 'color: #a855f7; font-weight: bold;');
-        return generateSmartFallback(userMessage, productData, cartData);
+    // Build message contents ensuring strictly alternating user/model turns
+    const contents = [];
+    const recentHistory = state.history.slice(-6);
+    for (const msg of recentHistory) {
+      const role = msg.role === "user" ? "user" : "model";
+      if (contents.length > 0 && contents[contents.length - 1].role === role) {
+        contents[contents.length - 1].parts[0].text += "\n" + msg.text;
+      } else {
+        contents.push({ role, parts: [{ text: msg.text }] });
+      }
     }
 
-    function generateSmartFallback(query, productData, cartData) {
-        const q = query.toLowerCase().trim();
+    if (contents.length > 0 && contents[contents.length - 1].role === "user") {
+      contents[contents.length - 1].parts[0].text += "\n" + userMessage;
+    } else {
+      contents.push({ role: "user", parts: [{ text: userMessage }] });
+    }
 
-        // Greetings
-        if (['hi', 'hello', 'hey', 'greetings', 'who are you', 'help'].some(w => q === w || q.startsWith(w + ' '))) {
-            return `Hey there! 👋 I'm **E-T**, your ETech Computers AI Assistant!
+    // Models to try in single order (Primary: gemini-2.5-flash)
+    const targetModels =
+      cfg.MODEL || "gemini-3-flash-preview";
+
+
+
+    if (key) {
+      console.log(`%c🤖 [E-T AI] Calling Gemini Live API...`, 'color: #3b82f6; font-weight: bold; font-size: 12px;');
+
+
+      try {
+        console.log(`%c⏳ Sending request to Model: [${targetModels}]...`, 'color: #94a3b8;');
+
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${targetModels}:generateContent?key=${encodeURIComponent(key)}`;
+        const response = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-goog-api-key": key
+          },
+          body: JSON.stringify({
+            systemInstruction: { parts: [{ text: systemPromptText }] },
+            contents: contents,
+            generationConfig: {
+              temperature: 0.7,
+              topP: 0.9,
+              maxOutputTokens: 1024
+            }
+          })
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          const replyText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (replyText) {
+            console.log(`%c✅ [E-T AI] GEMINI API SUCCESS! Model: ${targetModels}`, 'color: #22c55e; font-weight: bold; font-size: 12px;');
+            return replyText;
+          }
+        } else {
+          const errBody = await response.text();
+          console.warn(`%c❌ [E-T AI] API Error for [${targetModels}] (${response.status}):`, 'color: #ef4444; font-weight: bold;', errBody);
+        }
+      } catch (e) {
+        console.warn(`%c❌ [E-T AI] Fetch Exception for [${targetModels}]:`, 'color: #ef4444;', e);
+      }
+
+    } else {
+      console.warn(`%c⚠️ [E-T AI] No API key configured in et-training.js.`, 'color: #f59e0b;');
+    }
+
+    // Seamless Local Intelligence Fallback
+    console.info(`%c💡 [E-T AI] Switched to Local Smart Engine (Offline/Fallback Mode)`, 'color: #a855f7; font-weight: bold;');
+    return generateSmartFallback(userMessage, productData, cartData);
+  }
+
+  function generateSmartFallback(query, productData, cartData) {
+    const q = query.toLowerCase().trim();
+
+    // Greetings
+    if (['hi', 'hello', 'hey', 'greetings', 'who are you', 'help'].some(w => q === w || q.startsWith(w + ' '))) {
+      return `Hey there! 👋 I'm **E-T**, your ETech Computers AI Assistant!
 
 I can help you find hardware, check your shopping cart, give PC build advice, or answer questions about our store policies.
 
 What can I help you find today?`;
-        }
+    }
 
-        // Cart queries
-        if (q.includes('cart') || q.includes('basket') || q.includes('my item')) {
-            if (!cartData || cartData.length === 0) {
-                return `Your shopping cart is currently **empty**. 🛒
+    // Cart queries
+    if (q.includes('cart') || q.includes('basket') || q.includes('my item')) {
+      if (!cartData || cartData.length === 0) {
+        return `Your shopping cart is currently **empty**. 🛒
 
 Explore our Shop Catalog to add gaming laptops, OLED monitors, or custom PC components!
 [ACTION:NAVIGATE#shop]`;
-            }
-            const total = cartData.reduce((s, i) => s + (i.price * i.quantity), 0);
-            const itemsList = cartData.map(i => `• **${i.name}** (Qty: ${i.quantity}) — $${(i.price * i.quantity).toLocaleString()}`).join('\n');
-            return `🛒 **Your Active Shopping Cart (${cartData.length} items):**
+      }
+      const total = cartData.reduce((s, i) => s + (i.price * i.quantity), 0);
+      const itemsList = cartData.map(i => `• **${i.name}** (Qty: ${i.quantity}) — $${(i.price * i.quantity).toLocaleString()}`).join('\n');
+      return `🛒 **Your Active Shopping Cart (${cartData.length} items):**
 
 ${itemsList}
 
@@ -198,117 +195,117 @@ ${itemsList}
 
 Would you like to proceed to checkout?
 [ACTION:NAVIGATE#cart]`;
-        }
+    }
 
-        // Warranty & Policy
-        if (q.includes('warranty') || q.includes('policy') || q.includes('guarantee') || q.includes('return')) {
-            return `🛡️ **ETech Computers Guarantee & Warranty:**
+    // Warranty & Policy
+    if (q.includes('warranty') || q.includes('policy') || q.includes('guarantee') || q.includes('return')) {
+      return `🛡️ **ETech Computers Guarantee & Warranty:**
 
 • **1-Year Store Warranty:** Covers hardware defects & free tech support.
 • **Manufacturer Warranty:** Up to 10 years on modular PSUs and GPUs.
 • **30-Day Money-Back Guarantee:** Full refund for unopened items within 30 days.`;
-        }
+    }
 
-        // Shipping
-        if (q.includes('ship') || q.includes('delivery') || q.includes('track')) {
-            return `🚚 **Shipping & Delivery Info:**
+    // Shipping
+    if (q.includes('ship') || q.includes('delivery') || q.includes('track')) {
+      return `🚚 **Shipping & Delivery Info:**
 
 • **Free Standard Shipping:** On all orders over $50 nationwide (3 - 5 business days).
 • **Express Shipping:** 1 - 2 business days ($14.99).
 • **Tracking:** Live order tracking available on your Account dashboard.`;
-        }
+    }
 
-        // Product search fallback
-        const stopWords = new Set(['what', 'your', 'you', 'can', 'does', 'do', 'how', 'why', 'who', 'when', 'where', 'is', 'are', 'the', 'a', 'an', 'and', 'or', 'in', 'on', 'at', 'to', 'for', 'with', 'by', 'about', 'like', 'from', 'show', 'find', 'get']);
-        const words = q.split(/\s+/).filter(w => w.length > 2 && !stopWords.has(w));
+    // Product search fallback
+    const stopWords = new Set(['what', 'your', 'you', 'can', 'does', 'do', 'how', 'why', 'who', 'when', 'where', 'is', 'are', 'the', 'a', 'an', 'and', 'or', 'in', 'on', 'at', 'to', 'for', 'with', 'by', 'about', 'like', 'from', 'show', 'find', 'get']);
+    const words = q.split(/\s+/).filter(w => w.length > 2 && !stopWords.has(w));
 
-        const matches = productData.filter(p => {
-            const name = p.name.toLowerCase();
-            const cat = p.category.toLowerCase();
-            const desc = p.description.toLowerCase();
-            return words.some(w => name.includes(w) || cat.includes(w) || desc.includes(w));
-        }).slice(0, 3);
+    const matches = productData.filter(p => {
+      const name = p.name.toLowerCase();
+      const cat = p.category.toLowerCase();
+      const desc = p.description.toLowerCase();
+      return words.some(w => name.includes(w) || cat.includes(w) || desc.includes(w));
+    }).slice(0, 3);
 
-        if (matches.length > 0) {
-            const actions = matches.map(p => `[ACTION:SHOW_PRODUCT:${p.id}]`).join('\n');
-            return `Here are top matches for "**${query}**" from our store inventory:
+    if (matches.length > 0) {
+      const actions = matches.map(p => `[ACTION:SHOW_PRODUCT:${p.id}]`).join('\n');
+      return `Here are top matches for "**${query}**" from our store inventory:
 
 ${actions}`;
-        }
+    }
 
-        // Default friendly response
-        const featured = productData.slice(0, 2);
-        const actions = featured.map(p => `[ACTION:SHOW_PRODUCT:${p.id}]`).join('\n');
-        return `I searched our ETech store for "**${query}**". Here are top recommended items:
+    // Default friendly response
+    const featured = productData.slice(0, 2);
+    const actions = featured.map(p => `[ACTION:SHOW_PRODUCT:${p.id}]`).join('\n');
+    return `I searched our ETech store for "**${query}**". Here are top recommended items:
 
 ${actions}
 
 Need specific recommendations or PC build advice? Let me know!`;
+  }
+
+  // ── Action Parser ─────────────────────────────────────────
+  // Extracts [ACTION:...] tags from Gemini's response,
+  // executes them, and returns clean display text.
+  function parseAndExecuteActions(rawText) {
+    let cleanText = rawText;
+    const actions = [];
+
+    // Match all action tags
+    const actionRegex = /\[ACTION:(NAVIGATE[#:]([^\]]+))\]|\[ACTION:(ADD_TO_CART):(\d+)\]|\[ACTION:(SHOW_PRODUCT):(\d+)\]/g;
+    let match;
+
+    while ((match = actionRegex.exec(rawText)) !== null) {
+      if (match[1]) {
+        // NAVIGATE
+        actions.push({ type: "NAVIGATE", target: match[2] });
+      } else if (match[3]) {
+        // ADD_TO_CART
+        actions.push({ type: "ADD_TO_CART", productId: parseInt(match[4]) });
+      } else if (match[5]) {
+        // SHOW_PRODUCT
+        actions.push({ type: "SHOW_PRODUCT", productId: parseInt(match[6]) });
+      }
     }
 
-    // ── Action Parser ─────────────────────────────────────────
-    // Extracts [ACTION:...] tags from Gemini's response,
-    // executes them, and returns clean display text.
-    function parseAndExecuteActions(rawText) {
-        let cleanText = rawText;
-        const actions = [];
+    // Strip action tags from display text
+    cleanText = cleanText.replace(/\[ACTION:[^\]]+\]/g, "").trim();
 
-        // Match all action tags
-        const actionRegex = /\[ACTION:(NAVIGATE[#:]([^\]]+))\]|\[ACTION:(ADD_TO_CART):(\d+)\]|\[ACTION:(SHOW_PRODUCT):(\d+)\]/g;
-        let match;
-
-        while ((match = actionRegex.exec(rawText)) !== null) {
-            if (match[1]) {
-                // NAVIGATE
-                actions.push({ type: "NAVIGATE", target: match[2] });
-            } else if (match[3]) {
-                // ADD_TO_CART
-                actions.push({ type: "ADD_TO_CART", productId: parseInt(match[4]) });
-            } else if (match[5]) {
-                // SHOW_PRODUCT
-                actions.push({ type: "SHOW_PRODUCT", productId: parseInt(match[6]) });
+    // Execute actions
+    for (const action of actions) {
+      switch (action.type) {
+        case "NAVIGATE":
+          setTimeout(() => {
+            const target = action.target;
+            if (target.includes(".html")) {
+              window.location.href = getPathPrefix() + target;
+            } else {
+              window.location.hash = target.startsWith("#") ? target : "#" + target;
             }
-        }
+          }, 800);
+          break;
 
-        // Strip action tags from display text
-        cleanText = cleanText.replace(/\[ACTION:[^\]]+\]/g, "").trim();
+        case "ADD_TO_CART":
+          if (typeof addToCart === "function") {
+            addToCart(action.productId);
+          }
+          break;
 
-        // Execute actions
-        for (const action of actions) {
-            switch (action.type) {
-                case "NAVIGATE":
-                    setTimeout(() => {
-                        const target = action.target;
-                        if (target.includes(".html")) {
-                            window.location.href = getPathPrefix() + target;
-                        } else {
-                            window.location.hash = target.startsWith("#") ? target : "#" + target;
-                        }
-                    }, 800);
-                    break;
-
-                case "ADD_TO_CART":
-                    if (typeof addToCart === "function") {
-                        addToCart(action.productId);
-                    }
-                    break;
-
-                // SHOW_PRODUCT is handled during rendering
-            }
-        }
-
-        return { cleanText, actions };
+        // SHOW_PRODUCT is handled during rendering
+      }
     }
 
-    // ── Product Card Renderer ─────────────────────────────────
-    function renderProductCard(productId) {
-        const productList = (typeof products !== "undefined") ? products : [];
-        const p = productList.find(item => item.id === productId);
-        if (!p) return "";
+    return { cleanText, actions };
+  }
 
-        const discount = p.originalPrice ? Math.round((1 - p.price / p.originalPrice) * 100) : 0;
+  // ── Product Card Renderer ─────────────────────────────────
+  function renderProductCard(productId) {
+    const productList = (typeof products !== "undefined") ? products : [];
+    const p = productList.find(item => item.id === productId);
+    if (!p) return "";
 
-        return `
+    const discount = p.originalPrice ? Math.round((1 - p.price / p.originalPrice) * 100) : 0;
+
+    return `
       <div class="et-product-card group">
         <img src="${p.image}" alt="${escapeHtml(p.name)}" class="et-product-img" onerror="this.style.display='none'">
         <div class="et-product-info">
@@ -329,49 +326,49 @@ Need specific recommendations or PC build advice? Let me know!`;
         </button>
       </div>
     `;
-    }
+  }
 
-    // ── Chat Message Renderers ────────────────────────────────
-    function appendUserBubble(text) {
-        const list = document.getElementById("et-messages");
-        if (!list) return;
+  // ── Chat Message Renderers ────────────────────────────────
+  function appendUserBubble(text) {
+    const list = document.getElementById("et-messages");
+    if (!list) return;
 
-        const div = document.createElement("div");
-        div.className = "et-msg-row et-msg-user";
-        div.innerHTML = `
+    const div = document.createElement("div");
+    div.className = "et-msg-row et-msg-user";
+    div.innerHTML = `
       <div class="et-bubble-user">
         <p>${escapeHtml(text)}</p>
         <span class="et-time">${timeStr()}</span>
       </div>
     `;
-        list.appendChild(div);
-        scrollChat();
+    list.appendChild(div);
+    scrollChat();
+  }
+
+  function appendBotBubble(rawText) {
+    const list = document.getElementById("et-messages");
+    if (!list) return;
+
+    // Parse actions
+    const { cleanText, actions } = parseAndExecuteActions(rawText);
+
+    // Render markdown
+    let html = renderMarkdown(cleanText);
+
+    // Append product cards for SHOW_PRODUCT actions
+    const productCards = actions
+      .filter(a => a.type === "SHOW_PRODUCT")
+      .map(a => renderProductCard(a.productId))
+      .filter(Boolean)
+      .join("");
+
+    if (productCards) {
+      html += `<div class="et-product-cards">${productCards}</div>`;
     }
 
-    function appendBotBubble(rawText) {
-        const list = document.getElementById("et-messages");
-        if (!list) return;
-
-        // Parse actions
-        const { cleanText, actions } = parseAndExecuteActions(rawText);
-
-        // Render markdown
-        let html = renderMarkdown(cleanText);
-
-        // Append product cards for SHOW_PRODUCT actions
-        const productCards = actions
-            .filter(a => a.type === "SHOW_PRODUCT")
-            .map(a => renderProductCard(a.productId))
-            .filter(Boolean)
-            .join("");
-
-        if (productCards) {
-            html += `<div class="et-product-cards">${productCards}</div>`;
-        }
-
-        const div = document.createElement("div");
-        div.className = "et-msg-row et-msg-bot";
-        div.innerHTML = `
+    const div = document.createElement("div");
+    div.className = "et-msg-row et-msg-bot";
+    div.innerHTML = `
       <div class="et-avatar">
         <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714a2.25 2.25 0 00.659 1.591L19 14.5M14.25 3.104c.251.023.501.05.75.082M19 14.5l-2.47-2.47m0 0L19 9.56m-2.47 2.47H14.25m-8.5 2.47L3 14.5m2.75 0L3 11.53m2.75 2.97H8.25"/></svg>
       </div>
@@ -380,18 +377,18 @@ Need specific recommendations or PC build advice? Let me know!`;
         <span class="et-time">${timeStr()}</span>
       </div>
     `;
-        list.appendChild(div);
-        scrollChat();
-    }
+    list.appendChild(div);
+    scrollChat();
+  }
 
-    function showTyping() {
-        const list = document.getElementById("et-messages");
-        if (!list) return;
+  function showTyping() {
+    const list = document.getElementById("et-messages");
+    if (!list) return;
 
-        const div = document.createElement("div");
-        div.id = "et-typing";
-        div.className = "et-msg-row et-msg-bot";
-        div.innerHTML = `
+    const div = document.createElement("div");
+    div.id = "et-typing";
+    div.className = "et-msg-row et-msg-bot";
+    div.innerHTML = `
       <div class="et-avatar">
         <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714a2.25 2.25 0 00.659 1.591L19 14.5M14.25 3.104c.251.023.501.05.75.082M19 14.5l-2.47-2.47m0 0L19 9.56m-2.47 2.47H14.25m-8.5 2.47L3 14.5m2.75 0L3 11.53m2.75 2.97H8.25"/></svg>
       </div>
@@ -399,104 +396,104 @@ Need specific recommendations or PC build advice? Let me know!`;
         <div class="et-typing-dots"><span></span><span></span><span></span></div>
       </div>
     `;
-        list.appendChild(div);
-        scrollChat();
+    list.appendChild(div);
+    scrollChat();
+  }
+
+  function hideTyping() {
+    const el = document.getElementById("et-typing");
+    if (el) el.remove();
+  }
+
+  function scrollChat() {
+    const list = document.getElementById("et-messages");
+    if (list) setTimeout(() => list.scrollTop = list.scrollHeight, 50);
+  }
+
+  // ── Core Send Handler ─────────────────────────────────────
+  async function handleSend(text) {
+    const trimmed = text.trim();
+    if (!trimmed || state.isProcessing) return;
+
+    state.isProcessing = true;
+    appendUserBubble(trimmed);
+    state.history.push({ role: "user", text: trimmed });
+    saveSession();
+
+    // Clear input
+    const input = document.getElementById("et-input");
+    if (input) input.value = "";
+
+    showTyping();
+
+    try {
+      const reply = await callGemini(trimmed);
+      hideTyping();
+      appendBotBubble(reply);
+
+      // Save raw text (before action parsing) for history context
+      const { cleanText } = parseAndExecuteActions(reply);
+      state.history.push({ role: "model", text: cleanText });
+      saveSession();
+
+    } catch (err) {
+      hideTyping();
+      console.error("E-T error:", err);
+      appendBotBubble("Sorry, I'm having trouble connecting right now. Please try again in a moment! 🔧");
     }
 
-    function hideTyping() {
-        const el = document.getElementById("et-typing");
-        if (el) el.remove();
-    }
+    state.isProcessing = false;
+  }
 
-    function scrollChat() {
-        const list = document.getElementById("et-messages");
-        if (list) setTimeout(() => list.scrollTop = list.scrollHeight, 50);
-    }
+  // ── Session Persistence ───────────────────────────────────
+  function saveSession() {
+    try { sessionStorage.setItem("et_history", JSON.stringify(state.history.slice(-20))); } catch (e) { }
+  }
 
-    // ── Core Send Handler ─────────────────────────────────────
-    async function handleSend(text) {
-        const trimmed = text.trim();
-        if (!trimmed || state.isProcessing) return;
-
-        state.isProcessing = true;
-        appendUserBubble(trimmed);
-        state.history.push({ role: "user", text: trimmed });
-        saveSession();
-
-        // Clear input
-        const input = document.getElementById("et-input");
-        if (input) input.value = "";
-
-        showTyping();
-
-        try {
-            const reply = await callGemini(trimmed);
-            hideTyping();
-            appendBotBubble(reply);
-
-            // Save raw text (before action parsing) for history context
-            const { cleanText } = parseAndExecuteActions(reply);
-            state.history.push({ role: "model", text: cleanText });
-            saveSession();
-
-        } catch (err) {
-            hideTyping();
-            console.error("E-T error:", err);
-            appendBotBubble("Sorry, I'm having trouble connecting right now. Please try again in a moment! 🔧");
+  function loadSession() {
+    try {
+      const saved = sessionStorage.getItem("et_history");
+      if (saved) {
+        state.history = JSON.parse(saved);
+        // Replay messages into UI
+        for (const msg of state.history) {
+          if (msg.role === "user") appendUserBubble(msg.text);
+          else appendBotBubble(msg.text);
         }
+        return true;
+      }
+    } catch (e) { }
+    return false;
+  }
 
-        state.isProcessing = false;
+  // ── Toggle Chat Window ────────────────────────────────────
+  function toggleChat() {
+    state.isOpen = !state.isOpen;
+    const panel = document.getElementById("et-panel");
+    const fab = document.getElementById("et-fab");
+    const badge = document.getElementById("et-unread");
+
+    if (state.isOpen) {
+      panel.classList.remove("et-panel-hidden");
+      panel.classList.add("et-panel-visible");
+      fab.classList.add("et-fab-active");
+      if (badge) badge.classList.add("hidden");
+      state.hasUnread = false;
+      setTimeout(() => document.getElementById("et-input")?.focus(), 300);
+    } else {
+      panel.classList.add("et-panel-hidden");
+      panel.classList.remove("et-panel-visible");
+      fab.classList.remove("et-fab-active");
     }
+  }
 
-    // ── Session Persistence ───────────────────────────────────
-    function saveSession() {
-        try { sessionStorage.setItem("et_history", JSON.stringify(state.history.slice(-20))); } catch (e) { }
-    }
+  // ── Build the UI ──────────────────────────────────────────
+  function initUI() {
+    const cfg = ET_CONFIG;
 
-    function loadSession() {
-        try {
-            const saved = sessionStorage.getItem("et_history");
-            if (saved) {
-                state.history = JSON.parse(saved);
-                // Replay messages into UI
-                for (const msg of state.history) {
-                    if (msg.role === "user") appendUserBubble(msg.text);
-                    else appendBotBubble(msg.text);
-                }
-                return true;
-            }
-        } catch (e) { }
-        return false;
-    }
-
-    // ── Toggle Chat Window ────────────────────────────────────
-    function toggleChat() {
-        state.isOpen = !state.isOpen;
-        const panel = document.getElementById("et-panel");
-        const fab = document.getElementById("et-fab");
-        const badge = document.getElementById("et-unread");
-
-        if (state.isOpen) {
-            panel.classList.remove("et-panel-hidden");
-            panel.classList.add("et-panel-visible");
-            fab.classList.add("et-fab-active");
-            if (badge) badge.classList.add("hidden");
-            state.hasUnread = false;
-            setTimeout(() => document.getElementById("et-input")?.focus(), 300);
-        } else {
-            panel.classList.add("et-panel-hidden");
-            panel.classList.remove("et-panel-visible");
-            fab.classList.remove("et-fab-active");
-        }
-    }
-
-    // ── Build the UI ──────────────────────────────────────────
-    function initUI() {
-        const cfg = ET_CONFIG;
-
-        // Inject CSS
-        const style = document.createElement("style");
-        style.textContent = `
+    // Inject CSS
+    const style = document.createElement("style");
+    style.textContent = `
       /* ── E-T Chat Fab ── */
       .et-fab {
         position: fixed;
@@ -829,12 +826,12 @@ Need specific recommendations or PC build advice? Let me know!`;
         .et-fab { bottom: 16px; right: 16px; }
       }
     `;
-        document.head.appendChild(style);
+    document.head.appendChild(style);
 
-        // Build HTML structure
-        const wrapper = document.createElement("div");
-        wrapper.id = "et-chatbot";
-        wrapper.innerHTML = `
+    // Build HTML structure
+    const wrapper = document.createElement("div");
+    wrapper.id = "et-chatbot";
+    wrapper.innerHTML = `
       <!-- Floating Action Button -->
       <button id="et-fab" class="et-fab" onclick="document.getElementById('et-chatbot').__toggle()" aria-label="Open E-T Chat">
         <span class="et-fab-icon-open">
@@ -886,35 +883,35 @@ Need specific recommendations or PC build advice? Let me know!`;
       </div>
     `;
 
-        document.body.appendChild(wrapper);
+    document.body.appendChild(wrapper);
 
-        // Wire up public methods on the DOM node
-        wrapper.__toggle = toggleChat;
-        wrapper.__send = (text) => handleSend(text);
-        wrapper.__sendInput = () => {
-            const input = document.getElementById("et-input");
-            if (input && input.value.trim()) handleSend(input.value);
-        };
+    // Wire up public methods on the DOM node
+    wrapper.__toggle = toggleChat;
+    wrapper.__send = (text) => handleSend(text);
+    wrapper.__sendInput = () => {
+      const input = document.getElementById("et-input");
+      if (input && input.value.trim()) handleSend(input.value);
+    };
 
-        // Enter key handler
-        document.getElementById("et-input")?.addEventListener("keydown", (e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                wrapper.__sendInput();
-            }
-        });
+    // Enter key handler
+    document.getElementById("et-input")?.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        wrapper.__sendInput();
+      }
+    });
 
-        // Load session or show welcome
-        if (!loadSession()) {
-            appendBotBubble(cfg.WELCOME_MESSAGE);
-        }
+    // Load session or show welcome
+    if (!loadSession()) {
+      appendBotBubble(cfg.WELCOME_MESSAGE);
     }
+  }
 
-    // ── Init ──────────────────────────────────────────────────
-    if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", initUI);
-    } else {
-        initUI();
-    }
+  // ── Init ──────────────────────────────────────────────────
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initUI);
+  } else {
+    initUI();
+  }
 
 })();
