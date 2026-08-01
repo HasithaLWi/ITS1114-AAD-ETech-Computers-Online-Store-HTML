@@ -27,6 +27,8 @@
       }
     }
   </script>
+  <!-- Chatbot Styles -->
+  <link rel="stylesheet" href="globalcss.css">
 </head>
 
 <body
@@ -1072,11 +1074,99 @@
     </div>
   </footer>
 
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!--  E-T AI CHATBOT (Static HTML — logic in js/chatbot.js) -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <div id="et-chatbot">
+
+    <!-- Floating Action Button -->
+    <button id="et-fab"
+      class="fixed bottom-6 right-6 z-[9999] w-[58px] h-[58px] rounded-full bg-gradient-to-br from-blue-500 to-indigo-500 text-white border-none cursor-pointer flex items-center justify-center shadow-[0_4px_24px_rgba(59,130,246,0.4)] transition-all duration-300 hover:scale-[1.08] hover:shadow-[0_6px_30px_rgba(59,130,246,0.5)]"
+      style="animation: et-pulse 2.5s infinite;" aria-label="Open E-T Chat">
+      <span class="et-fab-icon-open">
+        <svg width="26" height="26" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
+            d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+        </svg>
+      </span>
+      <span class="et-fab-icon-close">
+        <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </span>
+      <span id="et-unread"
+        class="absolute -top-0.5 -right-0.5 w-[18px] h-[18px] bg-red-500 rounded-full border-2 border-slate-950 flex items-center justify-center text-[10px] font-bold hidden">1</span>
+    </button>
+
+    <!-- Chat Panel -->
+    <div id="et-panel"
+      class="et-panel-hidden fixed bottom-[94px] right-6 z-[9998] w-[400px] max-h-[600px] bg-slate-950 rounded-3xl border border-slate-700/60 shadow-2xl shadow-blue-950/50 flex flex-col overflow-hidden">
+
+      <!-- Header -->
+      <div
+        class="flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-slate-900 to-slate-800 border-b border-slate-700/50 flex-shrink-0">
+        <div
+          class="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center flex-shrink-0 text-white">
+          <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+              d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714a2.25 2.25 0 00.659 1.591L19 14.5M14.25 3.104c.251.023.501.05.75.082M19 14.5l-2.47-2.47m0 0L19 9.56m-2.47 2.47H14.25m-8.5 2.47L3 14.5m2.75 0L3 11.53m2.75 2.97H8.25" />
+          </svg>
+        </div>
+        <div class="flex-1 min-w-0">
+          <div id="et-bot-name" class="text-sm font-bold text-white">E-T</div>
+          <div class="text-[11px] text-slate-400 flex items-center gap-[5px]">
+            <span class="w-[7px] h-[7px] rounded-full bg-green-500 inline-block"></span>
+            <span id="et-bot-tagline">AI Shopping Assistant</span>
+          </div>
+        </div>
+        <div class="flex items-center gap-1">
+          <button id="et-clear-btn"
+            class="bg-transparent border-none text-slate-400 cursor-pointer p-1.5 rounded-lg flex items-center justify-center transition-all hover:text-red-400 hover:bg-red-500/15"
+            title="Clear Chat History">
+            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
+                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+          </button>
+          <button id="et-minimize-btn"
+            class="bg-transparent border-none text-slate-400 cursor-pointer p-1.5 rounded-lg flex items-center justify-center transition-all hover:text-white hover:bg-white/10"
+            title="Minimize Chat">
+            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Messages -->
+      <div id="et-messages" class="flex-1 overflow-y-auto p-4 flex flex-col gap-3"></div>
+
+      <!-- Quick Suggestions (filled by JS from ET_CONFIG) -->
+      <div id="et-suggestions" class="px-4 py-2 flex gap-1.5 flex-wrap flex-shrink-0 border-t border-slate-700/30">
+      </div>
+
+      <!-- Input Bar -->
+      <div class="px-3.5 py-2.5 bg-slate-950 border-t border-slate-700/50 flex items-center gap-2 flex-shrink-0">
+        <input id="et-input" type="text" placeholder="Ask E-T anything..." autocomplete="off"
+          class="flex-1 px-3.5 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-white text-[13px] outline-none transition-colors placeholder:text-slate-500 focus:border-blue-500"
+          style="font-family: inherit;">
+        <button id="et-send"
+          class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-500 border-none text-white cursor-pointer flex items-center justify-center flex-shrink-0 transition-all hover:scale-105 disabled:opacity-40 disabled:cursor-not-allowed">
+          <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+          </svg>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
   <!-- ES Module Entry: binds all exports to window for inline handlers -->
   <script type="module" src="script.js"></script>
   <!-- SPA Router & App Logic (imports its dependencies internally) -->
   <script type="module" src="js/app.js"></script>
-  <!-- E-T AI Chatbot (IIFE, reads window.ET_CONFIG & window.products) -->
+  <!-- E-T AI Chatbot Logic (binds to static HTML above) -->
   <script src="js/chatbot.js"></script>
 </body>
 
