@@ -15,7 +15,9 @@ const ET_CONFIG = {
 
   // ── Gemini API ──────────────────────────────────────────────
   API_KEY: "",
-  MODEL: "gemini-3.1-flash-lite",
+  // MODEL: "gemini-3.1-flash-lite",
+  MODEL: "gemini-3.6-flash",
+
 
   // ── Bot Identity ────────────────────────────────────────────
   BOT_NAME: "E-T",
