@@ -1,4 +1,10 @@
 // ETech Computers - Single Page Section Toggle Router & Global App Logic
+import { products, getProductById, getFeaturedProducts } from './data.js';
+import { legalPolicies, getPolicyData } from './policy-data.js';
+import { getCurrentUser, isLoggedIn, logoutUser, getUserOrders } from './auth.js';
+import { initCartLogic, initCheckoutLogic, updateCartBadge, addToCart, getCart, saveCart, showToast } from './cart.js';
+import { renderProductDetailsPage, viewProductDetails } from './product-details.js';
+import { initShopLogic } from './shop.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   initApp();
@@ -11,7 +17,7 @@ window.addEventListener('hashchange', () => {
 /**
  * Initialize SPA application
  */
-function initApp() {
+export function initApp() {
   handleRoute();
   updateCartBadge();
   updateHeaderAuthUI();
@@ -26,7 +32,7 @@ function handleRoute() {
   const pageName = routePart || 'home';
 
   // ROUTE GUARDS: Protected pages require signup/login first
-  if ((pageName === 'checkout' || pageName === 'account') && typeof isLoggedIn === 'function' && !isLoggedIn()) {
+  if ((pageName === 'checkout' || pageName === 'account') && !isLoggedIn()) {
     window.location.href = `pages/login.html?redirect=${pageName}`;
     return;
   }
@@ -34,6 +40,38 @@ function handleRoute() {
   // 1. Hide all page sections
   const sections = document.querySelectorAll('.page-section');
   sections.forEach(sec => sec.classList.add('hidden'));
+
+  // Handle Legal Policy routes (privacy, terms, warranty, policy)
+  if (['privacy', 'terms', 'warranty', 'policy'].includes(pageName)) {
+    const policySection = document.getElementById('policy-page');
+    if (policySection) {
+      policySection.classList.remove('hidden');
+      window.scrollTo(0, 0);
+      const activeKey = (pageName === 'policy') ? (queryPart || 'privacy') : pageName;
+      renderPolicyPage(activeKey);
+    }
+    updateActiveNavLinks(pageName);
+    updateHeaderAuthUI();
+    return;
+  }
+
+  // Handle Product Details route (#product?id=X or #product-details?id=X)
+  if (['product', 'product-details'].includes(pageName)) {
+    const productSection = document.getElementById('product-details-page');
+    if (productSection) {
+      productSection.classList.remove('hidden');
+      window.scrollTo(0, 0);
+      let productId = 1;
+      if (queryPart) {
+        const params = new URLSearchParams(queryPart);
+        productId = parseInt(params.get('id') || 1);
+      }
+      renderProductDetailsPage(productId);
+    }
+    updateActiveNavLinks('shop');
+    updateHeaderAuthUI();
+    return;
+  }
 
   // 2. Unhide target page section
   const targetSection = document.getElementById(`${pageName}-page`);
@@ -62,17 +100,11 @@ function triggerPageHooks(pageName, queryPart) {
   if (pageName === 'home') {
     renderHomeFeaturedProducts();
   } else if (pageName === 'shop') {
-    if (typeof initShopLogic === 'function') {
-      initShopLogic(queryPart);
-    }
+    initShopLogic(queryPart);
   } else if (pageName === 'cart') {
-    if (typeof initCartLogic === 'function') {
-      initCartLogic();
-    }
+    initCartLogic();
   } else if (pageName === 'checkout') {
-    if (typeof initCheckoutLogic === 'function') {
-      initCheckoutLogic();
-    }
+    initCheckoutLogic();
   } else if (pageName === 'account') {
     initAccountLogic();
   }
@@ -142,12 +174,20 @@ function updateActiveNavLinks(pageName) {
   const navLinks = document.querySelectorAll('.nav-link');
   navLinks.forEach(link => {
     const href = link.getAttribute('href');
-    if (href && href.startsWith(`#${pageName}`)) {
-      link.classList.add('text-white', 'bg-slate-800', 'border-b-2', 'border-blue-500');
-      link.classList.remove('text-slate-300');
+    const isActive = href && (href === `#${pageName}` || href.startsWith(`#${pageName}?`));
+    
+    if (isActive) {
+      if (link.classList.contains('block')) {
+        link.className = 'nav-link block px-4 py-2.5 rounded-xl text-base font-bold text-white bg-gradient-to-r from-blue-600 to-indigo-600 shadow-md shadow-blue-500/25 transition-all duration-200';
+      } else {
+        link.className = 'nav-link px-4 py-2 rounded-xl text-sm font-bold text-white bg-gradient-to-r from-blue-600 to-indigo-600 shadow-md shadow-blue-500/25 ring-1 ring-blue-400/30 transition-all duration-200';
+      }
     } else {
-      link.classList.remove('text-white', 'bg-slate-800', 'border-b-2', 'border-blue-500');
-      link.classList.add('text-slate-300');
+      if (link.classList.contains('block')) {
+        link.className = 'nav-link block px-4 py-2.5 rounded-xl text-base font-medium text-slate-300 hover:bg-slate-800/80 hover:text-blue-400 transition-all duration-200';
+      } else {
+        link.className = 'nav-link px-4 py-2 rounded-xl text-sm font-medium text-slate-300 hover:text-blue-400 hover:bg-slate-800/70 transition-all duration-200';
+      }
     }
   });
 }
@@ -223,7 +263,7 @@ function renderUserOrderHistory(email) {
           <span class="px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[11px] font-bold">
             ✓ ${order.status || 'Processing'}
           </span>
-          <span class="text-lg font-black text-white">$${parseFloat(order.totalAmount.replace(/[^0-9.]/g, '') || 0).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}</span>
+          <span class="text-lg font-black text-white">Rs. ${parseFloat(order.totalAmount.replace(/[^0-9.]/g, '') || 0).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}</span>
         </div>
       </div>
 
@@ -236,7 +276,7 @@ function renderUserOrderHistory(email) {
               <img src="${item.image}" alt="${item.name}" class="w-10 h-10 object-cover rounded-md flex-shrink-0 bg-slate-950">
               <div class="min-w-0 flex-1">
                 <p class="text-xs font-bold text-white truncate">${item.name}</p>
-                <p class="text-[10px] text-slate-400">Qty: ${item.quantity} × $${item.price}</p>
+                <p class="text-[10px] text-slate-400">Qty: ${item.quantity} × Rs. ${item.price}</p>
               </div>
             </div>
           `).join('')}
@@ -277,102 +317,135 @@ function renderHomeFeaturedProducts() {
   grid.innerHTML = featured.map(product => `
     <div class="group rounded-2xl bg-slate-900 border border-slate-800 hover:border-slate-700 p-4 flex flex-col justify-between transition-all duration-300 hover:shadow-xl hover:shadow-blue-500/5">
       <div>
-        <div class="relative overflow-hidden rounded-xl bg-slate-950 mb-4 h-48 flex items-center justify-center">
+        <div onclick="viewProductDetails(${product.id})" class="relative overflow-hidden rounded-xl bg-slate-950 mb-4 h-48 flex items-center justify-center cursor-pointer">
           <img src="${product.image}" alt="${product.name}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
           ${product.badge ? `<span class="absolute top-3 left-3 bg-blue-600 text-white text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full shadow-md">${product.badge}</span>` : ''}
+          <div class="absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+            <span class="px-3 py-1.5 rounded-xl bg-blue-600/90 text-white text-xs font-bold shadow-lg flex items-center space-x-1 backdrop-blur-md">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+              <span>View Specs</span>
+            </span>
+          </div>
         </div>
         <span class="text-[11px] font-bold uppercase text-slate-400 tracking-wider">${product.category}</span>
-        <h3 class="text-base font-bold text-white mt-1 line-clamp-1 group-hover:text-blue-400 transition-colors">${product.name}</h3>
+        <h3 onclick="viewProductDetails(${product.id})" class="text-base font-bold text-white mt-1 line-clamp-1 group-hover:text-blue-400 transition-colors cursor-pointer">${product.name}</h3>
         <p class="text-xs text-slate-400 mt-1 line-clamp-2 leading-relaxed">${product.description}</p>
       </div>
       
       <div class="mt-5 pt-4 border-t border-slate-800 flex items-center justify-between">
         <div>
-          <span class="text-xs text-slate-400 line-through">$${product.originalPrice}</span>
-          <p class="text-xl font-black text-white">$${product.price}</p>
+          <span class="text-xs text-slate-400 line-through">Rs. ${product.originalPrice}</span>
+          <p class="text-xl font-black text-white">Rs. ${product.price}</p>
         </div>
-        <button onclick="addToCart(${product.id})" class="px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs rounded-xl shadow-md transition-all flex items-center space-x-1">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-          <span>Add to Cart</span>
-        </button>
+        <div class="flex items-center space-x-1.5">
+          <button onclick="viewProductDetails(${product.id})" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-xl border border-slate-700/80 transition-all" title="View Product Details">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+          </button>
+          <button onclick="addToCart(${product.id})" class="px-3.5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs rounded-xl shadow-md transition-all flex items-center space-x-1">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            <span>Add</span>
+          </button>
+        </div>
       </div>
     </div>
   `).join('');
 }
 
+
+
 /**
- * Global LocalStorage Cart State Helpers
+ * Renders Legal Policy Section (Privacy Policy, Terms of Service, Guarantee & Warranty)
  */
-function getCart() {
-  const cart = localStorage.getItem('etech_cart');
-  return cart ? JSON.parse(cart) : [];
-}
+function renderPolicyPage(policyKey = 'privacy') {
+  const container = document.getElementById('policy-content-area');
+  const tabsContainer = document.getElementById('policy-tabs-container');
+  if (!container || typeof legalPolicies === 'undefined') return;
 
-function saveCart(cart) {
-  localStorage.setItem('etech_cart', JSON.stringify(cart));
-  updateCartBadge();
-}
+  const key = legalPolicies[policyKey] ? policyKey : 'privacy';
+  const policy = legalPolicies[key];
 
-function updateCartBadge() {
-  const badge = document.getElementById('cart-count-badge');
-  if (!badge) return;
-
-  const cart = getCart();
-  const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
-
-  badge.textContent = totalItems;
-}
-
-function addToCart(productId, quantity = 1) {
-  if (typeof products === 'undefined') return;
-  const product = products.find(p => p.id === parseInt(productId));
-  if (!product) return;
-
-  let cart = getCart();
-  const existingIndex = cart.findIndex(item => item.id === product.id);
-
-  if (existingIndex > -1) {
-    cart[existingIndex].quantity += quantity;
-  } else {
-    cart.push({
-      id: product.id,
-      name: product.name,
-      price: product.price,
-      image: product.image,
-      category: product.category,
-      quantity: quantity
-    });
+  // Render Tabs
+  if (tabsContainer) {
+    tabsContainer.innerHTML = Object.keys(legalPolicies).map(k => {
+      const p = legalPolicies[k];
+      const isActive = k === key;
+      return `
+        <a href="#${k}" class="flex items-center space-x-2 px-5 py-3 rounded-xl font-bold text-xs sm:text-sm transition-all ${
+          isActive 
+            ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/25 ring-1 ring-blue-400/30' 
+            : 'bg-slate-900/80 text-slate-400 hover:text-white hover:bg-slate-800 border border-slate-800'
+        }">
+          ${p.icon}
+          <span>${p.title}</span>
+        </a>
+      `;
+    }).join('');
   }
 
-  saveCart(cart);
-  showToast(`Added "${product.name}" to cart!`);
-}
+  // Render Main Policy Content Body
+  container.innerHTML = `
+    <div class="bg-slate-900/90 border border-slate-800 rounded-3xl p-6 sm:p-10 shadow-2xl backdrop-blur-md space-y-8">
+      
+      <!-- Policy Header Banner -->
+      <div class="border-b border-slate-800 pb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <div class="flex items-center space-x-3 mb-2">
+            <div class="p-2.5 rounded-2xl bg-blue-600/10 border border-blue-500/30 text-blue-400">
+              ${policy.icon}
+            </div>
+            <span class="text-xs font-extrabold uppercase tracking-widest text-blue-400">Official Legal Policy</span>
+          </div>
+          <h1 class="text-2xl sm:text-3xl font-black text-white tracking-tight">${policy.title}</h1>
+          <p class="text-sm text-slate-400 mt-1">${policy.subtitle}</p>
+        </div>
 
-function showToast(message) {
-  let toastContainer = document.getElementById('toast-container');
-  if (!toastContainer) {
-    toastContainer = document.createElement('div');
-    toastContainer.id = 'toast-container';
-    toastContainer.className = 'fixed bottom-6 right-6 z-50 flex flex-col space-y-3 pointer-events-none';
-    document.body.appendChild(toastContainer);
-  }
+        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+          <span class="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-full bg-slate-800 border border-slate-700 text-slate-300 text-xs font-semibold">
+            <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <span>Updated: ${policy.lastUpdated}</span>
+          </span>
+          <button onclick="window.print()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white rounded-xl text-xs font-bold border border-slate-700 transition-all flex items-center space-x-1.5">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+            <span>Print Policy</span>
+          </button>
+        </div>
+      </div>
 
-  const toast = document.createElement('div');
-  toast.className = 'pointer-events-auto flex items-center space-x-3 bg-slate-900 text-white px-5 py-3.5 rounded-xl shadow-2xl border border-blue-500/40 transform translate-y-4 opacity-0 transition-all duration-300';
-  toast.innerHTML = `
-    <div class="w-8 h-8 rounded-full bg-blue-600/20 text-blue-400 flex items-center justify-center flex-shrink-0">
-      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-      </svg>
+      <!-- Policy Sections List -->
+      <div class="space-y-8">
+        ${policy.sections.map(sec => `
+          <div class="space-y-3 bg-slate-950/60 p-5 sm:p-6 rounded-2xl border border-slate-800/80 hover:border-slate-700/80 transition-colors">
+            <h3 class="text-base sm:text-lg font-extrabold text-white flex items-center space-x-2">
+              <span class="w-2 h-2 rounded-full bg-blue-500 inline-block"></span>
+              <span>${sec.heading}</span>
+            </h3>
+            <p class="text-sm text-slate-300 leading-relaxed font-normal">${sec.content}</p>
+            ${sec.bullets ? `
+              <ul class="mt-3 space-y-2 pl-4 border-l-2 border-blue-500/30">
+                ${sec.bullets.map(bullet => `
+                  <li class="text-xs sm:text-sm text-slate-400 flex items-start space-x-2">
+                    <span class="text-blue-400 font-bold">▪</span>
+                    <span>${bullet}</span>
+                  </li>
+                `).join('')}
+              </ul>
+            ` : ''}
+          </div>
+        `).join('')}
+      </div>
+
+      <!-- Policy Footer Assistance Callout -->
+      <div class="pt-6 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4 bg-gradient-to-r from-blue-950/40 via-indigo-950/40 to-slate-900 p-6 rounded-2xl border border-blue-500/20">
+        <div>
+          <h4 class="text-sm font-bold text-white">Have questions regarding our ${policy.title}?</h4>
+          <p class="text-xs text-slate-400 mt-0.5">Our legal and support team is ready to assist you anytime.</p>
+        </div>
+        <a href="mailto:support@etechcomputers.com" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold shadow-md transition-all flex items-center space-x-2 flex-shrink-0">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+          <span>Contact Legal Team</span>
+        </a>
+      </div>
+
     </div>
-    <span class="text-sm font-medium">${message}</span>
   `;
-
-  toastContainer.appendChild(toast);
-
-  setTimeout(() => toast.classList.remove('translate-y-4', 'opacity-0'), 10);
-  setTimeout(() => {
-    toast.classList.add('translate-y-4', 'opacity-0');
-    setTimeout(() => toast.remove(), 300);
-  }, 3000);
 }

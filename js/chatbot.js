@@ -186,12 +186,12 @@ Explore our Shop Catalog to add gaming laptops, OLED monitors, or custom PC comp
 [ACTION:NAVIGATE#shop]`;
       }
       const total = cartData.reduce((s, i) => s + (i.price * i.quantity), 0);
-      const itemsList = cartData.map(i => `• **${i.name}** (Qty: ${i.quantity}) — $${(i.price * i.quantity).toLocaleString()}`).join('\n');
+      const itemsList = cartData.map(i => `• **${i.name}** (Qty: ${i.quantity}) — Rs. ${(i.price * i.quantity).toLocaleString()}`).join('\n');
       return `🛒 **Your Active Shopping Cart (${cartData.length} items):**
 
 ${itemsList}
 
-**Total:** $${total.toLocaleString()}
+**Total:** Rs. ${total.toLocaleString()}
 
 Would you like to proceed to checkout?
 [ACTION:NAVIGATE#cart]`;
@@ -315,8 +315,8 @@ Need specific recommendations or PC build advice? Let me know!`;
           </div>
           <h4 class="et-product-name">${escapeHtml(p.name)}</h4>
           <div class="flex items-center gap-2">
-            <span class="et-product-price">$${p.price}</span>
-            ${p.originalPrice ? `<span class="et-product-original">$${p.originalPrice}</span>` : ""}
+            <span class="et-product-price">Rs. ${p.price}</span>
+            ${p.originalPrice ? `<span class="et-product-original">Rs. ${p.originalPrice}</span>` : ""}
             ${discount > 0 ? `<span class="et-product-discount">-${discount}%</span>` : ""}
           </div>
         </div>

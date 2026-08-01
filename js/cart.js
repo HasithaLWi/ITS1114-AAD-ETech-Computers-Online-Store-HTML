@@ -1,9 +1,91 @@
 // ETech Computers - Shopping Cart & Checkout Logic
+import { products } from './data.js';
+import { saveOrder } from './auth.js';
+
+/**
+ * Global LocalStorage Cart State Helpers
+ */
+export function getCart() {
+  const cart = localStorage.getItem('etech_cart');
+  return cart ? JSON.parse(cart) : [];
+}
+
+export function saveCart(cart) {
+  localStorage.setItem('etech_cart', JSON.stringify(cart));
+  updateCartBadge();
+}
+
+export function updateCartBadge() {
+  const badge = document.getElementById('cart-count-badge');
+  if (!badge) return;
+
+  const cart = getCart();
+  const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+
+  badge.textContent = totalItems;
+}
+
+export function addToCart(productId, quantity = 1) {
+  if (typeof products === 'undefined') return;
+  const product = products.find(p => p.id === parseInt(productId));
+  if (!product) return;
+
+  let cart = getCart();
+  const existingIndex = cart.findIndex(item => item.id === product.id);
+
+  if (existingIndex > -1) {
+    cart[existingIndex].quantity += quantity;
+  } else {
+    cart.push({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      image: product.image,
+      category: product.category,
+      quantity: quantity
+    });
+  }
+
+  saveCart(cart);
+  showToast(`Added "${product.name}" to cart!`);
+}
+
+export function showToast(message) {
+  let toastContainer = document.getElementById('toast-container');
+  if (!toastContainer) {
+    toastContainer = document.createElement('div');
+    toastContainer.id = 'toast-container';
+    toastContainer.className = 'fixed bottom-6 right-6 z-50 flex flex-col space-y-3 pointer-events-none';
+    document.body.appendChild(toastContainer);
+  }
+
+  const toast = document.createElement('div');
+  toast.className = 'pointer-events-auto flex items-center space-x-3 bg-slate-900 text-white px-5 py-3.5 rounded-xl shadow-2xl border border-blue-500/40 transform translate-y-4 opacity-0 transition-all duration-300';
+  toast.innerHTML = `
+    <div class="w-8 h-8 rounded-full bg-blue-600/20 text-blue-400 flex items-center justify-center flex-shrink-0">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+      </svg>
+    </div>
+    <span class="text-sm font-medium">${message}</span>
+  `;
+
+  toastContainer.appendChild(toast);
+
+  setTimeout(() => {
+    toast.classList.remove('translate-y-4', 'opacity-0');
+  }, 10);
+
+  setTimeout(() => {
+    toast.classList.add('translate-y-4', 'opacity-0');
+    setTimeout(() => toast.remove(), 300);
+  }, 3000);
+}
 
 /**
  * Called by app.js router whenever #cart fragment is loaded into DOM
  */
-function initCartLogic() {
+export function initCartLogic() {
   renderCart();
 
   const clearCartBtn = document.getElementById('clear-cart-btn');
@@ -59,7 +141,7 @@ function renderCart() {
           <div>
             <span class="text-[10px] font-bold uppercase text-blue-400 tracking-wider">${item.category || 'Tech'}</span>
             <h3 class="text-base font-bold text-white line-clamp-1">${item.name}</h3>
-            <p class="text-xs text-slate-400 mt-0.5">Unit Price: <span class="text-white font-semibold">$${item.price}</span></p>
+            <p class="text-xs text-slate-400 mt-0.5">Unit Price: <span class="text-white font-semibold">Rs. ${item.price}</span></p>
           </div>
         </div>
 
@@ -80,7 +162,7 @@ function renderCart() {
           <!-- Total Price for Line Item -->
           <div class="text-right min-w-[90px]">
             <span class="text-[10px] text-slate-400 uppercase tracking-wider block">Line Total</span>
-            <span class="text-lg font-extrabold text-white">$${itemTotal.toLocaleString()}</span>
+            <span class="text-lg font-extrabold text-white">Rs. ${itemTotal.toLocaleString()}</span>
           </div>
 
           <!-- Remove Item Button -->
@@ -99,10 +181,10 @@ function renderCart() {
   updateSummaryTotals(subtotal);
 }
 
-/**
+/*
  * Increment or Decrement quantity of a cart item
  */
-function updateItemQuantity(productId, delta) {
+export function updateItemQuantity(productId, delta) {
   let cart = getCart();
   const item = cart.find(i => i.id === productId);
 
@@ -119,44 +201,44 @@ function updateItemQuantity(productId, delta) {
 /**
  * Remove a product item completely from cart
  */
-function removeItemFromCart(productId) {
+export function removeItemFromCart(productId) {
   let cart = getCart();
   cart = cart.filter(i => i.id !== productId);
   saveCart(cart);
   renderCart();
-  showToast('Item removed from cart');
+  if (typeof showToast === 'function') showToast('Item removed from cart');
 }
 
 /**
  * Recalculates subtotal, tax (8%), shipping, and total amount
  */
-function updateSummaryTotals(subtotal) {
+export function updateSummaryTotals(subtotal) {
   const subtotalEl = document.getElementById('summary-subtotal');
   const taxEl = document.getElementById('summary-tax');
   const shippingEl = document.getElementById('summary-shipping');
   const totalEl = document.getElementById('summary-total');
 
   const tax = subtotal * 0.08; // 8% sales tax
-  const shipping = subtotal > 500 || subtotal === 0 ? 0 : 25; // Free shipping over $500
+  const shipping = subtotal > 150000 || subtotal === 0 ? 0 : 2500; // Free shipping over Rs. 150,000
   const grandTotal = subtotal + tax + shipping;
 
-  if (subtotalEl) subtotalEl.textContent = `$${subtotal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-  if (taxEl) taxEl.textContent = `$${tax.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-  
+  if (subtotalEl) subtotalEl.textContent = `Rs. ${subtotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  if (taxEl) taxEl.textContent = `Rs. ${tax.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
   if (shippingEl) {
     if (subtotal === 0) {
-      shippingEl.textContent = '$0.00';
+      shippingEl.textContent = 'Rs. 0.00';
       shippingEl.className = 'font-bold text-white';
     } else if (shipping === 0) {
       shippingEl.textContent = 'FREE';
       shippingEl.className = 'font-bold text-emerald-400';
     } else {
-      shippingEl.textContent = `$${shipping.toFixed(2)}`;
+      shippingEl.textContent = `Rs. ${shipping.toFixed(2)}`;
       shippingEl.className = 'font-bold text-white';
     }
   }
 
-  if (totalEl) totalEl.textContent = `$${grandTotal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+  if (totalEl) totalEl.textContent = `Rs. ${grandTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 
@@ -165,7 +247,7 @@ function updateSummaryTotals(subtotal) {
 /**
  * Called by app.js router whenever #checkout fragment is loaded into DOM
  */
-function initCheckoutLogic() {
+export function initCheckoutLogic() {
   const cart = getCart();
 
   // If cart is empty, redirect to shop page hash
@@ -186,7 +268,7 @@ function initCheckoutLogic() {
 /**
  * Renders mini items list and subtotal calculations on checkout fragment
  */
-function renderCheckoutSummary(cart) {
+export function renderCheckoutSummary(cart) {
   const itemsContainer = document.getElementById('checkout-items-list');
   const subtotalEl = document.getElementById('checkout-subtotal');
   const taxEl = document.getElementById('checkout-tax');
@@ -209,28 +291,28 @@ function renderCheckoutSummary(cart) {
           </div>
           <div>
             <p class="font-bold text-white line-clamp-1">${item.name}</p>
-            <p class="text-slate-400">Qty: ${item.quantity} × $${item.price}</p>
+            <p class="text-slate-400">Qty: ${item.quantity} × Rs. ${item.price}</p>
           </div>
         </div>
-        <span class="font-bold text-white">$${itemTotal.toLocaleString()}</span>
+        <span class="font-bold text-white">Rs. ${itemTotal.toLocaleString()}</span>
       </div>
     `;
   }).join('');
 
   const tax = subtotal * 0.08;
-  const shipping = subtotal > 500 ? 0 : 25;
+  const shipping = subtotal > 150000 ? 0 : 2500;
   const grandTotal = subtotal + tax + shipping;
 
-  if (subtotalEl) subtotalEl.textContent = `$${subtotal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-  if (taxEl) taxEl.textContent = `$${tax.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-  if (shippingEl) shippingEl.textContent = shipping === 0 ? 'FREE' : `$${shipping.toFixed(2)}`;
-  if (totalEl) totalEl.textContent = `$${grandTotal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+  if (subtotalEl) subtotalEl.textContent = `Rs. ${subtotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  if (taxEl) taxEl.textContent = `Rs. ${tax.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  if (shippingEl) shippingEl.textContent = shipping === 0 ? 'FREE' : `Rs. ${shipping.toFixed(2)}`;
+  if (totalEl) totalEl.textContent = `Rs. ${grandTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 /**
  * Handles checkout form submission
  */
-function handleCheckoutSubmit(e) {
+export function handleCheckoutSubmit(e) {
   e.preventDefault();
 
   const fullName = document.getElementById('full-name')?.value.trim();
@@ -246,7 +328,7 @@ function handleCheckoutSubmit(e) {
 
   // Generate order ID
   const orderId = '#ETC-' + Math.floor(100000 + Math.random() * 900000);
-  const totalAmount = document.getElementById('checkout-total')?.textContent || '$0.00';
+  const totalAmount = document.getElementById('checkout-total')?.textContent || 'Rs. 0.00';
 
   // Populate modal
   const modalOrderId = document.getElementById('modal-order-id');
@@ -266,3 +348,5 @@ function handleCheckoutSubmit(e) {
     modal.classList.remove('hidden');
   }
 }
+
+

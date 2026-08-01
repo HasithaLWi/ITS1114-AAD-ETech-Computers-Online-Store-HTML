@@ -11,7 +11,7 @@
  * ============================================================
  */
 
-const ET_CONFIG = {
+export const ET_CONFIG = {
 
   // ── Gemini API ──────────────────────────────────────────────
   API_KEY: "",
@@ -118,3 +118,5 @@ I can help you find the perfect hardware, check your cart, answer questions abou
 
 What are you looking for today?`
 };
+
+
