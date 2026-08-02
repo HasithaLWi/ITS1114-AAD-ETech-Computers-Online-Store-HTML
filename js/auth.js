@@ -4,20 +4,56 @@ const USERS_STORAGE_KEY = 'etech_users';
 const CURRENT_USER_KEY = 'etech_current_user';
 const ORDERS_STORAGE_KEY = 'etech_orders';
 
+const DEFAULT_USERS = [
+  {
+    id: 'USR-100001',
+    name: 'System Admin',
+    email: 'admin@etech.com',
+    password: 'admin123',
+    role: 'ADMIN',
+    assignedBranch: 'BR-COL',
+    createdAt: 'Jan 15, 2026'
+  },
+  {
+    id: 'USR-100002',
+    name: 'Galle Operations Staff',
+    email: 'staff@etech.com',
+    password: 'staff123',
+    role: 'STAFF',
+    assignedBranch: 'BR-GAL',
+    createdAt: 'Feb 01, 2026'
+  },
+  {
+    id: 'USR-100003',
+    name: 'John Doe',
+    email: 'customer@etech.com',
+    password: 'customer123',
+    role: 'CUSTOMER',
+    assignedBranch: null,
+    createdAt: 'Mar 10, 2026'
+  }
+];
+
 /**
- * Get all registered users from localStorage
+ * Get all registered users from localStorage (seed defaults if empty)
  */
 export function getUsers() {
   const users = localStorage.getItem(USERS_STORAGE_KEY);
-  return users ? JSON.parse(users) : [];
+  if (!users) {
+    localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(DEFAULT_USERS));
+    return DEFAULT_USERS;
+  }
+  const parsed = JSON.parse(users);
+  // Ensure default admin always exists if missing
+  if (!parsed.some(u => u.email.toLowerCase() === 'admin@etech.com')) {
+    parsed.unshift(DEFAULT_USERS[0]);
+    localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(parsed));
+  }
+  return parsed;
 }
 
 /**
- * Register a new user
- * @param {string} name 
- * @param {string} email 
- * @param {string} password 
- * @returns {object} { success: boolean, message: string, user: object }
+ * Register a new user (always role CUSTOMER)
  */
 export function registerUser(name, email, password) {
   const cleanName = name.trim();
@@ -42,7 +78,9 @@ export function registerUser(name, email, password) {
     id: 'USR-' + Math.floor(100000 + Math.random() * 900000),
     name: cleanName,
     email: cleanEmail,
-    password: password, // Simple client-side storage for demo app
+    password: password,
+    role: 'CUSTOMER',
+    assignedBranch: null,
     createdAt: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
   };
 
@@ -57,9 +95,6 @@ export function registerUser(name, email, password) {
 
 /**
  * Log in user with credentials
- * @param {string} email 
- * @param {string} password 
- * @returns {object} { success: boolean, message: string, user: object }
  */
 export function loginUser(email, password) {
   const cleanEmail = email.trim().toLowerCase();
@@ -88,6 +123,8 @@ export function setCurrentUser(user) {
     id: user.id,
     name: user.name,
     email: user.email,
+    role: user.role || 'CUSTOMER',
+    assignedBranch: user.assignedBranch || null,
     createdAt: user.createdAt
   };
   localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(safeUser));
@@ -104,7 +141,6 @@ export function getCurrentUser() {
 
 /**
  * Check if user is logged in
- * @returns {boolean}
  */
 export function isLoggedIn() {
   return getCurrentUser() !== null;
@@ -118,18 +154,119 @@ export function logoutUser() {
 }
 
 /**
- * Save order details to order database (excluding sensitive card/address data)
- * @param {object} orderData 
+ * ADMIN ONLY: Add a new user directly (Admin or Staff or Customer)
+ */
+export function addUserByAdmin(userData) {
+  const users = getUsers();
+  const cleanEmail = userData.email.trim().toLowerCase();
+
+  if (users.some(u => u.email.toLowerCase() === cleanEmail)) {
+    return { success: false, message: 'Email address already exists.' };
+  }
+
+  const newUser = {
+    id: 'USR-' + Math.floor(100000 + Math.random() * 900000),
+    name: userData.name.trim(),
+    email: cleanEmail,
+    password: userData.password || 'etech123',
+    role: userData.role || 'STAFF',
+    assignedBranch: userData.assignedBranch || null,
+    createdAt: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+  };
+
+  users.push(newUser);
+  localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
+
+  return { success: true, message: `User ${newUser.name} created successfully!`, user: newUser };
+}
+
+/**
+ * ADMIN ONLY: Update existing user role / branch
+ */
+export function updateUserRole(userId, newRole, assignedBranch = null) {
+  const users = getUsers();
+  const user = users.find(u => u.id === userId);
+  if (!user) return { success: false, message: 'User not found.' };
+
+  user.role = newRole;
+  user.assignedBranch = assignedBranch;
+  localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
+
+  return { success: true, message: `Role updated to ${newRole}` };
+}
+
+/**
+ * ADMIN ONLY: Full user update (Name, Email, Role, Branch, Password)
+ */
+export function updateUser(userData) {
+  const users = getUsers();
+  const user = users.find(u => u.id === userData.id);
+  if (!user) return { success: false, message: 'User not found.' };
+
+  const cleanEmail = userData.email.trim().toLowerCase();
+  const existingUser = users.find(u => u.email.toLowerCase() === cleanEmail && u.id !== userData.id);
+  if (existingUser) {
+    return { success: false, message: 'Another user with this email address already exists.' };
+  }
+
+  user.name = userData.name.trim();
+  user.email = cleanEmail;
+  user.role = userData.role || user.role;
+  user.assignedBranch = userData.assignedBranch !== undefined ? userData.assignedBranch : user.assignedBranch;
+
+  if (userData.password && userData.password.trim().length > 0) {
+    if (userData.password.trim().length < 6) {
+      return { success: false, message: 'New password must be at least 6 characters long.' };
+    }
+    user.password = userData.password.trim();
+  }
+
+  localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
+
+  // If current active session is being updated, update session state too
+  const currentUser = getCurrentUser();
+  if (currentUser && currentUser.id === user.id) {
+    setCurrentUser(user);
+  }
+
+  return { success: true, message: `User ${user.name} updated successfully!`, user };
+}
+
+/**
+ * ADMIN ONLY: Delete user
+ */
+export function deleteUser(userId) {
+  const currentUser = getCurrentUser();
+  if (currentUser && currentUser.id === userId) {
+    return { success: false, message: 'You cannot delete your own active admin account.' };
+  }
+
+  let users = getUsers();
+  users = users.filter(u => u.id !== userId);
+  localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
+
+  return { success: true, message: 'User removed successfully.' };
+}
+
+/**
+ * Save order details to order database
  */
 export function saveOrder(orderData) {
   const orders = getAllOrders();
+  const currentUser = getCurrentUser();
 
-  // Strict privacy enforcement: Ensure sensitive fields are never saved
   const sanitizedOrder = {
     orderId: orderData.orderId,
+    userId: orderData.userId || (currentUser ? currentUser.id : null),
     date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
     customerName: orderData.customerName,
-    email: orderData.email.toLowerCase(),
+    email: (orderData.email || '').trim().toLowerCase(),
+    phone: orderData.phone || '',
+    city: orderData.city || 'Colombo',
+    address: orderData.address || '',
+    fulfillmentBranch: orderData.fulfillmentBranch || 'Colombo Main Hub',
+    fulfillmentBranchId: orderData.fulfillmentBranchId || 'BR-COL',
+    distanceKm: orderData.distanceKm || 5,
     items: orderData.items.map(item => ({
       id: item.id,
       name: item.name,
@@ -142,7 +279,7 @@ export function saveOrder(orderData) {
     shipping: orderData.shipping,
     totalAmount: orderData.totalAmount,
     paymentMethod: orderData.paymentMethod === 'card' ? 'Credit / Debit Card' : 'Cash on Delivery',
-    status: 'Processing'
+    status: 'Pending'
   };
 
   orders.unshift(sanitizedOrder);
@@ -150,6 +287,20 @@ export function saveOrder(orderData) {
 
   return sanitizedOrder;
 }
+
+/**
+ * Update order status (Pending -> Processing -> Shipped -> Delivered -> Cancelled)
+ */
+export function updateOrderStatus(orderId, newStatus) {
+  const orders = getAllOrders();
+  const order = orders.find(o => o.orderId === orderId);
+  if (!order) return { success: false, message: 'Order not found.' };
+
+  order.status = newStatus;
+  localStorage.setItem(ORDERS_STORAGE_KEY, JSON.stringify(orders));
+  return { success: true, message: `Order #${orderId} status updated to ${newStatus}` };
+}
+
 
 /**
  * Get all orders from localStorage
@@ -161,15 +312,26 @@ export function getAllOrders() {
 }
 
 /**
- * Get order history for a specific user email
- * @param {string} email 
+ * Get order history for a specific user object or email
+ * @param {string|object} userOrEmail 
  * @returns {Array}
  */
-export function getUserOrders(email) {
-  if (!email) return [];
-  const cleanEmail = email.toLowerCase();
+export function getUserOrders(userOrEmail) {
+  if (!userOrEmail) return [];
   const allOrders = getAllOrders();
-  return allOrders.filter(o => o.email === cleanEmail);
+
+  if (typeof userOrEmail === 'object') {
+    const email = (userOrEmail.email || '').trim().toLowerCase();
+    const userId = userOrEmail.id;
+    return allOrders.filter(o => {
+      const matchEmail = o.email && o.email.trim().toLowerCase() === email;
+      const matchId = userId && o.userId === userId;
+      return matchEmail || matchId;
+    });
+  }
+
+  const cleanEmail = userOrEmail.trim().toLowerCase();
+  return allOrders.filter(o => o.email && o.email.trim().toLowerCase() === cleanEmail);
 }
 
 // ── Login Page Logic (only runs if login-form exists in DOM) ──
@@ -183,8 +345,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Check if already logged in
   if (isLoggedIn()) {
-    const destination = redirectParam ? `../index.html#${redirectParam}` : '../index.html#account';
-    window.location.href = destination;
+    const user = getCurrentUser();
+    window.location.href = getRedirectTarget(user);
     return;
   }
 
@@ -253,10 +415,13 @@ export function showAlert(message, isError = true) {
   alertText.textContent = message;
 }
 
-function getRedirectTarget() {
+function getRedirectTarget(user) {
+  if (user && (user.role === 'ADMIN' || user.role === 'STAFF')) {
+    return 'administrator_dashboard.html';
+  }
   const urlParams = new URLSearchParams(window.location.search);
   const redirectParam = urlParams.get('redirect');
-  return redirectParam ? `../index.html#${redirectParam}` : '../index.html#account';
+  return redirectParam ? `../index.html#${redirectParam}` : '../index.html#home';
 }
 
 export function handleLoginSubmit(e) {
@@ -266,9 +431,9 @@ export function handleLoginSubmit(e) {
 
   const res = loginUser(email, password);
   if (res.success) {
-    showAlert(res.message, false);
+    showAlert(`Welcome back, ${res.user.name}! Redirecting...`, false);
     setTimeout(() => {
-      window.location.href = getRedirectTarget();
+      window.location.href = getRedirectTarget(res.user);
     }, 800);
   } else {
     showAlert(res.message, true);

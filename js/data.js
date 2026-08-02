@@ -362,12 +362,134 @@ export const products = [
     }
 ];
 
-// Helper functions for dataset access
-export function getProductById(id) {
-    return products.find(p => p.id === parseInt(id));
+// Add default branch stock allocations to products if not present
+const DEFAULT_BRANCH_ALLOCATION = {
+    1: { "BR-COL": 12, "BR-GAL": 5, "BR-MAT": 3, "BR-KND": 8 },
+    2: { "BR-COL": 25, "BR-GAL": 14, "BR-MAT": 8, "BR-KND": 10 },
+    3: { "BR-COL": 8, "BR-GAL": 3, "BR-MAT": 2, "BR-KND": 4 },
+    4: { "BR-COL": 30, "BR-GAL": 18, "BR-MAT": 12, "BR-KND": 15 },
+    5: { "BR-COL": 10, "BR-GAL": 4, "BR-MAT": 2, "BR-KND": 5 },
+    6: { "BR-COL": 20, "BR-GAL": 9, "BR-MAT": 6, "BR-KND": 11 },
+    7: { "BR-COL": 7, "BR-GAL": 2, "BR-MAT": 1, "BR-KND": 3 },
+    8: { "BR-COL": 15, "BR-GAL": 8, "BR-MAT": 5, "BR-KND": 9 },
+    9: { "BR-COL": 18, "BR-GAL": 10, "BR-MAT": 7, "BR-KND": 12 },
+    10: { "BR-COL": 40, "BR-GAL": 22, "BR-MAT": 15, "BR-KND": 20 },
+    11: { "BR-COL": 14, "BR-GAL": 6, "BR-MAT": 4, "BR-KND": 8 },
+    12: { "BR-COL": 22, "BR-GAL": 11, "BR-MAT": 7, "BR-KND": 13 }
+};
+
+const PRODUCTS_STORAGE_KEY = 'etech_products';
+
+/**
+ * Get all stored products from localStorage (or seed default)
+ */
+export function getStoredProducts() {
+    const raw = localStorage.getItem(PRODUCTS_STORAGE_KEY);
+    if (!raw) {
+        // Hydrate default products with branch stock
+        const seeded = products.map(p => {
+            const stockMap = DEFAULT_BRANCH_ALLOCATION[p.id] || { "BR-COL": 10, "BR-GAL": 5, "BR-MAT": 3, "BR-KND": 4 };
+            const totalStock = Object.values(stockMap).reduce((a, b) => a + b, 0);
+            return {
+                ...p,
+                branchStock: stockMap,
+                totalStock: totalStock,
+                inStock: totalStock > 0
+            };
+        });
+        localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(seeded));
+        return seeded;
+    }
+    return JSON.parse(raw);
 }
 
-export function getFeaturedProducts() {
-    return products.filter(p => p.badge !== "");
+/**
+ * Save full products array to localStorage
+ */
+export function saveStoredProducts(productsList) {
+    localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(productsList));
 }
+
+/**
+ * Get product by ID from stored products
+ */
+export function getProductById(id) {
+    const all = getStoredProducts();
+    return all.find(p => p.id === parseInt(id));
+}
+
+/**
+ * Get featured products
+ */
+export function getFeaturedProducts() {
+    const all = getStoredProducts();
+    return all.filter(p => p.badge !== "");
+}
+
+/**
+ * Save or update a product
+ */
+export function saveProduct(productData) {
+    const all = getStoredProducts();
+    const index = all.findIndex(p => p.id === parseInt(productData.id));
+
+    const branchStock = productData.branchStock || { "BR-COL": 10, "BR-GAL": 5, "BR-MAT": 3, "BR-KND": 5 };
+    const totalStock = Object.values(branchStock).reduce((sum, v) => sum + parseInt(v || 0), 0);
+
+    const formattedProduct = {
+        id: productData.id ? parseInt(productData.id) : (all.length > 0 ? Math.max(...all.map(p => p.id)) + 1 : 1),
+        name: productData.name,
+        category: productData.category,
+        price: parseFloat(productData.price),
+        originalPrice: parseFloat(productData.originalPrice || productData.price),
+        rating: parseFloat(productData.rating || 4.8),
+        reviews: parseInt(productData.reviews || 10),
+        image: productData.image || "https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?auto=format&fit=crop&w=600&q=80",
+        description: productData.description || "",
+        fullDescription: productData.fullDescription || productData.description || "",
+        sku: productData.sku || `ETC-${(productData.category || 'GEN').toUpperCase()}-${Math.floor(1000 + Math.random() * 9000)}`,
+        badge: productData.badge || "",
+        warranty: productData.warranty || "1-Year Warranty",
+        specs: productData.specs || { "Category": productData.category },
+        features: productData.features || ["High Performance Tech Hardware"],
+        branchStock: branchStock,
+        totalStock: totalStock,
+        inStock: totalStock > 0
+    };
+
+    if (index > -1) {
+        all[index] = formattedProduct;
+    } else {
+        all.push(formattedProduct);
+    }
+
+    saveStoredProducts(all);
+    return formattedProduct;
+}
+
+/**
+ * Delete product by ID
+ */
+export function deleteProduct(id) {
+    let all = getStoredProducts();
+    all = all.filter(p => p.id !== parseInt(id));
+    saveStoredProducts(all);
+    return true;
+}
+
+/**
+ * Deduct stock from a specific branch when an order is placed
+ */
+export function deductBranchStock(productId, branchId, quantity) {
+    const all = getStoredProducts();
+    const product = all.find(p => p.id === parseInt(productId));
+    if (product && product.branchStock) {
+        const current = product.branchStock[branchId] || 0;
+        product.branchStock[branchId] = Math.max(0, current - quantity);
+        product.totalStock = Object.values(product.branchStock).reduce((a, b) => a + b, 0);
+        product.inStock = product.totalStock > 0;
+        saveStoredProducts(all);
+    }
+}
+
 

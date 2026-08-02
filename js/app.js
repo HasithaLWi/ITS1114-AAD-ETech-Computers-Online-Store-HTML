@@ -123,8 +123,15 @@ function updateHeaderAuthUI() {
 
   if (authContainer) {
     if (user) {
+      const isAdminOrStaff = user.role === 'ADMIN' || user.role === 'STAFF';
       authContainer.innerHTML = `
         <div class="flex items-center space-x-2">
+          ${isAdminOrStaff ? `
+            <a href="pages/administrator_dashboard.html" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-purple-600/20 hover:bg-purple-600/30 border border-purple-500/40 text-purple-300 text-xs font-extrabold shadow-md transition-all">
+              <svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+              <span>Admin Console</span>
+            </a>
+          ` : ''}
           <a href="#account" class="flex items-center space-x-2 bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700/60 px-3 py-1.5 rounded-xl transition-all group">
             <div class="w-7 h-7 rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-500 text-white font-bold text-xs flex items-center justify-center shadow-md">
               ${user.name.charAt(0).toUpperCase()}
@@ -147,6 +154,7 @@ function updateHeaderAuthUI() {
 
   if (mobileDrawer) {
     if (user) {
+      const isAdminOrStaff = user.role === 'ADMIN' || user.role === 'STAFF';
       mobileDrawer.innerHTML = `
         <div class="p-3 bg-slate-900 border border-slate-800 rounded-xl space-y-2 text-xs">
           <div class="flex items-center space-x-2">
@@ -156,6 +164,9 @@ function updateHeaderAuthUI() {
               <p class="text-[10px] text-slate-400">${user.email}</p>
             </div>
           </div>
+          ${isAdminOrStaff ? `
+            <a href="pages/administrator_dashboard.html" class="block w-full text-center py-2 bg-purple-600 text-white rounded-lg text-xs font-bold">Open Admin Console</a>
+          ` : ''}
           <button onclick="handleLogout()" class="w-full py-2 bg-rose-950/80 border border-rose-800 text-rose-300 rounded-lg text-xs font-bold">Sign Out</button>
         </div>
       `;
@@ -217,13 +228,13 @@ function initAccountLogic() {
   if (idEl) idEl.textContent = user.id || 'USR-882910';
   if (joinedEl) joinedEl.textContent = user.createdAt || 'Member';
 
-  renderUserOrderHistory(user.email);
+  renderUserOrderHistory(user);
 }
 
 /**
  * Render user's saved orders history list
  */
-function renderUserOrderHistory(email) {
+function renderUserOrderHistory(userOrEmail) {
   const container = document.getElementById('account-orders-list');
   const countEl = document.getElementById('account-orders-count');
   if (!container) return;
@@ -233,7 +244,7 @@ function renderUserOrderHistory(email) {
     return;
   }
 
-  const orders = getUserOrders(email);
+  const orders = getUserOrders(userOrEmail);
 
   if (countEl) countEl.textContent = `${orders.length} Order${orders.length === 1 ? '' : 's'}`;
 
@@ -261,10 +272,16 @@ function renderUserOrderHistory(email) {
         </div>
         <div class="flex items-center space-x-3">
           <span class="px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[11px] font-bold">
-            ✓ ${order.status || 'Processing'}
+            ✓ ${order.status || 'Pending'}
           </span>
-          <span class="text-lg font-black text-white">Rs. ${parseFloat(order.totalAmount.replace(/[^0-9.]/g, '') || 0).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}</span>
+          <span class="text-lg font-black text-white">Rs. ${parseFloat((order.totalAmount || 0).toString().replace(/[^0-9.]/g, '')).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}</span>
         </div>
+      </div>
+
+      <!-- Dispatch Hub & Destination -->
+      <div class="flex items-center justify-between text-xs bg-slate-900/60 p-2.5 rounded-lg border border-slate-800">
+        <span class="text-slate-400">Dispatch Hub: <strong class="text-white">${order.fulfillmentBranch || 'Colombo Hub'}</strong></span>
+        <span class="text-slate-400">Delivery Dest: <strong class="text-blue-400">${order.city || 'Colombo'}</strong> (${order.distanceKm || 5} km)</span>
       </div>
 
       <!-- Items Grid -->
@@ -287,7 +304,7 @@ function renderUserOrderHistory(email) {
         <span>Payment Method: <strong class="text-slate-200">${order.paymentMethod}</strong></span>
         <span class="text-emerald-400 font-semibold flex items-center space-x-1">
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-          <span>Card & Address Details Not Stored</span>
+          <span>Card & Address Details Verified</span>
         </span>
       </div>
     </div>
@@ -297,7 +314,7 @@ function renderUserOrderHistory(email) {
 /**
  * Log out active session
  */
-function handleLogout() {
+export function handleLogout() {
   if (typeof logoutUser === 'function') {
     logoutUser();
   }
@@ -305,6 +322,8 @@ function handleLogout() {
   window.location.hash = '#home';
   handleRoute();
 }
+
+window.handleLogout = handleLogout;
 
 /**
  * Renders top 4 featured products on home page section

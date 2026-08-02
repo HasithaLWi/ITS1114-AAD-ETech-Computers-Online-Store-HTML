@@ -7,15 +7,16 @@
 //  can resolve them at runtime.
 // ============================================================
 
-import { products, getProductById, getFeaturedProducts } from './js/data.js';
+import { products, getProductById, getFeaturedProducts, getStoredProducts, saveProduct, deleteProduct } from './js/data.js';
 import { legalPolicies, getPolicyData } from './js/policy-data.js';
 import { ET_CONFIG } from './js/et-training.js';
 import {
     getUsers, registerUser, loginUser, setCurrentUser,
     getCurrentUser, isLoggedIn, logoutUser,
-    saveOrder, getAllOrders, getUserOrders,
+    saveOrder, getAllOrders, getUserOrders, updateOrderStatus,
     switchTab, togglePasswordVisibility, showAlert, handleLoginSubmit, handleSignupSubmit
 } from './js/auth.js';
+import { getBranches, calculateShippingFee, autoSelectFulfillmentBranch } from './js/branches.js';
 import {
     getCart, saveCart, updateCartBadge, addToCart, showToast,
     initCartLogic, initCheckoutLogic,
@@ -27,11 +28,15 @@ import {
     handleAddToCartFromDetails, handleBuyNowFromDetails
 } from './js/product-details.js';
 import { initShopLogic, renderFilteredProducts } from './js/shop.js';
+import { handleLogout } from './js/app.js';
 
 // ── Bind everything to window in one shot ────────────────────
 Object.assign(window, {
     // Data & Products
-    products, getProductById, getFeaturedProducts,
+    products, getProductById, getFeaturedProducts, getStoredProducts, saveProduct, deleteProduct,
+
+    // Branches & Shipping
+    getBranches, calculateShippingFee, autoSelectFulfillmentBranch,
 
     // Legal Policies
     legalPolicies, getPolicyData,
@@ -41,8 +46,8 @@ Object.assign(window, {
 
     // Authentication & Orders
     getUsers, registerUser, loginUser, setCurrentUser,
-    getCurrentUser, isLoggedIn, logoutUser,
-    saveOrder, getAllOrders, getUserOrders,
+    getCurrentUser, isLoggedIn, logoutUser, handleLogout,
+    saveOrder, getAllOrders, getUserOrders, updateOrderStatus,
     switchTab, togglePasswordVisibility, showAlert, handleLoginSubmit, handleSignupSubmit,
 
     // Cart & Checkout

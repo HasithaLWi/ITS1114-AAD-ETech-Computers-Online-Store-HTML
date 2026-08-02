@@ -1,6 +1,7 @@
 // ETech Computers - Shopping Cart & Checkout Logic
-import { products } from './data.js';
-import { saveOrder } from './auth.js';
+import { products, getStoredProducts, deductBranchStock } from './data.js';
+import { saveOrder, getCurrentUser } from './auth.js';
+import { autoSelectFulfillmentBranch } from './branches.js';
 
 /**
  * Global LocalStorage Cart State Helpers
@@ -26,8 +27,8 @@ export function updateCartBadge() {
 }
 
 export function addToCart(productId, quantity = 1) {
-  if (typeof products === 'undefined') return;
-  const product = products.find(p => p.id === parseInt(productId));
+  const allProducts = getStoredProducts();
+  const product = allProducts.find(p => p.id === parseInt(productId));
   if (!product) return;
 
   let cart = getCart();
@@ -147,31 +148,15 @@ function renderCart() {
 
         <!-- Quantity Controls & Actions -->
         <div class="flex items-center justify-between sm:justify-end w-full sm:w-auto space-x-6 border-t sm:border-t-0 border-slate-800 pt-3 sm:pt-0">
-          
-          <!-- Quantity Stepper -->
-          <div class="flex items-center space-x-2 bg-slate-950 p-1 rounded-xl border border-slate-800">
-            <button onclick="updateItemQuantity(${item.id}, -1)" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-white font-bold flex items-center justify-center transition-colors">
-              -
-            </button>
-            <span class="w-8 text-center text-sm font-bold text-white">${item.quantity}</span>
-            <button onclick="updateItemQuantity(${item.id}, 1)" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-white font-bold flex items-center justify-center transition-colors">
-              +
-            </button>
+          <div class="flex items-center space-x-2 bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-800">
+            <button onclick="updateItemQuantity(${item.id}, -1)" class="text-slate-400 hover:text-white font-bold px-1.5">-</button>
+            <span class="text-xs font-bold text-white w-6 text-center">${item.quantity}</span>
+            <button onclick="updateItemQuantity(${item.id}, 1)" class="text-slate-400 hover:text-white font-bold px-1.5">+</button>
           </div>
-
-          <!-- Total Price for Line Item -->
-          <div class="text-right min-w-[90px]">
-            <span class="text-[10px] text-slate-400 uppercase tracking-wider block">Line Total</span>
-            <span class="text-lg font-extrabold text-white">Rs. ${itemTotal.toLocaleString()}</span>
-          </div>
-
-          <!-- Remove Item Button -->
-          <button onclick="removeItemFromCart(${item.id})" class="p-2 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-xl transition-all" title="Remove item">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-            </svg>
+          <span class="text-sm font-extrabold text-white">Rs. ${itemTotal.toLocaleString()}</span>
+          <button onclick="removeItemFromCart(${item.id})" class="text-slate-500 hover:text-rose-400 transition-colors">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
           </button>
-
         </div>
 
       </div>
@@ -218,8 +203,8 @@ export function updateSummaryTotals(subtotal) {
   const shippingEl = document.getElementById('summary-shipping');
   const totalEl = document.getElementById('summary-total');
 
-  const tax = subtotal * 0.08; // 8% sales tax
-  const shipping = subtotal > 150000 || subtotal === 0 ? 0 : 2500; // Free shipping over Rs. 150,000
+  const tax = subtotal * 0.08;
+  const shipping = subtotal > 150000 || subtotal === 0 ? 0 : 2500;
   const grandTotal = subtotal + tax + shipping;
 
   if (subtotalEl) subtotalEl.textContent = `Rs. ${subtotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -244,20 +229,33 @@ export function updateSummaryTotals(subtotal) {
 
 /* ================= CHECKOUT HOOK & LOGIC ================= */
 
-/**
- * Called by app.js router whenever #checkout fragment is loaded into DOM
- */
 export function initCheckoutLogic() {
   const cart = getCart();
 
-  // If cart is empty, redirect to shop page hash
   if (cart.length === 0) {
     alert("Your cart is empty! Redirecting to shop catalog...");
     window.location.hash = '#shop';
     return;
   }
 
-  renderCheckoutSummary(cart);
+  const user = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
+  if (user) {
+    const fullNameInput = document.getElementById('full-name');
+    const emailInput = document.getElementById('email');
+    if (fullNameInput && !fullNameInput.value) fullNameInput.value = user.name;
+    if (emailInput && !emailInput.value) emailInput.value = user.email;
+  }
+
+  const cityInput = document.getElementById('city');
+  const initialCity = cityInput ? (cityInput.value.trim() || 'Colombo') : 'Colombo';
+
+  renderCheckoutSummary(cart, initialCity);
+
+  if (cityInput) {
+    cityInput.addEventListener('change', () => {
+      renderCheckoutSummary(cart, cityInput.value.trim() || 'Colombo');
+    });
+  }
 
   const checkoutForm = document.getElementById('checkout-form');
   if (checkoutForm) {
@@ -266,14 +264,15 @@ export function initCheckoutLogic() {
 }
 
 /**
- * Renders mini items list and subtotal calculations on checkout fragment
+ * Renders mini items list, automated fulfillment branch calculation, distance shipping fees
  */
-export function renderCheckoutSummary(cart) {
+export function renderCheckoutSummary(cart, customerCity = 'Colombo') {
   const itemsContainer = document.getElementById('checkout-items-list');
   const subtotalEl = document.getElementById('checkout-subtotal');
   const taxEl = document.getElementById('checkout-tax');
   const shippingEl = document.getElementById('checkout-shipping');
   const totalEl = document.getElementById('checkout-total');
+  const branchInfoEl = document.getElementById('checkout-branch-info');
 
   if (!itemsContainer) return;
 
@@ -299,18 +298,34 @@ export function renderCheckoutSummary(cart) {
     `;
   }).join('');
 
+  // Run automated fulfillment branch selection
+  const productsList = getStoredProducts();
+  const fulfillment = autoSelectFulfillmentBranch(cart, customerCity, productsList);
+
   const tax = subtotal * 0.08;
-  const shipping = subtotal > 150000 ? 0 : 2500;
+  const shipping = subtotal > 150000 ? 0 : (fulfillment ? fulfillment.shippingFee : 450);
   const grandTotal = subtotal + tax + shipping;
 
   if (subtotalEl) subtotalEl.textContent = `Rs. ${subtotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   if (taxEl) taxEl.textContent = `Rs. ${tax.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   if (shippingEl) shippingEl.textContent = shipping === 0 ? 'FREE' : `Rs. ${shipping.toFixed(2)}`;
   if (totalEl) totalEl.textContent = `Rs. ${grandTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+  if (branchInfoEl && fulfillment) {
+    branchInfoEl.innerHTML = `
+      <div class="p-3 bg-blue-950/40 border border-blue-500/30 rounded-xl text-xs space-y-1">
+        <div class="flex items-center justify-between font-bold text-blue-300">
+          <span>Dispatch Hub: ${fulfillment.branch.name}</span>
+          <span class="text-[10px] font-mono bg-blue-500/20 px-2 py-0.5 rounded text-blue-400">${fulfillment.distanceKm} km distance</span>
+        </div>
+        <p class="text-[11px] text-slate-400">Auto-selected as closest warehouse with full stock for your delivery destination.</p>
+      </div>
+    `;
+  }
 }
 
 /**
- * Handles checkout form submission
+ * Handles checkout form submission, saves order, and deducts branch stock
  */
 export function handleCheckoutSubmit(e) {
   e.preventDefault();
@@ -318,17 +333,54 @@ export function handleCheckoutSubmit(e) {
   const fullName = document.getElementById('full-name')?.value.trim();
   const email = document.getElementById('email')?.value.trim();
   const address = document.getElementById('address')?.value.trim();
-  const city = document.getElementById('city')?.value.trim();
-  const postalCode = document.getElementById('postal-code')?.value.trim();
+  const city = document.getElementById('city')?.value.trim() || 'Colombo';
+  const phone = document.getElementById('phone')?.value.trim() || '';
 
-  if (!fullName || !email || !address || !city || !postalCode) {
+  if (!fullName || !email || !address || !city) {
     alert("Please fill out all required shipping details.");
     return;
   }
 
-  // Generate order ID
+  const cart = getCart();
+  if (!cart.length) return;
+
+  const productsList = getStoredProducts();
+  const fulfillment = autoSelectFulfillmentBranch(cart, city, productsList);
+
+  const subtotal = cart.reduce((sum, i) => sum + (i.price * i.quantity), 0);
+  const tax = subtotal * 0.08;
+  const shipping = subtotal > 150000 ? 0 : (fulfillment ? fulfillment.shippingFee : 450);
+  const grandTotal = subtotal + tax + shipping;
+
   const orderId = '#ETC-' + Math.floor(100000 + Math.random() * 900000);
-  const totalAmount = document.getElementById('checkout-total')?.textContent || 'Rs. 0.00';
+
+  // Save order
+  const savedOrder = saveOrder({
+    orderId: orderId,
+    customerName: fullName,
+    email: email,
+    phone: phone,
+    city: city,
+    address: address,
+    fulfillmentBranch: fulfillment ? fulfillment.branch.name : 'Colombo Main Hub',
+    fulfillmentBranchId: fulfillment ? fulfillment.branch.id : 'BR-COL',
+    distanceKm: fulfillment ? fulfillment.distanceKm : 5,
+    items: cart,
+    subtotal: `Rs. ${subtotal.toFixed(2)}`,
+    tax: `Rs. ${tax.toFixed(2)}`,
+    shipping: shipping === 0 ? 'FREE' : `Rs. ${shipping.toFixed(2)}`,
+    totalAmount: `Rs. ${grandTotal.toFixed(2)}`,
+    paymentMethod: 'card'
+  });
+
+  // Deduct inventory stock from assigned branch
+  const branchId = fulfillment ? fulfillment.branch.id : 'BR-COL';
+  cart.forEach(item => {
+    deductBranchStock(item.id, branchId, item.quantity);
+  });
+
+  // Clear cart
+  saveCart([]);
 
   // Populate modal
   const modalOrderId = document.getElementById('modal-order-id');
@@ -337,16 +389,10 @@ export function handleCheckoutSubmit(e) {
 
   if (modalOrderId) modalOrderId.textContent = orderId;
   if (modalCustomerName) modalCustomerName.textContent = fullName;
-  if (modalTotalPaid) modalTotalPaid.textContent = totalAmount;
+  if (modalTotalPaid) modalTotalPaid.textContent = `Rs. ${grandTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-  // Clear localStorage cart
-  saveCart([]);
-
-  // Display Success Modal Popup
   const modal = document.getElementById('order-success-modal');
   if (modal) {
     modal.classList.remove('hidden');
   }
 }
-
-

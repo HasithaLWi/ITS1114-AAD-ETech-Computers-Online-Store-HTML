@@ -162,6 +162,28 @@ export default function renderProductDetails(productId) {
               </div>
             ` : ''}
 
+            <!-- Regional Branch Stock Availability -->
+            <div class="space-y-2.5">
+              <h3 class="text-xs font-extrabold uppercase tracking-widest text-emerald-400 flex items-center space-x-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                <span>Branch Stock Availability</span>
+              </h3>
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-slate-950 p-3 rounded-2xl border border-slate-800 text-xs">
+                ${product.branchStock ? Object.entries(product.branchStock).map(([bId, qty]) => {
+                  const bNames = { "BR-COL": "Colombo", "BR-GAL": "Galle", "BR-MAT": "Matara", "BR-KND": "Kandy" };
+                  const name = bNames[bId] || bId;
+                  return `
+                    <div class="p-2.5 rounded-xl bg-slate-900/60 border border-slate-800/80 text-center space-y-0.5">
+                      <span class="text-[10px] font-bold text-slate-400 block">${name}</span>
+                      <span class="font-extrabold text-sm ${qty > 0 ? 'text-emerald-400' : 'text-rose-400'}">${qty > 0 ? `${qty} in stock` : 'Out of stock'}</span>
+                    </div>
+                  `;
+                }).join('') : `
+                  <div class="col-span-4 p-2 text-center text-slate-400 text-xs">In stock at main warehouse</div>
+                `}
+              </div>
+            </div>
+
             <!-- Quantity Selector & Action Buttons -->
             <div class="pt-6 border-t border-slate-800 space-y-4">
               <div class="flex items-center space-x-4">
