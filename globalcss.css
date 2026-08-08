@@ -90,3 +90,73 @@
             right: 16px !important;
         }
     }
+
+    /* Hero 3-Card Carousel Custom Styles - High-Definition Crisp Rendering */
+    .hero-carousel-container-3d {
+        position: relative;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+
+    .card-3d {
+        transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1), z-index 0.5s ease, box-shadow 0.5s ease;
+        will-change: transform, opacity;
+        backface-visibility: hidden;
+        -webkit-backface-visibility: hidden;
+        transform-style: flat;
+    }
+
+    .card-3d-left {
+        transform: translate3d(-24%, 0, 0) scale(0.85);
+        opacity: 0.5;
+        z-index: 10;
+    }
+
+    .card-3d-left:hover {
+        opacity: 0.8;
+        transform: translate3d(-24%, 0, 0) scale(0.87);
+    }
+
+    .card-3d-center {
+        transform: translate3d(0, 0, 0) scale(1);
+        opacity: 1;
+        z-index: 30;
+        box-shadow: 0 20px 50px -10px rgba(59, 130, 246, 0.4), 0 0 30px rgba(99, 102, 241, 0.25);
+    }
+
+    .card-3d-center:hover {
+        transform: translate3d(0, -4px, 0) scale(1.02);
+        box-shadow: 0 25px 60px -10px rgba(59, 130, 246, 0.55), 0 0 40px rgba(99, 102, 241, 0.35);
+    }
+
+    .card-3d-right {
+        transform: translate3d(24%, 0, 0) scale(0.85);
+        opacity: 0.5;
+        z-index: 10;
+    }
+
+    .card-3d-right:hover {
+        opacity: 0.8;
+        transform: translate3d(24%, 0, 0) scale(0.87);
+    }
+
+    @media (max-width: 640px) {
+        .card-3d-left {
+            transform: translate3d(-15%, 0, 0) scale(0.86);
+            opacity: 0.35;
+        }
+        .card-3d-right {
+            transform: translate3d(15%, 0, 0) scale(0.86);
+            opacity: 0.35;
+        }
+    }
+
+    .hero-carousel-indicator {
+        transition: width 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .hero-carousel-indicator.active {
+        width: 2rem !important;
+        background-color: #3b82f6 !important;
+        box-shadow: 0 0 12px rgba(59, 130, 246, 0.6);
+    }

@@ -286,7 +286,7 @@ function renderProductsTab() {
 
         <div class="flex items-center space-x-3 w-full sm:w-auto">
           <input type="text" id="product-search-input" onkeyup="filterProductsTable()" placeholder="Search SKU or Product..." class="px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs placeholder-slate-500 focus:outline-none focus:border-blue-500 w-full sm:w-64">
-          <button onclick="openProductModal()" class="px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl shadow-lg shadow-blue-600/30 transition-all flex items-center space-x-1.5 flex-shrink-0">
+          <button onclick="openProductFormPage()" class="px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl shadow-lg shadow-blue-600/30 transition-all flex items-center space-x-1.5 flex-shrink-0">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
             <span>Add Product</span>
           </button>
@@ -689,11 +689,8 @@ window.confirmDeleteBranch = function(branchId) {
   }
 };
 
-// ── Modal Trigger Shortcuts ──
-window.openProductModal = function(productId = null) {
-  const modal = document.getElementById('admin-modal-container');
-  if (!modal) return;
-
+// ── Dedicated Product Add/Edit Workspace Page ──
+window.openProductFormPage = function(productId = null) {
   const product = productId ? getProductById(productId) : null;
   const branches = getBranches();
 
@@ -701,86 +698,497 @@ window.openProductModal = function(productId = null) {
   const staffBranchId = isStaff ? (activeUser.assignedBranch || 'BR-GAL') : null;
   const staffBranchObj = staffBranchId ? branches.find(b => b.id === staffBranchId) : null;
 
-  modal.innerHTML = `
-    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
-      <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 max-w-xl w-full space-y-5 max-h-[90vh] overflow-y-auto shadow-2xl">
-        <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+  // Multi-image array state (Max 5 images)
+  let imagesArr = product && Array.isArray(product.images) && product.images.length > 0
+    ? [...product.images]
+    : (product && product.image ? [product.image] : ['']);
+
+  if (imagesArr.length > 5) imagesArr = imagesArr.slice(0, 5);
+  window.formImagesState = imagesArr;
+
+  // Specs state array
+  let specsState = [];
+  if (product && product.specs) {
+    specsState = Object.entries(product.specs).map(([k, v]) => ({ key: k, value: String(v) }));
+  } else {
+    specsState = [
+      { key: 'Category', value: product ? product.category : 'laptops' },
+      { key: 'Warranty', value: product ? (product.warranty || '2-Year Warranty') : '2-Year Warranty' }
+    ];
+  }
+  window.formSpecsState = specsState;
+
+  // Features state array
+  let featuresState = product && Array.isArray(product.features) && product.features.length > 0
+    ? [...product.features]
+    : ['High Performance Tech Hardware'];
+  window.formFeaturesState = featuresState;
+
+  const container = document.getElementById('product-form-content-container');
+  if (!container) return;
+
+  container.innerHTML = `
+    <div class="space-y-6 max-w-7xl mx-auto pb-12">
+      <!-- Top Action Navigation Header -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-900/90 border border-slate-800 rounded-3xl p-6 shadow-xl">
+        <div class="flex items-center space-x-4">
+          <button onclick="switchAdminTab('products')" class="p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors border border-slate-700/80 flex items-center space-x-2 text-xs font-bold">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+            <span>Back to Product Catalog</span>
+          </button>
           <div>
-            <h3 class="text-lg font-extrabold text-white">${product ? 'Edit Hardware Product' : 'Add New Product'}</h3>
-            ${isStaff ? `<p class="text-[11px] text-blue-400 font-semibold mt-0.5">Staff Scope: ${staffBranchObj ? staffBranchObj.name : staffBranchId}</p>` : ''}
+            <h2 class="text-xl font-extrabold text-white">${product ? `Edit Product: ${product.name}` : 'Add New Hardware Product'}</h2>
+            <p class="text-xs text-slate-400 mt-0.5">${product ? `SKU: ${product.sku} | ID: #${product.id}` : 'Fill in specifications, multi-image gallery (max 5), pricing, and branch stock.'}</p>
           </div>
-          <button onclick="closeAdminModal()" class="text-slate-400 hover:text-white">&times;</button>
         </div>
 
-        ${isStaff ? `
-          <div class="p-3 bg-blue-950/60 border border-blue-500/40 rounded-xl text-[11px] text-blue-200 flex items-center space-x-2">
-            <span class="text-blue-400 font-bold text-sm">ℹ️</span>
-            <span>Staff Permission: You are editing inventory stock for <strong>${staffBranchObj ? staffBranchObj.city : 'your branch'}</strong>. Stock for other branches is locked.</span>
+        <div class="flex items-center space-x-3">
+          <button type="button" onclick="switchAdminTab('products')" class="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs">Cancel</button>
+          <button type="button" onclick="triggerProductFormSubmit()" class="px-6 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-extrabold text-xs shadow-lg shadow-blue-600/30 flex items-center space-x-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+            <span>${product ? 'Update & Save Product' : 'Publish Product'}</span>
+          </button>
+        </div>
+      </div>
+
+      ${isStaff ? `
+        <div class="p-4 bg-blue-950/60 border border-blue-500/40 rounded-2xl text-xs text-blue-200 flex items-center space-x-3 shadow-md">
+          <span class="text-blue-400 font-bold text-base">ℹ️</span>
+          <span>Staff Scope Active: You are editing inventory stock for <strong>${staffBranchObj ? staffBranchObj.city : 'your branch'} (${staffBranchId})</strong>. Quantities for other branch hubs are locked.</span>
+        </div>
+      ` : ''}
+
+      <!-- Main 2-Column Layout Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        
+        <!-- Left 8 Columns: Main Edit Form -->
+        <div class="lg:col-span-8 space-y-6">
+          <form id="full-product-form" onsubmit="handleSaveProductSubmit(event, ${product ? product.id : 'null'})" class="space-y-6">
+            
+            <!-- Section 1: Basic Information -->
+            <div class="bg-slate-900/90 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-4">
+              <h3 class="text-sm font-extrabold text-white uppercase tracking-wider border-b border-slate-800 pb-3 flex items-center space-x-2">
+                <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                <span>1. Basic Product Information</span>
+              </h3>
+
+              <div class="space-y-4 text-xs">
+                <div>
+                  <label class="block text-slate-300 font-bold mb-1.5">Product Title *</label>
+                  <input type="text" id="form-p-name" required value="${product ? product.name : ''}" oninput="updateLivePreview()" placeholder="e.g. Zenith Studio Ultra Laptop 16" class="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-800 text-white focus:outline-none focus:border-blue-500 text-sm font-medium">
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-slate-300 font-bold mb-1.5">Category *</label>
+                    <select id="form-p-category" required onchange="updateLivePreview()" class="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-800 text-white focus:outline-none focus:border-blue-500 text-xs font-semibold">
+                      <option value="laptops" ${product && product.category === 'laptops' ? 'selected' : ''}>Laptops & Notebooks</option>
+                      <option value="peripherals" ${product && product.category === 'peripherals' ? 'selected' : ''}>Gaming Peripherals</option>
+                      <option value="monitors" ${product && product.category === 'monitors' ? 'selected' : ''}>Displays & Monitors</option>
+                      <option value="components" ${product && product.category === 'components' ? 'selected' : ''}>PC Components (GPUs/RAM)</option>
+                      <option value="accessories" ${product && product.category === 'accessories' ? 'selected' : ''}>Accessories & Tech</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label class="block text-slate-300 font-bold mb-1.5">Badge Tag</label>
+                    <select id="form-p-badge" onchange="updateLivePreview()" class="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-800 text-white focus:outline-none focus:border-blue-500 text-xs font-semibold">
+                      <option value="New Arrival" ${product && product.badge === 'New Arrival' ? 'selected' : ''}>New Arrival</option>
+                      <option value="Bestseller" ${product && product.badge === 'Bestseller' ? 'selected' : ''}>Bestseller</option>
+                      <option value="Hot Deal" ${product && product.badge === 'Hot Deal' ? 'selected' : ''}>Hot Deal</option>
+                      <option value="Top Rated" ${product && product.badge === 'Top Rated' ? 'selected' : ''}>Top Rated</option>
+                      <option value="Popular" ${product && product.badge === 'Popular' ? 'selected' : ''}>Popular</option>
+                      <option value="" ${!product || !product.badge ? 'selected' : ''}>None</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-slate-300 font-bold mb-1.5">SKU / Model Code</label>
+                    <input type="text" id="form-p-sku" value="${product && product.sku ? product.sku : ''}" oninput="updateLivePreview()" placeholder="ETC-LAP-4090" class="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white focus:outline-none focus:border-blue-500 font-mono text-xs">
+                  </div>
+                  <div>
+                    <label class="block text-slate-300 font-bold mb-1.5">Warranty Period</label>
+                    <input type="text" id="form-p-warranty" value="${product && product.warranty ? product.warranty : '2-Year Official Warranty'}" oninput="updateLivePreview()" placeholder="2-Year Official Warranty" class="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white focus:outline-none focus:border-blue-500 text-xs">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Section 2: Pricing & Discount -->
+            <div class="bg-slate-900/90 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-4">
+              <h3 class="text-sm font-extrabold text-white uppercase tracking-wider border-b border-slate-800 pb-3 flex items-center space-x-2">
+                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                <span>2. Pricing & Discounts</span>
+              </h3>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                <div>
+                  <label class="block text-slate-300 font-bold mb-1.5">Selling Price (Rs.) *</label>
+                  <input type="number" step="0.01" id="form-p-price" required value="${product ? product.price : ''}" oninput="updateLivePreview()" placeholder="2499.00" class="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-800 text-white font-extrabold text-base focus:outline-none focus:border-blue-500">
+                </div>
+                <div>
+                  <label class="block text-slate-300 font-bold mb-1.5">Original List Price (Rs.) <span class="text-slate-400 font-normal">(For discount strikethrough)</span></label>
+                  <input type="number" step="0.01" id="form-p-original-price" value="${product && product.originalPrice ? product.originalPrice : ''}" oninput="updateLivePreview()" placeholder="2799.00" class="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-800 text-slate-400 font-semibold text-base focus:outline-none focus:border-blue-500">
+                </div>
+              </div>
+            </div>
+
+            <!-- Section 3: Multi-Image Gallery Manager (Up to 5 Images) -->
+            <div class="bg-slate-900/90 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-4">
+              <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 class="text-sm font-extrabold text-white uppercase tracking-wider flex items-center space-x-2">
+                  <span class="w-2 h-2 rounded-full bg-purple-500"></span>
+                  <span>3. Multi-Image Gallery Manager (Max 5 Images)</span>
+                </h3>
+                <span id="gallery-count-badge" class="px-2.5 py-0.5 rounded-full bg-slate-800 text-blue-400 text-[10px] font-mono font-bold">${imagesArr.length} / 5 Images</span>
+              </div>
+
+              <p class="text-xs text-slate-400">Add up to 5 image web URLs for this product gallery. The first image serves as the primary card cover thumbnail.</p>
+
+              <div id="image-inputs-container" class="space-y-3">
+                <!-- Dynamically populated image input rows -->
+              </div>
+
+              <div class="pt-2 flex items-center justify-between">
+                <button type="button" id="add-img-btn" onclick="addGalleryImageInput()" class="px-4 py-2 rounded-xl bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 hover:text-blue-300 font-bold text-xs border border-blue-500/40 transition-colors flex items-center space-x-1.5">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                  <span>+ Add Image URL</span>
+                </button>
+                <span class="text-[11px] text-slate-500">Supports Unsplash, CDN & direct HTTPS image links.</span>
+              </div>
+            </div>
+
+            <!-- Section 4: Descriptions -->
+            <div class="bg-slate-900/90 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-4">
+              <h3 class="text-sm font-extrabold text-white uppercase tracking-wider border-b border-slate-800 pb-3 flex items-center space-x-2">
+                <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                <span>4. Product Descriptions & Overview</span>
+              </h3>
+
+              <div class="space-y-4 text-xs">
+                <div>
+                  <label class="block text-slate-300 font-bold mb-1.5">Short Card Description Snippet</label>
+                  <input type="text" id="form-p-description" value="${product && product.description ? product.description : ''}" oninput="updateLivePreview()" placeholder="Lightweight CNC aluminum chassis with Liquid Retina XDR display..." class="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white focus:outline-none focus:border-blue-500">
+                </div>
+
+                <div>
+                  <label class="block text-slate-300 font-bold mb-1.5">Full Detailed Overview Paragraph</label>
+                  <textarea id="form-p-full-description" rows="3" oninput="updateLivePreview()" placeholder="Full comprehensive summary paragraph shown on the Product Specification page..." class="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-800 text-white focus:outline-none focus:border-blue-500">${product && product.fullDescription ? product.fullDescription : ''}</textarea>
+                </div>
+              </div>
+            </div>
+
+            <!-- Section 5: Tech Specs & Features -->
+            <div class="bg-slate-900/90 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-4">
+              <h3 class="text-sm font-extrabold text-white uppercase tracking-wider border-b border-slate-800 pb-3 flex items-center space-x-2">
+                <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+                <span>5. Specifications & Highlights</span>
+              </h3>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 text-xs">
+                <!-- Technical Specs List Builder -->
+                <div class="space-y-3">
+                  <div class="flex items-center justify-between">
+                    <label class="block text-slate-300 font-bold">Technical Specs (Key-Value)</label>
+                    <button type="button" onclick="addFormSpecInput()" class="px-3 py-1.5 rounded-xl bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 font-bold text-xs border border-blue-500/40 transition-colors flex items-center space-x-1 shadow-sm">
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                      <span>+ Add Spec</span>
+                    </button>
+                  </div>
+
+                  <div id="specs-inputs-container" class="space-y-2.5">
+                    <!-- Dynamic spec rows -->
+                  </div>
+                </div>
+
+                <!-- Highlight Features List Builder -->
+                <div class="space-y-3">
+                  <div class="flex items-center justify-between">
+                    <label class="block text-slate-300 font-bold">Highlight Features (Bullets)</label>
+                    <button type="button" onclick="addFormFeatureInput()" class="px-3 py-1.5 rounded-xl bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-400 font-bold text-xs border border-indigo-500/40 transition-colors flex items-center space-x-1 shadow-sm">
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                      <span>+ Add Feature</span>
+                    </button>
+                  </div>
+
+                  <div id="features-inputs-container" class="space-y-2.5">
+                    <!-- Dynamic feature rows -->
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Section 6: Branch Stock Allocations -->
+            <div class="bg-slate-900/90 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-4">
+              <h3 class="text-sm font-extrabold text-white uppercase tracking-wider border-b border-slate-800 pb-3 flex items-center space-x-2">
+                <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                <span>6. Branch Warehouse Inventory Allocation</span>
+              </h3>
+
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                ${branches.map(b => {
+                  const qty = product && product.branchStock ? (product.branchStock[b.id] || 0) : (b.id === staffBranchId ? 10 : 0);
+                  const isEditable = !isStaff || (b.id === staffBranchId);
+
+                  return `
+                    <div>
+                      <label class="block text-[11px] font-bold mb-1 ${isEditable ? 'text-slate-200' : 'text-slate-500'}">
+                        ${b.city} (${b.id})
+                      </label>
+                      <input type="number" min="0" id="form-stock-${b.id}" value="${qty}" ${isEditable ? '' : 'disabled'} oninput="updateLivePreview()" class="w-full px-3 py-2 rounded-xl text-xs ${isEditable ? 'bg-slate-950 border border-blue-500/80 text-white focus:outline-none focus:border-blue-500 font-bold' : 'bg-slate-950 border border-slate-800 text-slate-500 cursor-not-allowed'}">
+                    </div>
+                  `;
+                }).join('')}
+              </div>
+            </div>
+
+            <!-- Bottom Action Footer -->
+            <div class="flex items-center justify-end space-x-4 pt-4">
+              <button type="button" onclick="switchAdminTab('products')" class="px-6 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs">Cancel</button>
+              <button type="submit" class="px-8 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-extrabold text-sm shadow-xl shadow-blue-600/40">
+                ${product ? 'Save & Publish Changes' : 'Create Product'}
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Right 4 Columns: Live Product Card Preview -->
+        <div class="lg:col-span-4">
+          <div class="sticky top-6 bg-slate-900/90 border border-slate-800 rounded-3xl p-5 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+              <span class="text-xs font-bold text-blue-400 uppercase tracking-wider flex items-center space-x-1.5">
+                <span>👁️</span>
+                <span>Live Catalog Preview</span>
+              </span>
+              <span class="px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 text-[10px] font-mono font-bold">REAL-TIME</span>
+            </div>
+
+            <!-- Live Card Display -->
+            <div id="live-product-preview-card"></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  `;
+
+  // Render initial multi-image, specs, and features inputs
+  renderFormImageInputs();
+  renderFormSpecsInputs();
+  renderFormFeaturesInputs();
+
+  // Switch to product form tab
+  switchAdminTab('product-form');
+
+  // Initial preview update
+  setTimeout(() => updateLivePreview(), 50);
+};
+
+window.renderFormImageInputs = function() {
+  const container = document.getElementById('image-inputs-container');
+  const countBadge = document.getElementById('gallery-count-badge');
+  const addBtn = document.getElementById('add-img-btn');
+  if (!container) return;
+
+  const images = window.formImagesState || [''];
+  if (countBadge) countBadge.textContent = `${images.length} / 5 Images`;
+  if (addBtn) addBtn.disabled = images.length >= 5;
+
+  container.innerHTML = images.map((url, idx) => `
+    <div class="flex items-center space-x-3 p-2.5 rounded-2xl bg-slate-950 border border-slate-800/80">
+      <div class="w-12 h-12 rounded-xl bg-slate-900 border border-slate-800 overflow-hidden flex-shrink-0 relative">
+        <img src="${url || 'https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?auto=format&fit=crop&w=300&q=80'}" class="w-full h-full object-cover" onerror="this.src='https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?auto=format&fit=crop&w=300&q=80'">
+        ${idx === 0 ? `<span class="absolute bottom-0 inset-x-0 bg-blue-600 text-white text-[8px] font-black uppercase text-center py-0.5">MAIN</span>` : ''}
+      </div>
+
+      <div class="flex-1 min-w-0">
+        <div class="flex items-center justify-between mb-1">
+          <span class="text-[10px] font-bold ${idx === 0 ? 'text-blue-400' : 'text-slate-400'} uppercase">Image ${idx + 1} ${idx === 0 ? '(Primary Cover)' : ''}</span>
+        </div>
+        <input type="url" value="${url}" oninput="window.formImagesState[${idx}] = this.value; updateLivePreview();" placeholder="https://..." class="w-full px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-white text-xs focus:outline-none focus:border-blue-500 font-mono">
+      </div>
+
+      ${images.length > 1 ? `
+        <button type="button" onclick="removeGalleryImageInput(${idx})" class="p-2 rounded-lg bg-rose-950/40 text-rose-400 hover:bg-rose-900/60 transition-colors flex-shrink-0" title="Delete Image">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+        </button>
+      ` : ''}
+    </div>
+  `).join('');
+};
+
+window.addGalleryImageInput = function() {
+  if (!window.formImagesState) window.formImagesState = [''];
+  if (window.formImagesState.length < 5) {
+    window.formImagesState.push('');
+    renderFormImageInputs();
+    updateLivePreview();
+  }
+};
+
+window.removeGalleryImageInput = function(idx) {
+  if (window.formImagesState && window.formImagesState.length > 1) {
+    window.formImagesState.splice(idx, 1);
+    renderFormImageInputs();
+    updateLivePreview();
+  }
+};
+
+// ── Dynamic Specs List Manager ──
+window.renderFormSpecsInputs = function() {
+  const container = document.getElementById('specs-inputs-container');
+  if (!container) return;
+
+  const specs = window.formSpecsState || [];
+  if (specs.length === 0) {
+    container.innerHTML = `<p class="text-[11px] text-slate-500 italic py-2">No specs added yet. Click "+ Add Spec" above.</p>`;
+    return;
+  }
+
+  container.innerHTML = specs.map((s, idx) => `
+    <div class="flex items-center space-x-2">
+      <input type="text" value="${s.key || ''}" oninput="window.formSpecsState[${idx}].key = this.value; updateLivePreview();" placeholder="Key (e.g. GPU)" class="w-5/12 px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-blue-500 font-medium">
+      <input type="text" value="${s.value || ''}" oninput="window.formSpecsState[${idx}].value = this.value; updateLivePreview();" placeholder="Value (e.g. RTX 4090)" class="w-7/12 px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-blue-500 font-medium">
+      <button type="button" onclick="removeFormSpecInput(${idx})" class="p-2 rounded-xl bg-rose-950/40 text-rose-400 hover:bg-rose-900/60 transition-colors flex-shrink-0" title="Delete Spec">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+      </button>
+    </div>
+  `).join('');
+};
+
+window.addFormSpecInput = function() {
+  if (!window.formSpecsState) window.formSpecsState = [];
+  window.formSpecsState.push({ key: '', value: '' });
+  renderFormSpecsInputs();
+  updateLivePreview();
+};
+
+window.removeFormSpecInput = function(idx) {
+  if (window.formSpecsState && window.formSpecsState.length > 0) {
+    window.formSpecsState.splice(idx, 1);
+    renderFormSpecsInputs();
+    updateLivePreview();
+  }
+};
+
+// ── Dynamic Features List Manager ──
+window.renderFormFeaturesInputs = function() {
+  const container = document.getElementById('features-inputs-container');
+  if (!container) return;
+
+  const features = window.formFeaturesState || [];
+  if (features.length === 0) {
+    container.innerHTML = `<p class="text-[11px] text-slate-500 italic py-2">No highlight features added yet. Click "+ Add Feature" above.</p>`;
+    return;
+  }
+
+  container.innerHTML = features.map((f, idx) => `
+    <div class="flex items-center space-x-2">
+      <input type="text" value="${f || ''}" oninput="window.formFeaturesState[${idx}] = this.value; updateLivePreview();" placeholder="Feature bullet (e.g. 240Hz Mini-LED)" class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-blue-500 font-medium">
+      <button type="button" onclick="removeFormFeatureInput(${idx})" class="p-2 rounded-xl bg-rose-950/40 text-rose-400 hover:bg-rose-900/60 transition-colors flex-shrink-0" title="Delete Feature">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+      </button>
+    </div>
+  `).join('');
+};
+
+window.addFormFeatureInput = function() {
+  if (!window.formFeaturesState) window.formFeaturesState = [];
+  window.formFeaturesState.push('');
+  renderFormFeaturesInputs();
+  updateLivePreview();
+};
+
+window.removeFormFeatureInput = function(idx) {
+  if (window.formFeaturesState && window.formFeaturesState.length > 0) {
+    window.formFeaturesState.splice(idx, 1);
+    renderFormFeaturesInputs();
+    updateLivePreview();
+  }
+};
+
+window.triggerProductFormSubmit = function() {
+  const form = document.getElementById('full-product-form');
+  if (form) form.requestSubmit();
+};
+
+window.updateLivePreview = function() {
+  const previewContainer = document.getElementById('live-product-preview-card');
+  if (!previewContainer) return;
+
+  const name = document.getElementById('form-p-name')?.value || 'Product Title Placeholder';
+  const category = document.getElementById('form-p-category')?.value || 'laptops';
+  const badge = document.getElementById('form-p-badge')?.value || '';
+  const price = parseFloat(document.getElementById('form-p-price')?.value || '0');
+  const origPrice = parseFloat(document.getElementById('form-p-original-price')?.value || '0');
+  const sku = document.getElementById('form-p-sku')?.value || 'ETC-GEN-1001';
+  const warranty = document.getElementById('form-p-warranty')?.value || '1-Year Warranty';
+  const desc = document.getElementById('form-p-description')?.value || 'Short product summary description snippet...';
+
+  const images = window.formImagesState && window.formImagesState.filter(u => u && u.trim() !== '').length > 0
+    ? window.formImagesState.filter(u => u && u.trim() !== '')
+    : ['https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?auto=format&fit=crop&w=600&q=80'];
+
+  const mainImage = images[0];
+
+  previewContainer.innerHTML = `
+    <div class="rounded-2xl bg-gradient-to-b from-slate-800/90 to-slate-950 border border-slate-700/80 p-4 space-y-3.5 shadow-xl">
+      <div class="relative w-full h-48 rounded-xl overflow-hidden bg-slate-950 border border-slate-800">
+        <img id="preview-main-img" src="${mainImage}" class="w-full h-full object-cover">
+        
+        ${badge ? `
+          <div class="absolute top-2.5 left-2.5">
+            <span class="px-2.5 py-0.5 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-[9px] font-black uppercase tracking-wider shadow-md">
+              ${badge}
+            </span>
           </div>
         ` : ''}
 
-        <form onsubmit="handleSaveProductSubmit(event, ${product ? product.id : 'null'})" class="space-y-4 text-xs">
-          <div>
-            <label class="block text-slate-300 font-bold mb-1">Product Title *</label>
-            <input type="text" id="modal-p-name" required value="${product ? product.name : ''}" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white focus:outline-none focus:border-blue-500">
-          </div>
+        <div class="absolute bottom-2 right-2 px-2 py-0.5 rounded-full bg-slate-900/90 text-blue-300 text-[9px] font-bold border border-slate-700">
+          ${images.length} Image${images.length > 1 ? 's' : ''}
+        </div>
+      </div>
 
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <label class="block text-slate-300 font-bold mb-1">Category *</label>
-              <select id="modal-p-category" required class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white focus:outline-none focus:border-blue-500">
-                <option value="laptops" ${product && product.category === 'laptops' ? 'selected' : ''}>Laptops</option>
-                <option value="peripherals" ${product && product.category === 'peripherals' ? 'selected' : ''}>Peripherals</option>
-                <option value="monitors" ${product && product.category === 'monitors' ? 'selected' : ''}>Monitors</option>
-                <option value="components" ${product && product.category === 'components' ? 'selected' : ''}>Components</option>
-                <option value="accessories" ${product && product.category === 'accessories' ? 'selected' : ''}>Accessories</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-slate-300 font-bold mb-1">Price (Rs.) *</label>
-              <input type="number" id="modal-p-price" required value="${product ? product.price : ''}" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white focus:outline-none focus:border-blue-500">
-            </div>
-          </div>
+      <!-- Preview Image Thumbnails -->
+      ${images.length > 1 ? `
+        <div class="flex items-center space-x-2 overflow-x-auto pb-1">
+          ${images.map((img, i) => `
+            <img src="${img}" onclick="document.getElementById('preview-main-img').src='${img}'" class="w-9 h-9 rounded-lg object-cover bg-slate-950 border border-slate-700 cursor-pointer hover:border-blue-500 transition-colors flex-shrink-0">
+          `).join('')}
+        </div>
+      ` : ''}
 
-          <div>
-            <label class="block text-slate-300 font-bold mb-1">Image URL</label>
-            <input type="url" id="modal-p-image" value="${product ? product.image : ''}" placeholder="https://..." class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white focus:outline-none focus:border-blue-500">
-          </div>
+      <div class="space-y-1 text-xs">
+        <div class="flex items-center justify-between">
+          <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest">${category}</span>
+          <span class="text-[10px] text-slate-500 font-mono">${sku}</span>
+        </div>
 
-          <!-- Branch Stock Allocation Grid -->
-          <div class="border-t border-b border-slate-800 py-3 space-y-2">
-            <label class="block text-slate-300 font-bold uppercase tracking-wider text-[10px]">Branch Inventory Allocation</label>
-            <div class="grid grid-cols-2 gap-3">
-              ${branches.map(b => {
-                const qty = product && product.branchStock ? (product.branchStock[b.id] || 0) : (b.id === staffBranchId ? 10 : 0);
-                const isEditable = !isStaff || (b.id === staffBranchId);
+        <h4 class="font-extrabold text-white text-sm line-clamp-1">${name}</h4>
+        <p class="text-[11px] text-slate-400 line-clamp-2 leading-relaxed">${desc}</p>
+      </div>
 
-                return `
-                  <div>
-                    <label class="block text-[11px] font-medium mb-1 ${isEditable ? 'text-slate-200' : 'text-slate-500'}">
-                      ${b.city} Stock (${b.id})
-                      ${isStaff && isEditable ? '<span class="text-emerald-400 font-bold text-[10px] ml-1">(Your Hub)</span>' : ''}
-                      ${isStaff && !isEditable ? '<span class="text-slate-500 text-[10px] ml-1">(Locked)</span>' : ''}
-                    </label>
-                    <input type="number" min="0" id="modal-stock-${b.id}" value="${qty}" ${isEditable ? '' : 'disabled'} class="w-full px-3 py-2 rounded-lg text-xs ${isEditable ? 'bg-slate-950 border border-blue-500/80 text-white focus:outline-none focus:border-blue-500 font-bold' : 'bg-slate-900 border border-slate-800/80 text-slate-500 cursor-not-allowed'}">
-                  </div>
-                `;
-              }).join('')}
-            </div>
-          </div>
-
-          <div class="pt-2 flex items-center justify-end space-x-3">
-            <button type="button" onclick="closeAdminModal()" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl font-bold">Cancel</button>
-            <button type="submit" class="px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold shadow-lg shadow-blue-600/30">Save Product</button>
-          </div>
-        </form>
+      <div class="flex items-center justify-between pt-2 border-t border-slate-800">
+        <div>
+          ${origPrice > price ? `<span class="text-[10px] text-slate-400 line-through mr-1.5">Rs. ${origPrice.toLocaleString()}</span>` : ''}
+          <span class="text-base font-black text-white">Rs. ${price.toLocaleString()}</span>
+        </div>
+        <span class="px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 text-[10px] font-bold border border-emerald-500/30">
+          ${warranty}
+        </span>
       </div>
     </div>
   `;
 };
 
 window.editProduct = function(productId) {
-  window.openProductModal(productId);
+  window.openProductFormPage(productId);
+};
+
+window.openProductModal = function(productId = null) {
+  window.openProductFormPage(productId);
 };
 
 window.handleSaveProductSubmit = function(e, productId) {
@@ -793,7 +1201,7 @@ window.handleSaveProductSubmit = function(e, productId) {
   const staffBranchId = isStaff ? (activeUser.assignedBranch || 'BR-GAL') : null;
 
   branches.forEach(b => {
-    const input = document.getElementById(`modal-stock-${b.id}`);
+    const input = document.getElementById(`form-stock-${b.id}`);
     if (input && (!isStaff || b.id === staffBranchId)) {
       branchStock[b.id] = parseInt(input.value || 0) || 0;
     } else if (branchStock[b.id] === undefined) {
@@ -801,17 +1209,51 @@ window.handleSaveProductSubmit = function(e, productId) {
     }
   });
 
+  // Filter gallery images array (max 5)
+  const images = window.formImagesState && window.formImagesState.filter(u => u && typeof u === 'string' && u.trim() !== '').length > 0
+    ? window.formImagesState.filter(u => u && typeof u === 'string' && u.trim() !== '').slice(0, 5)
+    : ["https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?auto=format&fit=crop&w=600&q=80"];
+
+  // Convert specsState array into key-value object
+  const specsObj = {};
+  if (window.formSpecsState && Array.isArray(window.formSpecsState)) {
+    window.formSpecsState.forEach(s => {
+      if (s && s.key && s.value && s.key.trim() !== '') {
+        specsObj[s.key.trim()] = s.value.trim();
+      }
+    });
+  }
+
+  // Convert featuresState array into string array
+  const featuresArr = window.formFeaturesState && Array.isArray(window.formFeaturesState)
+    ? window.formFeaturesState.map(f => typeof f === 'string' ? f.trim() : '').filter(f => f.length > 0)
+    : ["High Performance Tech Hardware"];
+
+  const categoryVal = document.getElementById('form-p-category').value;
+  const priceVal = parseFloat(document.getElementById('form-p-price').value);
+  const origPriceVal = document.getElementById('form-p-original-price').value ? parseFloat(document.getElementById('form-p-original-price').value) : priceVal;
+
   const productData = {
     id: productId,
-    name: document.getElementById('modal-p-name').value,
-    category: document.getElementById('modal-p-category').value,
-    price: document.getElementById('modal-p-price').value,
-    image: document.getElementById('modal-p-image').value,
+    name: document.getElementById('form-p-name').value,
+    category: categoryVal,
+    price: priceVal,
+    originalPrice: origPriceVal,
+    sku: document.getElementById('form-p-sku').value || `ETC-${categoryVal.toUpperCase()}-${Math.floor(1000 + Math.random() * 9000)}`,
+    warranty: document.getElementById('form-p-warranty').value || '1-Year Warranty',
+    image: images[0],
+    images: images,
+    badge: document.getElementById('form-p-badge') ? document.getElementById('form-p-badge').value : (existingProduct ? existingProduct.badge : ''),
+    description: document.getElementById('form-p-description').value || '',
+    fullDescription: document.getElementById('form-p-full-description').value || document.getElementById('form-p-description').value || '',
+    specs: Object.keys(specsObj).length > 0 ? specsObj : { "Category": categoryVal },
+    features: featuresArr.length > 0 ? featuresArr : ["High Performance Hardware"],
     branchStock: branchStock
   };
 
   saveProduct(productData);
-  closeAdminModal();
+  window.dispatchEvent(new CustomEvent('productsUpdated'));
+  switchAdminTab('products');
   renderProductsTab();
 };
 

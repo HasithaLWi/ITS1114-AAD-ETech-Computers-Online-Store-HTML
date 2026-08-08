@@ -103,7 +103,7 @@ export const products = [
         description: "Ultra-lightweight 58g design, 26,000 DPI Optical Sensor, 90-hour battery life, zero-latency 2.4GHz connection.",
         fullDescription: "Dominate twitch-shooters with the Precision Elite Wireless Gaming Mouse. Weighing just 58 grams without honeycomb holes, it houses a state-of-the-art 26,000 DPI optical sensor with 650 IPS tracking speed and 90-hour battery life.",
         inStock: true,
-        badge: "",
+        badge: "New Arrival",
         sku: "ETC-MS-PRECELITE",
         warranty: "1-Year Direct Replacement Warranty",
         specs: {
@@ -193,7 +193,7 @@ export const products = [
         description: "16GB GDDR6X, DLSS 3.5 AI upscaling, 3rd Gen Ray Tracing cores, triple-fan axial tech cooling system.",
         fullDescription: "Supercharge your PC with the NVIDIA GeForce RTX 4080 Super. Built on the ultra-efficient Ada Lovelace architecture, it brings ultra-high frame rates in 4K resolution with DLSS 3.5 AI Frame Generation and full ray tracing rendering power.",
         inStock: true,
-        badge: "High Demand",
+        badge: "New Arrival",
         sku: "ETC-GPU-4080S",
         warranty: "3-Year Manufacturer Warranty & Technical RMA Support",
         specs: {
@@ -223,7 +223,7 @@ export const products = [
         description: "2x32GB Kit, CL30 low latency, Intel XMP 3.0 & AMD EXPO ready, custom heat spreader with ambient light sync.",
         fullDescription: "Push high-speed system memory performance with the Quantum 64GB (2x32GB) DDR5 RAM Kit. Running at 6000MHz with tight CL30 timings, it delivers maximum bandwidth for extreme gaming, heavy multitasking, and workstation workloads.",
         inStock: true,
-        badge: "",
+        badge: "New Arrival",
         sku: "ETC-RAM-64GDDR5",
         warranty: "Lifetime Limited Manufacturer Warranty",
         specs: {
@@ -427,11 +427,36 @@ export function getFeaturedProducts() {
 }
 
 /**
+ * Get new arrival products (filtered by badge matching "New Arrival")
+ */
+export function getNewArrivalProducts() {
+    const all = getStoredProducts();
+    const arrivals = all.filter(p => p.badge && p.badge.trim().toLowerCase() === "new arrival");
+    if (arrivals.length > 0) {
+        return arrivals;
+    }
+    // Fallback: Return any products with non-empty badge or default to top 4 products
+    const featured = all.filter(p => p.badge && p.badge !== "");
+    return featured.length > 0 ? featured : all.slice(0, 4);
+}
+
+/**
  * Save or update a product
  */
 export function saveProduct(productData) {
     const all = getStoredProducts();
     const index = all.findIndex(p => p.id === parseInt(productData.id));
+
+    // Filter and sanitize images array (max 5 images)
+    let imagesArr = Array.isArray(productData.images) ? productData.images.filter(img => img && typeof img === 'string' && img.trim() !== '') : [];
+    if (imagesArr.length === 0 && productData.image) {
+        imagesArr = [productData.image];
+    }
+    if (imagesArr.length > 5) {
+        imagesArr = imagesArr.slice(0, 5);
+    }
+
+    const mainImg = imagesArr.length > 0 ? imagesArr[0] : (productData.image || "https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?auto=format&fit=crop&w=600&q=80");
 
     const branchStock = productData.branchStock || { "BR-COL": 10, "BR-GAL": 5, "BR-MAT": 3, "BR-KND": 5 };
     const totalStock = Object.values(branchStock).reduce((sum, v) => sum + parseInt(v || 0), 0);
@@ -444,7 +469,8 @@ export function saveProduct(productData) {
         originalPrice: parseFloat(productData.originalPrice || productData.price),
         rating: parseFloat(productData.rating || 4.8),
         reviews: parseInt(productData.reviews || 10),
-        image: productData.image || "https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?auto=format&fit=crop&w=600&q=80",
+        image: mainImg,
+        images: imagesArr.length > 0 ? imagesArr : [mainImg],
         description: productData.description || "",
         fullDescription: productData.fullDescription || productData.description || "",
         sku: productData.sku || `ETC-${(productData.category || 'GEN').toUpperCase()}-${Math.floor(1000 + Math.random() * 9000)}`,

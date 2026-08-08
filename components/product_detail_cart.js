@@ -68,6 +68,17 @@ export default function renderProductDetails(productId) {
               </span>
             </div>
 
+            <!-- Multi-Image Gallery Thumbnails (Max 5) -->
+            ${product.images && product.images.length > 1 ? `
+              <div class="flex items-center space-x-3 overflow-x-auto pb-1">
+                ${product.images.map((img, i) => `
+                  <button type="button" onclick="document.getElementById('product-detail-main-img').src='${img}'; document.querySelectorAll('.gallery-thumb-btn').forEach(b => { b.classList.remove('border-blue-500'); b.classList.add('border-slate-800'); }); this.classList.remove('border-slate-800'); this.classList.add('border-blue-500');" class="gallery-thumb-btn w-16 h-16 rounded-xl overflow-hidden bg-slate-950 border-2 ${i === 0 ? 'border-blue-500' : 'border-slate-800'} transition-all hover:scale-105 flex-shrink-0 shadow-md">
+                    <img src="${img}" class="w-full h-full object-cover">
+                  </button>
+                `).join('')}
+              </div>
+            ` : ''}
+
             <!-- Meta Information Pills -->
             <div class="grid grid-cols-2 gap-3 text-xs">
               <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800/80 space-y-0.5">

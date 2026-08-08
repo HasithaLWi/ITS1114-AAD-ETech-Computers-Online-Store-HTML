@@ -7,7 +7,7 @@
 //  can resolve them at runtime.
 // ============================================================
 
-import { products, getProductById, getFeaturedProducts, getStoredProducts, saveProduct, deleteProduct } from './js/data.js';
+import { products, getProductById, getFeaturedProducts, getNewArrivalProducts, getStoredProducts, saveProduct, deleteProduct } from './js/data.js';
 import { legalPolicies, getPolicyData } from './js/policy-data.js';
 import { ET_CONFIG } from './js/et-training.js';
 import {
@@ -33,7 +33,7 @@ import { handleLogout } from './js/app.js';
 // ── Bind everything to window in one shot ────────────────────
 Object.assign(window, {
     // Data & Products
-    products, getProductById, getFeaturedProducts, getStoredProducts, saveProduct, deleteProduct,
+    products, getProductById, getFeaturedProducts, getNewArrivalProducts, getStoredProducts, saveProduct, deleteProduct,
 
     // Branches & Shipping
     getBranches, calculateShippingFee, autoSelectFulfillmentBranch,

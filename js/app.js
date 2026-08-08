@@ -1,5 +1,5 @@
 // ETech Computers - Single Page Section Toggle Router & Global App Logic
-import { products, getProductById, getFeaturedProducts } from './data.js';
+import { products, getProductById, getFeaturedProducts, getNewArrivalProducts } from './data.js';
 import { legalPolicies, getPolicyData } from './policy-data.js';
 import { getCurrentUser, isLoggedIn, logoutUser, getUserOrders } from './auth.js';
 import { initCartLogic, initCheckoutLogic, updateCartBadge, addToCart, getCart, saveCart, showToast } from './cart.js';
@@ -99,6 +99,7 @@ function handleRoute() {
 function triggerPageHooks(pageName, queryPart) {
   if (pageName === 'home') {
     renderHomeFeaturedProducts();
+    renderHomeNewArrivalsCarousel();
   } else if (pageName === 'shop') {
     initShopLogic(queryPart);
   } else if (pageName === 'cart') {
@@ -369,6 +370,224 @@ function renderHomeFeaturedProducts() {
     </div>
   `).join('');
 }
+
+// ── Hero New Arrivals Product Carousel Controller (3-Card 3D Layered Carousel) ──
+let currentCarouselIndex = 0;
+let carouselTimer = null;
+let carouselTouchStartX = 0;
+
+/**
+ * Renders dynamic 3-Card 3D Layered New Arrivals Product Carousel in Hero Section
+ */
+export function renderHomeNewArrivalsCarousel() {
+  const container = document.getElementById('hero-carousel-container');
+  if (!container || typeof getNewArrivalProducts === 'undefined') return;
+
+  const arrivals = getNewArrivalProducts();
+  if (!arrivals || arrivals.length === 0) {
+    container.innerHTML = `
+      <div class="p-8 text-center rounded-2xl bg-slate-900 border border-slate-800 text-slate-400">
+        <p class="font-bold">No New Arrival products found</p>
+      </div>`;
+    return;
+  }
+
+  // Ensure current index is valid
+  if (currentCarouselIndex >= arrivals.length) {
+    currentCarouselIndex = 0;
+  }
+
+  const n = arrivals.length;
+  const prevIndex = (currentCarouselIndex - 1 + n) % n;
+  const nextIndex = (currentCarouselIndex + 1) % n;
+
+  const prevProduct = arrivals[prevIndex];
+  const currentProduct = arrivals[currentCarouselIndex];
+  const nextProduct = arrivals[nextIndex];
+
+  // Helper renderer for individual clean product card (No action buttons)
+  const renderCard = (p, labelTag = '') => `
+    <div class="relative group/card h-full flex flex-col justify-between p-3 sm:p-4 rounded-2xl bg-gradient-to-b from-slate-800/95 via-slate-900 to-slate-950 border border-slate-700/80 cursor-pointer overflow-hidden shadow-2xl transition-all" onclick="viewProductDetails(${p.id})">
+      <!-- Product Image & Badge -->
+      <div class="relative w-full h-40 sm:h-48 lg:h-52 rounded-xl overflow-hidden mb-2.5 bg-slate-950">
+        <img src="${p.image}" alt="${p.name}" class="w-full h-full object-cover group-hover/card:scale-105 transition-transform duration-500 rounded-xl">
+        <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent opacity-85"></div>
+        
+        <!-- Hover View Specs Overlay Button -->
+        <div class="absolute inset-0 bg-slate-950/50 opacity-0 group-hover/card:opacity-100 transition-opacity duration-300 flex items-center justify-center pointer-events-none">
+          <span class="px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-extrabold shadow-2xl flex items-center space-x-2 border border-blue-400/40 transform scale-90 group-hover/card:scale-100 transition-all duration-300">
+            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+            <span>View Specs</span>
+          </span>
+        </div>
+
+        <div class="absolute top-2.5 left-2.5 flex items-center space-x-1.5 z-10">
+          <span class="px-2.5 py-0.5 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-[9px] font-black uppercase tracking-wider shadow-md">
+            ${p.badge || 'New Arrival'}
+          </span>
+          ${labelTag ? `<span class="px-2 py-0.5 rounded-full bg-slate-900/90 text-blue-300 text-[9px] font-bold border border-slate-700/60 uppercase">${labelTag}</span>` : ''}
+        </div>
+      </div>
+
+      <!-- Card Details (Category, Title, Price, Description) -->
+      <div class="space-y-1">
+        <div class="flex items-center justify-between">
+          <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest">${p.category}</span>
+          <div class="text-right">
+            ${p.originalPrice ? `<span class="text-[10px] text-slate-400 line-through mr-1">Rs. ${p.originalPrice.toLocaleString()}</span>` : ''}
+            <span class="text-sm sm:text-base font-black text-white">Rs. ${p.price.toLocaleString()}</span>
+          </div>
+        </div>
+        <h3 class="text-sm sm:text-base font-extrabold text-white line-clamp-1 group-hover/card:text-blue-300 transition-colors">${p.name}</h3>
+        <p class="text-[11px] text-slate-400 line-clamp-2 leading-snug">${p.description}</p>
+      </div>
+    </div>
+  `;
+
+  container.innerHTML = `
+    <div class="relative w-full max-w-lg sm:max-w-xl mx-auto py-1" id="hero-carousel-wrapper"
+         onmouseenter="pauseHeroCarousel()" 
+         onmouseleave="startHeroCarouselAutoPlay()">
+      
+      <!-- Top Slide Count Indicator (NEW ARRIVALS DROP pill removed per request) -->
+      <div class="flex items-center justify-end mb-2.5 px-1">
+        <span class="text-[11px] font-extrabold text-slate-400 bg-slate-900/80 px-3 py-0.5 rounded-full border border-slate-800 shadow-md">
+          ${currentCarouselIndex + 1} / ${arrivals.length}
+        </span>
+      </div>
+
+      <!-- 3D Stack Viewport: Shows 3 Cards at once (Left 1st, Center TOP, Right Next) -->
+      <div class="relative h-[320px] sm:h-[360px] lg:h-[390px] w-full flex items-center justify-center overflow-visible hero-carousel-container-3d">
+        
+        <!-- Left / 1st Card (Behind on Left) -->
+        <div class="absolute top-0 bottom-0 left-0 w-[76%] sm:w-[72%] card-3d card-3d-left" onclick="prevHeroCarouselSlide()">
+          ${renderCard(prevProduct, '1st')}
+        </div>
+
+        <!-- Right / Next Card (Behind on Right) -->
+        <div class="absolute top-0 bottom-0 right-0 w-[76%] sm:w-[72%] card-3d card-3d-right" onclick="nextHeroCarouselSlide()">
+          ${renderCard(nextProduct, 'next')}
+        </div>
+
+        <!-- Center TOP Active Card (Foreground) -->
+        <div class="absolute top-0 bottom-0 w-[84%] sm:w-[80%] card-3d card-3d-center">
+          ${renderCard(currentProduct, 'TOP')}
+        </div>
+
+        <!-- Navigation Arrow Controls -->
+        <button onclick="prevHeroCarouselSlide()" 
+                class="absolute left-0 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-slate-900/90 hover:bg-blue-600 text-white border border-slate-700/80 flex items-center justify-center shadow-2xl backdrop-blur-md transition-all z-40 hover:scale-110 active:scale-95" 
+                title="Previous Slide">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
+        </button>
+        
+        <button onclick="nextHeroCarouselSlide()" 
+                class="absolute right-0 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-slate-900/90 hover:bg-blue-600 text-white border border-slate-700/80 flex items-center justify-center shadow-2xl backdrop-blur-md transition-all z-40 hover:scale-110 active:scale-95" 
+                title="Next Slide">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+        </button>
+      </div>
+
+      <!-- Pagination Indicators (matching dashed lines in drawing) -->
+      <div class="flex items-center justify-center space-x-2 mt-4">
+        ${arrivals.map((_, idx) => `
+          <button onclick="goToHeroCarouselSlide(${idx})" 
+                  class="hero-carousel-indicator h-1.5 rounded-full transition-all duration-300 ${idx === currentCarouselIndex ? 'active w-8 bg-blue-500 shadow-md shadow-blue-500/50' : 'w-4 bg-slate-700 hover:bg-slate-500'}"
+                  title="Go to slide ${idx + 1}"></button>
+        `).join('')}
+      </div>
+
+    </div>
+  `;
+
+  // Touch Swipe Support
+  const wrapper = document.getElementById('hero-carousel-wrapper');
+  if (wrapper) {
+    wrapper.addEventListener('touchstart', (e) => {
+      carouselTouchStartX = e.touches[0].clientX;
+    }, { passive: true });
+
+    wrapper.addEventListener('touchend', (e) => {
+      const touchEndX = e.changedTouches[0].clientX;
+      const diff = carouselTouchStartX - touchEndX;
+      if (Math.abs(diff) > 40) {
+        if (diff > 0) nextHeroCarouselSlide();
+        else prevHeroCarouselSlide();
+      }
+    }, { passive: true });
+  }
+
+  startHeroCarouselAutoPlay();
+}
+
+/**
+ * Jump to specific carousel slide
+ */
+export function goToHeroCarouselSlide(index) {
+  const arrivals = typeof getNewArrivalProducts === 'function' ? getNewArrivalProducts() : [];
+  if (!arrivals || arrivals.length === 0) return;
+  currentCarouselIndex = (index + arrivals.length) % arrivals.length;
+  renderHomeNewArrivalsCarousel();
+}
+
+/**
+ * Move to next slide (left movement)
+ */
+export function nextHeroCarouselSlide() {
+  goToHeroCarouselSlide(currentCarouselIndex + 1);
+}
+
+/**
+ * Move to previous slide
+ */
+export function prevHeroCarouselSlide() {
+  goToHeroCarouselSlide(currentCarouselIndex - 1);
+}
+
+/**
+ * Start continuous auto-play timer (slides left every 3.5 seconds)
+ */
+export function startHeroCarouselAutoPlay() {
+  pauseHeroCarousel();
+  carouselTimer = setInterval(() => {
+    const arrivals = typeof getNewArrivalProducts === 'function' ? getNewArrivalProducts() : [];
+    if (arrivals && arrivals.length > 1) {
+      currentCarouselIndex = (currentCarouselIndex + 1) % arrivals.length;
+      renderHomeNewArrivalsCarousel();
+    }
+  }, 3500);
+}
+
+/**
+ * Pause auto-play timer on hover
+ */
+export function pauseHeroCarousel() {
+  if (carouselTimer) {
+    clearInterval(carouselTimer);
+    carouselTimer = null;
+  }
+}
+
+// Bind to window for inline handlers
+window.renderHomeNewArrivalsCarousel = renderHomeNewArrivalsCarousel;
+window.goToHeroCarouselSlide = goToHeroCarouselSlide;
+window.nextHeroCarouselSlide = nextHeroCarouselSlide;
+window.prevHeroCarouselSlide = prevHeroCarouselSlide;
+window.pauseHeroCarousel = pauseHeroCarousel;
+window.startHeroCarouselAutoPlay = startHeroCarouselAutoPlay;
+
+// Real-time synchronization listeners
+window.addEventListener('storage', (e) => {
+  if (e.key === 'etech_products') {
+    renderHomeNewArrivalsCarousel();
+    renderHomeFeaturedProducts();
+  }
+});
+
+window.addEventListener('productsUpdated', () => {
+  renderHomeNewArrivalsCarousel();
+  renderHomeFeaturedProducts();
+});
 
 
 
