@@ -10,7 +10,8 @@
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet">
 
   <!-- Tailwind CSS v4 CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -27,57 +28,80 @@
   </script>
 </head>
 
-<body class="bg-slate-950 text-slate-100 flex h-screen overflow-hidden font-sans antialiased selection:bg-blue-600 selection:text-white">
+<body
+  class="bg-slate-950 text-slate-100 flex h-screen overflow-hidden font-sans antialiased selection:bg-blue-600 selection:text-white">
 
   <!-- ============================================================ -->
   <!-- 1. FIXED SIDEBAR NAVIGATION (Worker Navigation)            -->
   <!-- ============================================================ -->
-  <aside class="w-64 bg-slate-900/90 border-r border-slate-800 flex flex-col justify-between flex-shrink-0 z-30 shadow-2xl">
-    
+  <aside
+    class="w-64 bg-slate-900/90 border-r border-slate-800 flex flex-col justify-between flex-shrink-0 z-30 shadow-2xl">
+
     <!-- Top Brand & Header -->
     <div class="p-6 space-y-6">
       <!-- Brand Logo -->
       <a href="../index.html" class="flex items-center space-x-3 group">
-        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center shadow-lg shadow-blue-500/30 group-hover:scale-105 transition-transform duration-300">
-          <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"/>
-          </svg>
-        </div>
         <div class="flex flex-col">
-          <span class="text-lg font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-100 to-blue-400">ETech<span class="text-blue-500">Console</span></span>
-          <span class="text-[9px] tracking-widest uppercase text-slate-400 font-semibold">Worker Workspace</span>
+          <span
+            class="text-2xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-100 to-blue-400">ETech<span
+              class="text-blue-500">Console</span></span>
+          <span class="text-xs tracking-widest uppercase text-slate-400 font-semibold">Worker Workspace</span>
         </div>
       </a>
 
       <!-- Navigation Links -->
       <nav class="space-y-1.5 pt-2">
-        <button data-tab="overview" onclick="switchAdminTab('overview')" class="sidebar-nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl font-bold text-sm bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-600/30 transition-all">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+        <button data-tab="overview" onclick="switchAdminTab('overview')"
+          class="sidebar-nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl font-bold text-sm bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-600/30 transition-all">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+          </svg>
           <span>Overview</span>
         </button>
 
-        <button data-tab="products" onclick="switchAdminTab('products')" class="sidebar-nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl font-medium text-sm text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+        <button data-tab="products" onclick="switchAdminTab('products')"
+          class="sidebar-nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl font-medium text-sm text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+          </svg>
           <span>Product Catalog</span>
         </button>
 
-        <button data-tab="orders" onclick="switchAdminTab('orders')" class="sidebar-nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl font-medium text-sm text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+        <button data-tab="orders" onclick="switchAdminTab('orders')"
+          class="sidebar-nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl font-medium text-sm text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+          </svg>
           <span>Orders Processing</span>
         </button>
 
-        <button data-tab="branches" onclick="switchAdminTab('branches')" class="admin-only-nav sidebar-nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl font-medium text-sm text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+        <button data-tab="branches" onclick="switchAdminTab('branches')"
+          class="admin-only-nav sidebar-nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl font-medium text-sm text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+          </svg>
           <span>Store Branches</span>
         </button>
 
-        <button data-tab="users" onclick="switchAdminTab('users')" class="admin-only-nav sidebar-nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl font-medium text-sm text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+        <button data-tab="users" onclick="switchAdminTab('users')"
+          class="admin-only-nav sidebar-nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl font-medium text-sm text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+          </svg>
           <span>User Directory</span>
         </button>
 
-        <button data-tab="analytics" onclick="switchAdminTab('analytics')" class="admin-only-nav sidebar-nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl font-medium text-sm text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+        <button data-tab="analytics" onclick="switchAdminTab('analytics')"
+          class="admin-only-nav sidebar-nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl font-medium text-sm text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          </svg>
           <span>Financial Reports</span>
         </button>
       </nav>
@@ -85,13 +109,20 @@
 
     <!-- Bottom Quick Links & Store Switch -->
     <div class="p-4 border-t border-slate-800 space-y-3">
-      <a href="../index.html" class="flex items-center space-x-2 text-xs font-bold text-slate-300 hover:text-white px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 transition-colors">
-        <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+      <a href="../index.html"
+        class="flex items-center space-x-2 text-xs font-bold text-slate-300 hover:text-white px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 transition-colors">
+        <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+        </svg>
         <span>Return to Store Front</span>
       </a>
 
-      <button onclick="handleAdminLogout()" class="w-full text-left flex items-center space-x-2 text-xs font-bold text-rose-400 hover:text-rose-300 px-3 py-2 rounded-xl bg-rose-950/40 hover:bg-rose-950/80 border border-rose-900/60 transition-colors">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+      <button onclick="handleAdminLogout()"
+        class="w-full text-left flex items-center space-x-2 text-xs font-bold text-rose-400 hover:text-rose-300 px-3 py-2 rounded-xl bg-rose-950/40 hover:bg-rose-950/80 border border-rose-900/60 transition-colors">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+        </svg>
         <span>Sign Out Session</span>
       </button>
     </div>
@@ -112,19 +143,22 @@
 
       <!-- Active Worker Profile Badge -->
       <div class="flex items-center space-x-3">
-        <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-extrabold text-xs flex items-center justify-center shadow-md" id="admin-user-avatar">
+        <div
+          class="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-extrabold text-xs flex items-center justify-center shadow-md"
+          id="admin-user-avatar">
           A
         </div>
         <div class="flex flex-col text-right">
           <span class="text-xs font-bold text-white" id="admin-user-name">Administrator</span>
-          <span id="admin-user-role" class="px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase bg-purple-500/20 text-purple-300 border border-purple-500/40">ADMIN</span>
+          <span id="admin-user-role"
+            class="px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase bg-purple-500/20 text-purple-300 border border-purple-500/40">ADMIN</span>
         </div>
       </div>
     </header>
 
     <!-- Main Dynamic Tab Content Scroll Area -->
     <main class="flex-1 overflow-y-auto p-6 sm:p-8">
-      
+
       <!-- Tab Panel 1: Overview -->
       <div id="tab-panel-overview" class="dashboard-tab-panel">
         <div id="overview-content-container"></div>
@@ -163,7 +197,8 @@
     </main>
 
     <!-- Simple Worker Footer (Minimalist for Max Space) -->
-    <footer class="h-10 border-t border-slate-900 px-6 flex items-center justify-between text-[11px] text-slate-500 flex-shrink-0 bg-slate-950">
+    <footer
+      class="h-10 border-t border-slate-900 px-6 flex items-center justify-between text-[11px] text-slate-500 flex-shrink-0 bg-slate-950">
       <span>&copy; 2026 ETech Computers Management Console v1.0</span>
       <span class="font-mono text-[10px]">System Status: <strong class="text-emerald-400">ONLINE</strong></span>
     </footer>

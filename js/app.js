@@ -118,6 +118,7 @@ function updateHeaderAuthUI() {
   const authContainer = document.getElementById('header-auth-btn-container');
   const mobileDrawer = document.getElementById('mobile-auth-drawer');
 
+
   if (typeof getCurrentUser !== 'function') return;
 
   const user = getCurrentUser();
@@ -125,31 +126,31 @@ function updateHeaderAuthUI() {
   if (authContainer) {
     if (user) {
       const isAdminOrStaff = user.role === 'ADMIN' || user.role === 'STAFF';
+
       authContainer.innerHTML = `
-        <div class="flex items-center space-x-2">
-          ${isAdminOrStaff ? `
-            <a href="pages/administrator_dashboard.html" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-purple-600/20 hover:bg-purple-600/30 border border-purple-500/40 text-purple-300 text-xs font-extrabold shadow-md transition-all">
-              <svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-              <span>Admin Console</span>
+          <div class="flex items-center space-x-2 hidden md:flex">
+            ${isAdminOrStaff ? `
+              <a href="pages/administrator_dashboard.html" class="flex items-center space-x-2 bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700/60 px-3 py-1.5 rounded-xl transition-all group">
+                <span class="flex items-center h-7 text-xs font-bold text-slate-200 group-hover:text-white max-w-[100px] truncate">Admin Console</span>
+              </a>
+            ` : ''}
+            <a href="#account" class="flex items-center space-x-2 bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700/60 px-3 py-1.5 rounded-xl transition-all group">
+              <div class="w-7 h-7 rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-500 text-white font-bold text-xs flex items-center justify-center shadow-md">
+                ${user.name.charAt(0).toUpperCase()}
+              </div>
+              <span class="text-xs font-bold text-slate-200 group-hover:text-white max-w-[100px] truncate">${user.name.split(' ')[0]}</span>
             </a>
-          ` : ''}
-          <a href="#account" class="flex items-center space-x-2 bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700/60 px-3 py-1.5 rounded-xl transition-all group">
-            <div class="w-7 h-7 rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-500 text-white font-bold text-xs flex items-center justify-center shadow-md">
-              ${user.name.charAt(0).toUpperCase()}
-            </div>
-            <span class="text-xs font-bold text-slate-200 group-hover:text-white max-w-[100px] truncate">${user.name.split(' ')[0]}</span>
-          </a>
-        </div>
-      `;
+          </div>
+        `;
     } else {
       authContainer.innerHTML = `
-        <a href="pages/login.html" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold shadow-md transition-all flex items-center space-x-1.5">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/>
-          </svg>
-          <span>Sign In</span>
-        </a>
-      `;
+          <a href="pages/login.html" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold shadow-md transition-all flex items-center space-x-1.5">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/>
+            </svg>
+            <span>Sign In</span>
+          </a>
+        `;
     }
   }
 
@@ -187,7 +188,7 @@ function updateActiveNavLinks(pageName) {
   navLinks.forEach(link => {
     const href = link.getAttribute('href');
     const isActive = href && (href === `#${pageName}` || href.startsWith(`#${pageName}?`));
-    
+
     if (isActive) {
       if (link.classList.contains('block')) {
         link.className = 'nav-link block px-4 py-2.5 rounded-xl text-base font-bold text-white bg-gradient-to-r from-blue-600 to-indigo-600 shadow-md shadow-blue-500/25 transition-all duration-200';
@@ -275,7 +276,7 @@ function renderUserOrderHistory(userOrEmail) {
           <span class="px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[11px] font-bold">
             ✓ ${order.status || 'Pending'}
           </span>
-          <span class="text-lg font-black text-white">Rs. ${parseFloat((order.totalAmount || 0).toString().replace(/[^0-9.]/g, '')).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}</span>
+          <span class="text-lg font-black text-white">Rs. ${parseFloat((order.totalAmount || 0).toString().replace(/[^0-9.]/g, '')).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
         </div>
       </div>
 
@@ -608,10 +609,9 @@ function renderPolicyPage(policyKey = 'privacy') {
       const p = legalPolicies[k];
       const isActive = k === key;
       return `
-        <a href="#${k}" class="flex items-center space-x-2 px-5 py-3 rounded-xl font-bold text-xs sm:text-sm transition-all ${
-          isActive 
-            ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/25 ring-1 ring-blue-400/30' 
-            : 'bg-slate-900/80 text-slate-400 hover:text-white hover:bg-slate-800 border border-slate-800'
+        <a href="#${k}" class="flex items-center space-x-2 px-5 py-3 rounded-xl font-bold text-xs sm:text-sm transition-all ${isActive
+          ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/25 ring-1 ring-blue-400/30'
+          : 'bg-slate-900/80 text-slate-400 hover:text-white hover:bg-slate-800 border border-slate-800'
         }">
           ${p.icon}
           <span>${p.title}</span>
