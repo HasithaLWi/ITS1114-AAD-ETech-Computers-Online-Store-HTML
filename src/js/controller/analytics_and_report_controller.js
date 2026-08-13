@@ -25,13 +25,13 @@ export function renderAnalyticsTab() {
   list.innerHTML = branchSales.map(bs => {
     const percentage = Math.round((bs.revenue / maxRevenue) * 100);
     return `
-      <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-2">
+      <div class="bg-[#080b12] p-4 rounded-md border border-[#202b3a] space-y-2">
         <div class="flex items-center justify-between text-xs">
           <span class="font-bold text-white">${bs.name} (${bs.city})</span>
           <span class="font-mono text-blue-400 font-extrabold">Rs. ${bs.revenue.toLocaleString()} (${bs.count} orders)</span>
         </div>
-        <div class="w-full h-3 rounded-full bg-slate-900 overflow-hidden border border-slate-800">
-          <div class="h-full bg-gradient-to-r from-blue-600 to-indigo-500 rounded-full transition-all duration-500" style="width: ${percentage}%"></div>
+        <div class="w-full h-2.5 rounded-full bg-[#101722] overflow-hidden border border-[#202b3a]">
+          <div class="h-full bg-blue-600 rounded-full transition-all duration-500" style="width: ${percentage}%"></div>
         </div>
       </div>
     `;

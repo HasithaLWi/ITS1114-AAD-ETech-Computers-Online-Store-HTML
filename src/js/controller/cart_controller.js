@@ -1,19 +1,18 @@
-// ETech Computers - Shopping Cart & Checkout Logic
+// ETech Computers - Shopping Cart & Order Checkout System
 import { products, getStoredProducts, deductBranchStock } from '../models/data.js';
-import { getCurrentUser } from './login_controller.js';
-import { saveOrder } from './order_management_controller.js';
 import { autoSelectFulfillmentBranch } from './branch_controller.js';
+import { saveOrder } from './order_management_controller.js';
+import { getCurrentUser } from './login_controller.js';
 
-/**
- * Global LocalStorage Cart State Helpers
- */
+const CART_STORAGE_KEY = 'etech_cart';
+
 export function getCart() {
-  const cart = localStorage.getItem('etech_cart');
-  return cart ? JSON.parse(cart) : [];
+  const data = localStorage.getItem(CART_STORAGE_KEY);
+  return data ? JSON.parse(data) : [];
 }
 
 export function saveCart(cart) {
-  localStorage.setItem('etech_cart', JSON.stringify(cart));
+  localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
   updateCartBadge();
 }
 
@@ -22,21 +21,25 @@ export function updateCartBadge() {
   if (!badge) return;
 
   const cart = getCart();
-  const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+  const totalCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+  badge.textContent = totalCount;
 
-  badge.textContent = totalItems;
+  badge.classList.remove('scale-125');
+  void badge.offsetWidth;
+  badge.classList.add('scale-125');
+  setTimeout(() => badge.classList.remove('scale-125'), 200);
 }
 
 export function addToCart(productId, quantity = 1) {
-  const allProducts = getStoredProducts();
-  const product = allProducts.find(p => p.id === parseInt(productId));
+  const storedProducts = getStoredProducts();
+  const product = storedProducts.find(p => p.id === productId);
   if (!product) return;
 
   let cart = getCart();
-  const existingIndex = cart.findIndex(item => item.id === product.id);
+  const existingItem = cart.find(item => item.id === productId);
 
-  if (existingIndex > -1) {
-    cart[existingIndex].quantity += quantity;
+  if (existingItem) {
+    existingItem.quantity += quantity;
   } else {
     cart.push({
       id: product.id,
@@ -57,31 +60,31 @@ export function showToast(message) {
   if (!toastContainer) {
     toastContainer = document.createElement('div');
     toastContainer.id = 'toast-container';
-    toastContainer.className = 'fixed bottom-6 right-6 z-50 flex flex-col space-y-3 pointer-events-none';
+    toastContainer.className = 'fixed bottom-6 right-6 z-50 flex flex-col space-y-2 pointer-events-none';
     document.body.appendChild(toastContainer);
   }
 
   const toast = document.createElement('div');
-  toast.className = 'pointer-events-auto flex items-center space-x-3 bg-slate-900 text-white px-5 py-3.5 rounded-xl shadow-2xl border border-blue-500/40 transform translate-y-4 opacity-0 transition-all duration-300';
+  toast.className = 'pointer-events-auto flex items-center space-x-2.5 bg-[#101722] text-[#f4f7fb] px-4 py-3 rounded-md shadow-2xl border border-blue-500/40 transform translate-y-3 opacity-0 transition-all duration-200';
   toast.innerHTML = `
-    <div class="w-8 h-8 rounded-full bg-blue-600/20 text-blue-400 flex items-center justify-center flex-shrink-0">
-      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+    <div class="w-6 h-6 rounded-full bg-blue-600/20 text-blue-400 flex items-center justify-center flex-shrink-0">
+      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
       </svg>
     </div>
-    <span class="text-sm font-medium">${message}</span>
+    <span class="text-xs font-semibold">${message}</span>
   `;
 
   toastContainer.appendChild(toast);
 
   setTimeout(() => {
-    toast.classList.remove('translate-y-4', 'opacity-0');
+    toast.classList.remove('translate-y-3', 'opacity-0');
   }, 10);
 
   setTimeout(() => {
-    toast.classList.add('translate-y-4', 'opacity-0');
-    setTimeout(() => toast.remove(), 300);
-  }, 3000);
+    toast.classList.add('translate-y-3', 'opacity-0');
+    setTimeout(() => toast.remove(), 250);
+  }, 2800);
 }
 
 /**
@@ -133,30 +136,30 @@ function renderCart() {
     subtotal += itemTotal;
 
     return `
-      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4 transition-all hover:border-slate-700">
+      <div class="bg-[#101722] border border-[#202b3a] rounded-lg p-4 flex flex-col sm:flex-row items-center justify-between gap-4 transition-all hover:border-[#34445a]">
         
         <!-- Product Image & Details -->
-        <div class="flex items-center space-x-4 w-full sm:w-auto">
-          <div class="w-20 h-20 rounded-xl bg-slate-950 flex-shrink-0 overflow-hidden border border-slate-800 flex items-center justify-center">
+        <div class="flex items-center space-x-3.5 w-full sm:w-auto">
+          <div class="w-16 h-16 rounded-md bg-[#080b12] flex-shrink-0 overflow-hidden border border-[#202b3a] flex items-center justify-center">
             <img src="${item.image}" alt="${item.name}" class="w-full h-full object-cover">
           </div>
           <div>
-            <span class="text-[10px] font-bold uppercase text-blue-400 tracking-wider">${item.category || 'Tech'}</span>
-            <h3 class="text-base font-bold text-white line-clamp-1">${item.name}</h3>
-            <p class="text-xs text-slate-400 mt-0.5">Unit Price: <span class="text-white font-semibold">Rs. ${item.price}</span></p>
+            <span class="text-[9px] font-bold uppercase text-cyan-400 font-mono tracking-wider">${item.category || 'Tech'}</span>
+            <h3 class="text-sm font-bold text-white line-clamp-1">${item.name}</h3>
+            <p class="text-xs text-[#718096] mt-0.5">Unit Price: <span class="text-white font-mono font-semibold">Rs. ${item.price}</span></p>
           </div>
         </div>
 
         <!-- Quantity Controls & Actions -->
-        <div class="flex items-center justify-between sm:justify-end w-full sm:w-auto space-x-6 border-t sm:border-t-0 border-slate-800 pt-3 sm:pt-0">
-          <div class="flex items-center space-x-2 bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-800">
-            <button onclick="updateItemQuantity(${item.id}, -1)" class="text-slate-400 hover:text-white font-bold px-1.5">-</button>
-            <span class="text-xs font-bold text-white w-6 text-center">${item.quantity}</span>
-            <button onclick="updateItemQuantity(${item.id}, 1)" class="text-slate-400 hover:text-white font-bold px-1.5">+</button>
+        <div class="flex items-center justify-between sm:justify-end w-full sm:w-auto space-x-5 border-t sm:border-t-0 border-[#202b3a] pt-3 sm:pt-0">
+          <div class="flex items-center space-x-1.5 bg-[#080b12] px-2.5 py-1 rounded-md border border-[#202b3a]">
+            <button onclick="updateItemQuantity(${item.id}, -1)" class="text-[#a7b3c4] hover:text-white font-bold px-1 text-xs">-</button>
+            <span class="text-xs font-bold text-white w-5 text-center font-mono">${item.quantity}</span>
+            <button onclick="updateItemQuantity(${item.id}, 1)" class="text-[#a7b3c4] hover:text-white font-bold px-1 text-xs">+</button>
           </div>
-          <span class="text-sm font-extrabold text-white">Rs. ${itemTotal.toLocaleString()}</span>
-          <button onclick="removeItemFromCart(${item.id})" class="text-slate-500 hover:text-rose-400 transition-colors">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+          <span class="text-sm font-extrabold text-white font-mono">Rs. ${itemTotal.toLocaleString()}</span>
+          <button onclick="removeItemFromCart(${item.id})" class="text-[#718096] hover:text-rose-400 transition-colors p-1" title="Remove Item">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
           </button>
         </div>
 
@@ -214,13 +217,13 @@ export function updateSummaryTotals(subtotal) {
   if (shippingEl) {
     if (subtotal === 0) {
       shippingEl.textContent = 'Rs. 0.00';
-      shippingEl.className = 'font-bold text-white';
+      shippingEl.className = 'font-bold text-white font-mono';
     } else if (shipping === 0) {
       shippingEl.textContent = 'FREE';
-      shippingEl.className = 'font-bold text-emerald-400';
+      shippingEl.className = 'font-bold text-emerald-400 font-mono';
     } else {
       shippingEl.textContent = `Rs. ${shipping.toFixed(2)}`;
-      shippingEl.className = 'font-bold text-white';
+      shippingEl.className = 'font-bold text-white font-mono';
     }
   }
 
@@ -284,17 +287,17 @@ export function renderCheckoutSummary(cart, customerCity = 'Colombo') {
     subtotal += itemTotal;
 
     return `
-      <div class="flex items-center justify-between text-xs py-2 border-b border-slate-800/60 last:border-0">
-        <div class="flex items-center space-x-3">
-          <div class="w-10 h-10 rounded-lg bg-slate-950 flex-shrink-0 overflow-hidden border border-slate-800 flex items-center justify-center">
+      <div class="flex items-center justify-between text-xs py-2 border-b border-[#202b3a] last:border-0">
+        <div class="flex items-center space-x-2.5">
+          <div class="w-9 h-9 rounded bg-[#080b12] flex-shrink-0 overflow-hidden border border-[#202b3a] flex items-center justify-center">
             <img src="${item.image}" alt="${item.name}" class="w-full h-full object-cover">
           </div>
           <div>
             <p class="font-bold text-white line-clamp-1">${item.name}</p>
-            <p class="text-slate-400">Qty: ${item.quantity} × Rs. ${item.price}</p>
+            <p class="text-[#718096] font-mono text-[10px]">Qty: ${item.quantity} × Rs. ${item.price}</p>
           </div>
         </div>
-        <span class="font-bold text-white">Rs. ${itemTotal.toLocaleString()}</span>
+        <span class="font-bold text-white font-mono">Rs. ${itemTotal.toLocaleString()}</span>
       </div>
     `;
   }).join('');
@@ -314,12 +317,12 @@ export function renderCheckoutSummary(cart, customerCity = 'Colombo') {
 
   if (branchInfoEl && fulfillment) {
     branchInfoEl.innerHTML = `
-      <div class="p-3 bg-blue-950/40 border border-blue-500/30 rounded-xl text-xs space-y-1">
+      <div class="p-2.5 bg-blue-950/30 border border-blue-500/30 rounded-md text-xs space-y-1">
         <div class="flex items-center justify-between font-bold text-blue-300">
           <span>Dispatch Hub: ${fulfillment.branch.name}</span>
-          <span class="text-[10px] font-mono bg-blue-500/20 px-2 py-0.5 rounded text-blue-400">${fulfillment.distanceKm} km distance</span>
+          <span class="text-[10px] font-mono bg-blue-500/20 px-2 py-0.5 rounded text-blue-400">${fulfillment.distanceKm} km</span>
         </div>
-        <p class="text-[11px] text-slate-400">Auto-selected as closest warehouse with full stock for your delivery destination.</p>
+        <p class="text-[10px] text-[#718096]">Auto-selected closest warehouse with stock for your destination.</p>
       </div>
     `;
   }

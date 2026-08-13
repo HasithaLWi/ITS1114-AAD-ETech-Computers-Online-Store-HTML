@@ -1,14 +1,13 @@
 /* ============================================================
    ETech Computers — Design System Variables
    ============================================================
-   Central source of truth for theming tokens.
+   Precision Tech Theme: 3-level surface hierarchy, primary blue,
+   technical cyan accents, and professional geometry.
    Import this file before global.css in any HTML page.
    ============================================================ */
 
 :root {
-  /* ── Color Palette ─────────────────────────────────────────── */
-
-  /* Primary Brand */
+  /* ── Brand / Primary ───────────────────────────────────── */
   --color-primary-50:  #eff6ff;
   --color-primary-100: #dbeafe;
   --color-primary-200: #bfdbfe;
@@ -18,46 +17,55 @@
   --color-primary-600: #2563eb;
   --color-primary-700: #1d4ed8;
   --color-primary-800: #1e40af;
-  --color-primary-900: #1e3a8a;
+  --color-primary-900: #172554;
 
-  /* Accent / Indigo */
-  --color-accent-500: #6366f1;
-  --color-accent-600: #4f46e5;
+  /* ── Premium Accent (Cyan) ─────────────────────────────── */
+  --color-accent-300: #67e8f9;
+  --color-accent-400: #22d3ee;
+  --color-accent-500: #06b6d4;
+  --color-accent-600: #0891b2;
 
-  /* Slate Neutrals (Dark Theme) */
-  --color-slate-50:  #f8fafc;
-  --color-slate-100: #f1f5f9;
-  --color-slate-200: #e2e8f0;
-  --color-slate-300: #cbd5e1;
-  --color-slate-400: #94a3b8;
-  --color-slate-500: #64748b;
-  --color-slate-600: #475569;
-  --color-slate-700: #334155;
-  --color-slate-800: #1e293b;
-  --color-slate-900: #0f172a;
-  --color-slate-950: #020617;
+  /* ── 3-Level Surface & Background Hierarchy ─────────────── */
+  --color-bg:          #080b12; /* Level 1: Main page background */
+  --color-bg-soft:     #0c111b; /* Level 1.5: Soft section background */
+  --color-surface:     #101722; /* Level 2: Cards, panels, modals */
+  --color-surface-2:   #141c28; /* Level 3: Elevated cards, dropdowns */
+  --color-surface-3:   #192332; /* Level 3.5: Active pills, item hover */
 
-  /* Semantic */
-  --color-success: #10b981;
+  /* ── Precision Borders ─────────────────────────────────── */
+  --color-border:      #202b3a;
+  --color-border-soft: #182231;
+  --color-border-hover:#34445a;
+  --color-border-focus:#3b82f6;
+
+  /* ── Text & Typography ─────────────────────────────────── */
+  --color-text-primary:   #f4f7fb;
+  --color-text-secondary: #a7b3c4;
+  --color-text-muted:     #718096;
+  --color-text-disabled:  #4b5565;
+
+  /* ── Semantic Colors ───────────────────────────────────── */
+  --color-success: #22c55e;
   --color-warning: #f59e0b;
   --color-danger:  #ef4444;
-  --color-info:    #3b82f6;
+  --color-info:    #38bdf8;
 
-  /* ── Typography ────────────────────────────────────────────── */
-  --font-family-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  /* ── Typography Families ───────────────────────────────── */
+  --font-family-sans: 'Plus Jakarta Sans', Inter, system-ui, -apple-system, sans-serif;
   --font-family-mono: 'JetBrains Mono', 'Fira Code', monospace;
 
-  /* Font Sizes */
-  --text-xs:  0.75rem;   /* 12px */
-  --text-sm:  0.875rem;  /* 14px */
-  --text-base: 1rem;     /* 16px */
-  --text-lg:  1.125rem;  /* 18px */
+  /* ── Font Sizes ─────────────────────────────────────────── */
+  --text-xs:   0.75rem;   /* 12px */
+  --text-sm:   0.875rem;  /* 14px */
+  --text-base: 1rem;      /* 16px */
+  --text-lg:   1.125rem;  /* 18px */
   --text-xl:  1.25rem;   /* 20px */
-  --text-2xl: 1.5rem;    /* 24px */
-  --text-3xl: 1.875rem;  /* 30px */
-  --text-4xl: 2.25rem;   /* 36px */
+  --text-2xl:  1.5rem;    /* 24px */
+  --text-3xl:  1.875rem;  /* 30px */
+  --text-4xl:  2.25rem;   /* 36px */
+  --text-5xl:  3rem;      /* 48px */
 
-  /* ── Spacing Scale ─────────────────────────────────────────── */
+  /* ── Spacing Scale ──────────────────────────────────────── */
   --space-1:  0.25rem;
   --space-2:  0.5rem;
   --space-3:  0.75rem;
@@ -66,26 +74,31 @@
   --space-8:  2rem;
   --space-12: 3rem;
   --space-16: 4rem;
+  --space-20: 5rem;
 
-  /* ── Border Radius ─────────────────────────────────────────── */
-  --radius-sm:  0.375rem;
-  --radius-md:  0.5rem;
-  --radius-lg:  0.75rem;
-  --radius-xl:  1rem;
-  --radius-2xl: 1.5rem;
+  /* ── Professional Geometry / Radius ────────────────────── */
+  --radius-sm:  0.25rem;  /* 4px */
+  --radius-md:  0.375rem; /* 6px */
+  --radius-lg:  0.5rem;   /* 8px */
+  --radius-xl:  0.75rem;  /* 12px */
+  --radius-2xl: 1rem;     /* 16px */
   --radius-full: 9999px;
 
-  /* ── Shadows ───────────────────────────────────────────────── */
-  --shadow-sm:  0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md:  0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
-  --shadow-lg:  0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
-  --shadow-xl:  0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
-  --shadow-glow-blue: 0 4px 24px rgba(59, 130, 246, 0.4);
+  /* ── Professional Shadows (No excessive neon blur) ──────── */
+  --shadow-sm:  0 1px 2px rgba(0, 0, 0, 0.25);
+  --shadow-md:  0 4px 12px rgba(0, 0, 0, 0.28);
+  --shadow-lg:  0 12px 30px rgba(0, 0, 0, 0.35);
+  --shadow-xl:  0 20px 50px rgba(0, 0, 0, 0.45);
 
-  /* ── Transitions ───────────────────────────────────────────── */
+  /* Subtle technical micro-glows */
+  --shadow-glow-blue: 0 0 24px rgba(37, 99, 235, 0.18);
+  --shadow-glow-cyan: 0 0 24px rgba(6, 182, 212, 0.12);
+
+  /* ── Transitions & Motion ───────────────────────────────── */
   --ease-default: cubic-bezier(0.4, 0, 0.2, 1);
   --ease-bounce:  cubic-bezier(0.16, 1, 0.3, 1);
-  --duration-fast: 150ms;
+
+  --duration-fast:   150ms;
   --duration-normal: 200ms;
-  --duration-slow: 300ms;
+  --duration-slow:   300ms;
 }

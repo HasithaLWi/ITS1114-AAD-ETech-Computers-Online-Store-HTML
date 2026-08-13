@@ -16,40 +16,40 @@ export function renderUsersTab() {
   const branches = getBranches();
 
   tbody.innerHTML = users.map(u => `
-    <tr class="hover:bg-slate-800/40 transition-colors">
-      <td class="py-3.5 px-4">
-        <div class="flex items-center space-x-3">
-          <div class="w-8 h-8 rounded-lg bg-blue-600/20 text-blue-400 font-bold text-xs flex items-center justify-center border border-blue-500/30">
+    <tr class="hover:bg-[#141c28] transition-colors">
+      <td class="py-3 px-3.5">
+        <div class="flex items-center space-x-2.5">
+          <div class="w-7 h-7 rounded bg-blue-600/20 text-blue-400 font-bold text-xs flex items-center justify-center border border-blue-500/30">
             ${u.name.charAt(0).toUpperCase()}
           </div>
           <div>
-            <p class="font-bold text-white">${u.name}</p>
-            <p class="text-[10px] text-slate-500 font-mono">${u.id}</p>
+            <p class="font-bold text-white text-xs">${u.name}</p>
+            <p class="text-[10px] text-[#718096] font-mono">${u.id}</p>
           </div>
         </div>
       </td>
-      <td class="py-3.5 px-4 font-mono text-slate-300">${u.email}</td>
-      <td class="py-3.5 px-4">
-        <span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase ${u.role === 'ADMIN' ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40' : u.role === 'STAFF' ? 'bg-blue-500/20 text-blue-300 border border-blue-500/40' : 'bg-slate-800 text-slate-300'}">
+      <td class="py-3 px-3.5 font-mono text-[#a7b3c4] text-xs">${u.email}</td>
+      <td class="py-3 px-3.5">
+        <span class="px-2 py-0.5 rounded text-[9px] font-mono font-bold uppercase ${u.role === 'ADMIN' ? 'bg-blue-500/10 text-blue-300 border border-blue-500/30' : u.role === 'STAFF' ? 'bg-cyan-500/10 text-cyan-300 border border-cyan-500/30' : 'bg-[#141c28] text-[#a7b3c4] border border-[#202b3a]'}">
           ${u.role || 'CUSTOMER'}
         </span>
       </td>
-      <td class="py-3.5 px-4">
-        ${u.assignedBranch ? branches.find(b => b.id === u.assignedBranch)?.name || u.assignedBranch : '<span class="text-slate-500">-</span>'}
+      <td class="py-3 px-3.5 text-xs text-[#a7b3c4]">
+        ${u.assignedBranch ? branches.find(b => b.id === u.assignedBranch)?.name || u.assignedBranch : '<span class="text-[#718096]">-</span>'}
       </td>
-      <td class="py-3.5 px-4 text-slate-400">${u.createdAt || 'Standard'}</td>
-      <td class="py-3.5 px-4 text-right">
-        <div class="flex items-center justify-end space-x-2">
-          <button onclick="openUserModal('${u.id}')" class="p-1.5 bg-slate-800 hover:bg-slate-700 text-blue-400 rounded-lg transition-colors" title="Edit User Details">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+      <td class="py-3 px-3.5 text-[#718096] text-xs">${u.createdAt || 'Standard'}</td>
+      <td class="py-3 px-3.5 text-right">
+        <div class="flex items-center justify-end space-x-1.5">
+          <button onclick="openUserModal('${u.id}')" class="p-1.5 bg-[#141c28] hover:bg-[#192332] text-blue-400 rounded border border-[#202b3a] transition-colors" title="Edit User Details">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
           </button>
-          <select onchange="changeUserRole('${u.id}', this.value)" class="bg-slate-950 border border-slate-700 text-white rounded-lg px-2 py-1 text-xs font-semibold focus:outline-none focus:border-blue-500">
+          <select onchange="changeUserRole('${u.id}', this.value)" class="bg-[#080b12] border border-[#202b3a] text-white rounded px-2 py-1 text-xs focus:border-blue-500 cursor-pointer">
             <option value="CUSTOMER" ${u.role === 'CUSTOMER' ? 'selected' : ''}>CUSTOMER</option>
             <option value="STAFF" ${u.role === 'STAFF' ? 'selected' : ''}>STAFF</option>
             <option value="ADMIN" ${u.role === 'ADMIN' ? 'selected' : ''}>ADMIN</option>
           </select>
-          <button onclick="confirmDeleteUser('${u.id}')" class="p-1.5 bg-rose-950/80 hover:bg-rose-900 text-rose-300 border border-rose-800 rounded-lg transition-colors" title="Delete User">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+          <button onclick="confirmDeleteUser('${u.id}')" class="p-1.5 bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 border border-rose-900/40 rounded transition-colors" title="Delete User">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
           </button>
         </div>
       </td>
@@ -84,53 +84,53 @@ export function openUserModal(userId = null) {
   const targetUser = userId ? users.find(u => u.id === userId) : null;
 
   modal.innerHTML = `
-    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
-      <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 max-w-md w-full space-y-5 shadow-2xl">
-        <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#080b12]/80 backdrop-blur-sm">
+      <div class="bg-[#101722] border border-[#202b3a] rounded-lg p-6 max-w-md w-full space-y-4 shadow-2xl">
+        <div class="flex items-center justify-between border-b border-[#202b3a] pb-3">
           <div>
-            <h3 class="text-lg font-extrabold text-white">${targetUser ? 'Edit User Account' : 'Create Staff / Admin Account'}</h3>
+            <h3 class="text-base font-extrabold text-white">${targetUser ? 'Edit User Account' : 'Create Staff / Admin Account'}</h3>
             ${targetUser ? `<span class="text-[10px] text-blue-400 font-mono">${targetUser.id}</span>` : ''}
           </div>
-          <button onclick="closeAdminModal()" class="text-slate-400 hover:text-white">&times;</button>
+          <button onclick="closeAdminModal()" class="text-[#718096] hover:text-white">&times;</button>
         </div>
 
-        <form onsubmit="handleSaveUserSubmit(event, ${targetUser ? `'${targetUser.id}'` : 'null'})" class="space-y-4 text-xs">
+        <form onsubmit="handleSaveUserSubmit(event, ${targetUser ? `'${targetUser.id}'` : 'null'})" class="space-y-3.5 text-xs">
           <div>
-            <label class="block text-slate-300 font-bold mb-1">Full Name *</label>
-            <input type="text" id="modal-u-name" required value="${targetUser ? targetUser.name : ''}" placeholder="Jane Smith" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white focus:outline-none focus:border-blue-500">
+            <label class="block text-[#a7b3c4] font-bold mb-1">Full Name *</label>
+            <input type="text" id="modal-u-name" required value="${targetUser ? targetUser.name : ''}" placeholder="Jane Smith" class="w-full px-3 py-2 rounded-md bg-[#080b12] border border-[#202b3a] text-white focus:border-blue-500">
           </div>
 
           <div>
-            <label class="block text-slate-300 font-bold mb-1">Email Address *</label>
-            <input type="email" id="modal-u-email" required value="${targetUser ? targetUser.email : ''}" placeholder="staff@etech.com" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white focus:outline-none focus:border-blue-500">
+            <label class="block text-[#a7b3c4] font-bold mb-1">Email Address *</label>
+            <input type="email" id="modal-u-email" required value="${targetUser ? targetUser.email : ''}" placeholder="staff@etech.com" class="w-full px-3 py-2 rounded-md bg-[#080b12] border border-[#202b3a] text-white focus:border-blue-500">
           </div>
 
           <div>
-            <label class="block text-slate-300 font-bold mb-1">${targetUser ? 'New Password (Optional)' : 'Password *'}</label>
-            <input type="password" id="modal-u-password" ${targetUser ? '' : 'required'} placeholder="${targetUser ? 'Leave blank to keep current password' : '••••••••'}" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white focus:outline-none focus:border-blue-500">
+            <label class="block text-[#a7b3c4] font-bold mb-1">${targetUser ? 'New Password (Optional)' : 'Password *'}</label>
+            <input type="password" id="modal-u-password" ${targetUser ? '' : 'required'} placeholder="${targetUser ? 'Leave blank to keep current password' : '••••••••'}" class="w-full px-3 py-2 rounded-md bg-[#080b12] border border-[#202b3a] text-white focus:border-blue-500">
           </div>
 
-          <div class="grid grid-cols-2 gap-4">
+          <div class="grid grid-cols-2 gap-3">
             <div>
-              <label class="block text-slate-300 font-bold mb-1">System Role *</label>
-              <select id="modal-u-role" required class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white focus:outline-none focus:border-blue-500">
+              <label class="block text-[#a7b3c4] font-bold mb-1">System Role *</label>
+              <select id="modal-u-role" required class="w-full px-3 py-2 rounded-md bg-[#080b12] border border-[#202b3a] text-white focus:border-blue-500">
                 <option value="CUSTOMER" ${targetUser && targetUser.role === 'CUSTOMER' ? 'selected' : ''}>CUSTOMER</option>
                 <option value="STAFF" ${targetUser && targetUser.role === 'STAFF' ? 'selected' : ''}>STAFF</option>
                 <option value="ADMIN" ${targetUser && targetUser.role === 'ADMIN' ? 'selected' : ''}>ADMIN</option>
               </select>
             </div>
             <div>
-              <label class="block text-slate-300 font-bold mb-1">Assigned Branch</label>
-              <select id="modal-u-branch" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white focus:outline-none focus:border-blue-500">
+              <label class="block text-[#a7b3c4] font-bold mb-1">Assigned Branch</label>
+              <select id="modal-u-branch" class="w-full px-3 py-2 rounded-md bg-[#080b12] border border-[#202b3a] text-white focus:border-blue-500">
                 <option value="">None</option>
                 ${branches.map(b => `<option value="${b.id}" ${targetUser && targetUser.assignedBranch === b.id ? 'selected' : ''}>${b.city}</option>`).join('')}
               </select>
             </div>
           </div>
 
-          <div class="pt-2 flex items-center justify-end space-x-3">
-            <button type="button" onclick="closeAdminModal()" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl font-bold">Cancel</button>
-            <button type="submit" class="px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold shadow-lg shadow-blue-600/30">${targetUser ? 'Save User Changes' : 'Create Account'}</button>
+          <div class="pt-2 flex items-center justify-end space-x-2.5">
+            <button type="button" onclick="closeAdminModal()" class="px-4 py-2 bg-[#141c28] hover:bg-[#192332] text-[#a7b3c4] rounded-md font-bold border border-[#202b3a]">Cancel</button>
+            <button type="submit" class="px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-md font-bold shadow-sm">${targetUser ? 'Save User Changes' : 'Create Account'}</button>
           </div>
         </form>
       </div>
@@ -140,109 +140,74 @@ export function openUserModal(userId = null) {
 
 export function handleSaveUserSubmit(e, userId) {
   e.preventDefault();
-  const userData = {
-    id: userId,
-    name: document.getElementById('modal-u-name').value,
-    email: document.getElementById('modal-u-email').value,
-    password: document.getElementById('modal-u-password').value,
-    role: document.getElementById('modal-u-role').value,
-    assignedBranch: document.getElementById('modal-u-branch').value
-  };
+  const name = document.getElementById('modal-u-name').value.trim();
+  const email = document.getElementById('modal-u-email').value.trim();
+  const password = document.getElementById('modal-u-password').value;
+  const role = document.getElementById('modal-u-role').value;
+  const branch = document.getElementById('modal-u-branch').value;
 
-  const res = userId ? updateUser(userData) : addUserByAdmin(userData);
-  if (res.success) {
-    if (window.closeAdminModal) window.closeAdminModal();
-    renderUsersTab();
-  } else {
-    alert(res.message);
-  }
-}
-
-/**
- * ============================================================
- * ADMIN DATA MANIPULATION FUNCTIONS (MIGRATED FROM login_controller.js)
- * ============================================================
- */
-
-export function addUserByAdmin(userData) {
   const users = getUsers();
-  const cleanEmail = userData.email.trim().toLowerCase();
 
-  if (users.some(u => u.email.toLowerCase() === cleanEmail)) {
-    return { success: false, message: 'Email address already exists.' };
+  if (userId) {
+    // Edit existing
+    const user = users.find(u => u.id === userId);
+    if (user) {
+      user.name = name;
+      user.email = email;
+      if (password) user.password = password;
+      user.role = role;
+      user.assignedBranch = branch || null;
+      localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
+
+      // If updating currently logged in user, refresh active state
+      const current = getCurrentUser();
+      if (current && current.id === userId) {
+        setCurrentUser(user);
+      }
+    }
+  } else {
+    // Check if email already exists
+    if (users.find(u => u.email.toLowerCase() === email.toLowerCase())) {
+      alert('A user account with this email address already exists.');
+      return;
+    }
+
+    const newUser = {
+      id: `USR-${Math.floor(100000 + Math.random() * 900000)}`,
+      name: name,
+      email: email,
+      password: password,
+      role: role,
+      assignedBranch: branch || null,
+      createdAt: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+    };
+
+    users.unshift(newUser);
+    localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
   }
 
-  const newUser = {
-    id: 'USR-' + Math.floor(100000 + Math.random() * 900000),
-    name: userData.name.trim(),
-    email: cleanEmail,
-    password: userData.password || 'etech123',
-    role: userData.role || 'STAFF',
-    assignedBranch: userData.assignedBranch || null,
-    createdAt: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
-  };
-
-  users.push(newUser);
-  localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
-
-  return { success: true, message: `User ${newUser.name} created successfully!`, user: newUser };
+  if (window.closeAdminModal) window.closeAdminModal();
+  renderUsersTab();
 }
 
-export function updateUserRole(userId, newRole, assignedBranch = null) {
+export function updateUserRole(userId, newRole) {
   const users = getUsers();
   const user = users.find(u => u.id === userId);
-  if (!user) return { success: false, message: 'User not found.' };
+  if (!user) return { success: false, message: 'User not found' };
 
   user.role = newRole;
-  user.assignedBranch = assignedBranch;
   localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
-
-  return { success: true, message: `Role updated to ${newRole}` };
-}
-
-export function updateUser(userData) {
-  const users = getUsers();
-  const user = users.find(u => u.id === userData.id);
-  if (!user) return { success: false, message: 'User not found.' };
-
-  const cleanEmail = userData.email.trim().toLowerCase();
-  const existingUser = users.find(u => u.email.toLowerCase() === cleanEmail && u.id !== userData.id);
-  if (existingUser) {
-    return { success: false, message: 'Another user with this email address already exists.' };
-  }
-
-  user.name = userData.name.trim();
-  user.email = cleanEmail;
-  user.role = userData.role || user.role;
-  user.assignedBranch = userData.assignedBranch !== undefined ? userData.assignedBranch : user.assignedBranch;
-
-  if (userData.password && userData.password.trim().length > 0) {
-    if (userData.password.trim().length < 6) {
-      return { success: false, message: 'New password must be at least 6 characters long.' };
-    }
-    user.password = userData.password.trim();
-  }
-
-  localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
-
-  // If current active session is being updated, update session state too
-  const currentUser = getCurrentUser();
-  if (currentUser && currentUser.id === user.id) {
-    setCurrentUser(user);
-  }
-
-  return { success: true, message: `User ${user.name} updated successfully!`, user };
+  return { success: true, message: `User role updated to ${newRole}` };
 }
 
 export function deleteUser(userId) {
   const currentUser = getCurrentUser();
   if (currentUser && currentUser.id === userId) {
-    return { success: false, message: 'You cannot delete your own active admin account.' };
+    return { success: false, message: 'You cannot delete your own active administrator account.' };
   }
 
   let users = getUsers();
   users = users.filter(u => u.id !== userId);
   localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
-
-  return { success: true, message: 'User removed successfully.' };
+  return { success: true, message: 'User account removed.' };
 }

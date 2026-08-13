@@ -56,9 +56,9 @@ function updateUserInfoHeader() {
   if (roleEl) {
     roleEl.textContent = activeUser.role;
     if (activeUser.role === 'ADMIN') {
-      roleEl.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-purple-500/20 text-purple-300 border border-purple-500/40';
+      roleEl.className = 'px-2 py-0.5 rounded text-[9px] font-extrabold uppercase bg-blue-500/10 text-blue-300 border border-blue-500/30';
     } else {
-      roleEl.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-blue-500/20 text-blue-300 border border-blue-500/40';
+      roleEl.className = 'px-2 py-0.5 rounded text-[9px] font-extrabold uppercase bg-cyan-500/10 text-cyan-300 border border-cyan-500/30';
     }
   }
   if (avatarEl) avatarEl.textContent = activeUser.name.charAt(0).toUpperCase();
@@ -94,9 +94,9 @@ export function switchAdminTab(tabName) {
   navBtns.forEach(btn => {
     const target = btn.getAttribute('data-tab');
     if (target === tabName) {
-      btn.className = 'sidebar-nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl font-bold text-sm bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-600/30 transition-all';
+      btn.className = 'sidebar-nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-md font-bold text-xs bg-blue-600 text-white shadow-sm transition-all';
     } else {
-      btn.className = 'sidebar-nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl font-medium text-sm text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all';
+      btn.className = 'sidebar-nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-md font-medium text-xs text-[#a7b3c4] hover:text-white hover:bg-[#141c28] transition-all';
     }
   });
 
@@ -173,60 +173,54 @@ function renderOverviewTab() {
   const recentOrdersFeed = document.getElementById('recent-orders-feed');
   if (recentOrdersFeed) {
     recentOrdersFeed.innerHTML = orders.slice(0, 5).map(o => `
-            <div class="bg-slate-950/80 border border-slate-800 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div class="bg-[#080b12] border border-[#202b3a] rounded-md p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
               <div>
                 <div class="flex items-center space-x-2">
                   <span class="text-xs font-mono font-bold text-blue-400">${o.orderId}</span>
-                  <span class="text-[10px] text-slate-400">${o.date}</span>
+                  <span class="text-[10px] text-[#718096]">${o.date}</span>
                 </div>
                 <p class="text-xs font-semibold text-white mt-0.5">${o.customerName} (${o.city})</p>
-                <p class="text-[11px] text-slate-400">Branch: <span class="text-slate-200 font-medium">${o.fulfillmentBranch || 'Colombo'}</span> | Distance: ${o.distanceKm || 5} km</p>
+                <p class="text-[10px] text-[#718096]">Branch: <span class="text-[#f4f7fb] font-medium">${o.fulfillmentBranch || 'Colombo'}</span> | Dist: ${o.distanceKm || 5} km</p>
               </div>
               <div class="flex items-center justify-between sm:justify-end space-x-3">
-                <span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold ${getStatusStyle(o.status)}">
+                <span class="px-2 py-0.5 rounded text-[9px] font-bold ${getStatusStyle(o.status)}">
                   ${o.status || 'Pending'}
                 </span>
-                <span class="text-sm font-bold text-white">Rs. ${parseFloat((o.totalAmount || 0).toString().replace(/[^0-9.]/g, '')).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                <span class="text-sm font-extrabold text-white font-mono">Rs. ${parseFloat((o.totalAmount || 0).toString().replace(/[^0-9.]/g, '')).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
               </div>
             </div>
-        `).join('') || '<p class="text-xs text-slate-400 py-4">No recent orders.</p>';
+        `).join('') || '<p class="text-xs text-[#718096] py-3">No recent orders.</p>';
   }
 
   // Populate Low Stock Alerts Warning Sidebar
   const lowStocksAlerts = document.getElementById('low-stocks-alerts');
   if (lowStocksAlerts) {
     lowStocksAlerts.innerHTML = lowStockProducts.map(p => `
-            <div class="bg-slate-950 p-3.5 rounded-xl border border-rose-950/60 flex items-center space-x-3">
-              <img src="${p.image}" class="w-10 h-10 object-cover rounded-lg bg-slate-900 flex-shrink-0">
+            <div class="bg-[#080b12] p-3 rounded-md border border-rose-950/60 flex items-center space-x-2.5">
+              <img src="${p.image}" class="w-9 h-9 object-cover rounded bg-[#101722] flex-shrink-0">
               <div class="min-w-0 flex-1">
                 <p class="text-xs font-bold text-white truncate">${p.name}</p>
-                <div class="flex flex-wrap gap-1 mt-1">
+                <div class="flex flex-wrap gap-1 mt-0.5">
                   ${Object.entries(p.branchStock || {}).map(([bId, qty]) => `
-                    <span class="text-[9px] px-1.5 py-0.5 rounded font-mono ${qty < 3 ? 'bg-rose-500/20 text-rose-300 font-bold' : 'bg-slate-800 text-slate-300'}">
+                    <span class="text-[9px] px-1 py-0.5 rounded font-mono ${qty < 3 ? 'bg-rose-500/20 text-rose-300 font-bold' : 'bg-[#141c28] text-[#a7b3c4]'}">
                       ${bId.replace('BR-', '')}: ${qty}
                     </span>
                   `).join('')}
                 </div>
               </div>
             </div>
-        `).join('') || '<p class="text-xs text-emerald-400 py-4">All branch stocks healthy!</p>';
+        `).join('') || '<p class="text-xs text-emerald-400 py-3">All branch stocks healthy!</p>';
   }
 }
-
-// TAB 2: PRODUCT MANAGEMENT is imported and handled in product_management_controller.js
-// TAB 3: ORDER MANAGEMENT is imported and handled in order_management_controller.js
-// TAB 4: BRANCH MANAGEMENT is imported and handled in branch_management_controller.js
-// TAB 5: USER MANAGEMENT is imported and handled in user_management_controller.js
-// TAB 6: FINANCIAL ANALYTICS & REPORTS is imported and handled in analytics_and_report_controller.js
 
 // ── Status Pill Styles Helper ──
 function getStatusStyle(status) {
   switch (status) {
-    case 'Processing': return 'bg-blue-500/20 text-blue-400 border border-blue-500/40';
-    case 'Shipped': return 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/40';
-    case 'Delivered': return 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40';
-    case 'Cancelled': return 'bg-rose-500/20 text-rose-400 border border-rose-500/40';
-    default: return 'bg-amber-500/20 text-amber-400 border border-amber-500/40';
+    case 'Processing': return 'bg-blue-500/10 text-blue-400 border border-blue-500/30';
+    case 'Shipped': return 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/30';
+    case 'Delivered': return 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30';
+    case 'Cancelled': return 'bg-rose-500/10 text-rose-400 border border-rose-500/30';
+    default: return 'bg-amber-500/10 text-amber-400 border border-amber-500/30';
   }
 }
 

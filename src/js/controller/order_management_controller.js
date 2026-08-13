@@ -99,30 +99,30 @@ export function renderOrdersTab() {
   const orders = getAllOrders();
 
   tbody.innerHTML = orders.map(o => `
-    <tr class="hover:bg-slate-800/40 transition-colors">
-      <td class="py-3.5 px-4">
-        <span class="font-mono font-extrabold text-blue-400">${o.orderId}</span>
-        <p class="text-[10px] text-slate-400">${o.date}</p>
+    <tr class="hover:bg-[#141c28] transition-colors">
+      <td class="py-3 px-3.5">
+        <span class="font-mono font-extrabold text-blue-400 text-xs">${o.orderId}</span>
+        <p class="text-[10px] text-[#718096]">${o.date}</p>
       </td>
-      <td class="py-3.5 px-4">
-        <p class="font-bold text-white">${o.customerName}</p>
-        <p class="text-[10px] text-slate-400">${o.email}</p>
+      <td class="py-3 px-3.5">
+        <p class="font-bold text-white text-xs">${o.customerName}</p>
+        <p class="text-[10px] text-[#718096]">${o.email}</p>
       </td>
-      <td class="py-3.5 px-4">
-        <p class="font-bold text-slate-200">${o.fulfillmentBranch || 'Colombo Hub'}</p>
-        <p class="text-[10px] text-slate-400">Dest: <strong class="text-white">${o.city}</strong> (${o.distanceKm || 5} km distance)</p>
+      <td class="py-3 px-3.5">
+        <p class="font-bold text-[#f4f7fb] text-xs">${o.fulfillmentBranch || 'Colombo Hub'}</p>
+        <p class="text-[10px] text-[#718096]">Dest: <strong class="text-white">${o.city}</strong> (${o.distanceKm || 5} km)</p>
       </td>
-      <td class="py-3.5 px-4 font-bold text-white">
+      <td class="py-3 px-3.5 font-bold text-white font-mono text-xs">
         Rs. ${parseFloat((o.totalAmount || 0).toString().replace(/[^0-9.]/g, '')).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
       </td>
-      <td class="py-3.5 px-4">
-        <span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold ${getStatusStyle(o.status)}">
+      <td class="py-3 px-3.5">
+        <span class="px-2 py-0.5 rounded text-[9px] font-bold ${getStatusStyle(o.status)}">
           ${o.status || 'Pending'}
         </span>
       </td>
-      <td class="py-3.5 px-4 text-right">
+      <td class="py-3 px-3.5 text-right">
         <div class="flex items-center justify-end space-x-2">
-          <select onchange="changeOrderStatus('${o.orderId}', this.value)" class="bg-slate-950 border border-slate-700 text-white rounded-lg px-2.5 py-1.5 text-xs font-semibold focus:outline-none focus:border-blue-500">
+          <select onchange="changeOrderStatus('${o.orderId}', this.value)" class="bg-[#080b12] border border-[#202b3a] text-white rounded px-2 py-1 text-xs focus:border-blue-500 cursor-pointer">
             <option value="Pending" ${o.status === 'Pending' ? 'selected' : ''}>Pending</option>
             <option value="Processing" ${o.status === 'Processing' ? 'selected' : ''}>Processing</option>
             <option value="Shipped" ${o.status === 'Shipped' ? 'selected' : ''}>Shipped</option>
@@ -132,17 +132,15 @@ export function renderOrdersTab() {
         </div>
       </td>
     </tr>
-  `).join('') || '<tr><td colspan="6" class="py-8 text-center text-xs text-slate-400">No orders recorded yet.</td></tr>';
+  `).join('') || '<tr><td colspan="6" class="py-8 text-center text-xs text-[#718096]">No orders recorded yet.</td></tr>';
 }
 
 export function changeOrderStatus(orderId, newStatus) {
   const res = updateOrderStatus(orderId, newStatus);
   if (res.success) {
-    // If overview recent-orders-feed exists in DOM, update dashboard overview
     if (document.getElementById('recent-orders-feed')) {
       if (window.initAdminDashboard) window.initAdminDashboard();
     }
-    // If orders table tbody exists, reload orders tab
     if (document.getElementById('orders-tbody')) {
       renderOrdersTab();
     }
@@ -152,10 +150,10 @@ export function changeOrderStatus(orderId, newStatus) {
 // ── Status Pill Styles ──
 export function getStatusStyle(status) {
   switch (status) {
-    case 'Processing': return 'bg-blue-500/20 text-blue-400 border border-blue-500/40';
-    case 'Shipped': return 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/40';
-    case 'Delivered': return 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40';
-    case 'Cancelled': return 'bg-rose-500/20 text-rose-400 border border-rose-500/40';
-    default: return 'bg-amber-500/20 text-amber-400 border border-amber-500/40';
+    case 'Processing': return 'bg-blue-500/10 text-blue-400 border border-blue-500/30';
+    case 'Shipped': return 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/30';
+    case 'Delivered': return 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30';
+    case 'Cancelled': return 'bg-rose-500/10 text-rose-400 border border-rose-500/30';
+    default: return 'bg-amber-500/10 text-amber-400 border border-amber-500/30';
   }
 }

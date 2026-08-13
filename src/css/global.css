@@ -1,162 +1,279 @@
-    @keyframes et-pulse {
+@import './variables.css';
 
-        0%,
-        100% {
-            box-shadow: 0 4px 24px rgba(59, 130, 246, 0.4), 0 0 0 0 rgba(59, 130, 246, 0.3);
-        }
+/* ============================================================
+   ETech Computers — Global Precision Stylesheet
+   ============================================================ */
 
-        50% {
-            box-shadow: 0 4px 24px rgba(59, 130, 246, 0.4), 0 0 0 10px rgba(59, 130, 246, 0);
-        }
+/* ── Base Reset & Scroll Behavior ───────────────────────────── */
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+html {
+    background-color: var(--color-bg);
+    color: var(--color-text-primary);
+    font-family: var(--font-family-sans);
+    color-scheme: dark;
+}
+
+body {
+    background-color: var(--color-bg);
+    color: var(--color-text-primary);
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+/* ── Custom Precision Scrollbar ─────────────────────────────── */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: #080b12;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #202b3a;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #34445a;
+}
+
+/* ── Precision Input Focus Rings ────────────────────────────── */
+input:focus,
+select:focus,
+textarea:focus {
+    outline: none !important;
+    border-color: #2563eb !important;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2) !important;
+}
+
+/* ── Pulse Animation for Status Indicators ──────────────────── */
+@keyframes et-pulse {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.4);
     }
-
-    @keyframes et-dot {
-
-        0%,
-        80%,
-        100% {
-            transform: scale(0.6);
-            opacity: 0.4;
-        }
-
-        40% {
-            transform: scale(1);
-            opacity: 1;
-        }
+    50% {
+        box-shadow: 0 0 0 8px rgba(37, 99, 235, 0);
     }
+}
 
-    .et-panel-hidden {
-        opacity: 0;
-        transform: translateY(16px) scale(0.96);
-        pointer-events: none;
-        visibility: hidden;
-        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+/* ── Navigation Tab / Link Button Styles (Exact Match) ─────── */
+.nav-tab-btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    padding: 0 14px;
+    font-size: 0.9375rem; /* 15px */
+    font-weight: 500;
+    color: #94a3b8;
+    text-decoration: none;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: color 0.15s ease;
+}
+
+.nav-tab-btn:hover {
+    color: #ffffff;
+}
+
+/* Active indicator underline */
+.nav-tab-btn::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 14px;
+    right: 14px;
+    height: 2.5px;
+    background-color: #2563eb;
+    border-radius: 2px 2px 0 0;
+    opacity: 0;
+    transform: scaleX(0.7);
+    transition: opacity 0.2s ease, transform 0.2s ease, background-color 0.2s ease;
+}
+
+.nav-tab-btn:hover::after {
+    opacity: 0.4;
+    transform: scaleX(1);
+    background-color: #3b82f6;
+}
+
+.nav-tab-btn.active {
+    color: #ffffff !important;
+    font-weight: 700 !important;
+}
+
+.nav-tab-btn.active::after {
+    opacity: 1 !important;
+    transform: scaleX(1) !important;
+    background-color: #2563eb !important;
+}
+
+
+@keyframes et-dot {
+    0%, 80%, 100% {
+        transform: scale(0.6);
+        opacity: 0.4;
     }
-
-    .et-panel-visible {
+    40% {
+        transform: scale(1);
         opacity: 1;
-        transform: translateY(0) scale(1);
-        pointer-events: auto;
-        visibility: visible;
-        transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+}
+
+/* ── E-T AI Chatbot Panel & FAB ─────────────────────────────── */
+.et-panel-hidden {
+    opacity: 0;
+    transform: translateY(12px) scale(0.97);
+    pointer-events: none;
+    visibility: hidden;
+    transition: opacity 0.2s var(--ease-default), transform 0.2s var(--ease-default), visibility 0.2s;
+}
+
+.et-panel-visible {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+    visibility: visible;
+    transition: opacity 0.25s var(--ease-bounce), transform 0.25s var(--ease-bounce), visibility 0.25s;
+}
+
+#et-fab .et-fab-icon-open {
+    display: flex;
+}
+
+#et-fab .et-fab-icon-close {
+    display: none;
+}
+
+#et-fab.et-fab-active .et-fab-icon-open {
+    display: none;
+}
+
+#et-fab.et-fab-active .et-fab-icon-close {
+    display: flex;
+}
+
+#et-fab.et-fab-active {
+    animation: none;
+}
+
+#et-messages {
+    scrollbar-width: thin;
+    scrollbar-color: #202b3a transparent;
+}
+
+#et-messages::-webkit-scrollbar {
+    width: 4px;
+}
+
+#et-messages::-webkit-scrollbar-thumb {
+    background: #202b3a;
+    border-radius: 4px;
+}
+
+@media (max-width: 480px) {
+    #et-panel {
+        right: 0 !important;
+        bottom: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        max-height: 100vh !important;
+        border-radius: 0 !important;
     }
 
-    #et-fab .et-fab-icon-open {
-        display: flex;
+    #et-fab {
+        bottom: 16px !important;
+        right: 16px !important;
     }
+}
 
-    #et-fab .et-fab-icon-close {
-        display: none;
-    }
+/* ── Hero 3-Card Layered Carousel (Precision Look) ──────────── */
+.hero-carousel-container-3d {
+    position: relative;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
 
-    #et-fab.et-fab-active .et-fab-icon-open {
-        display: none;
-    }
+.card-3d {
+    transition: transform 0.4s var(--ease-default), opacity 0.4s var(--ease-default), z-index 0.4s ease, box-shadow 0.4s ease;
+    will-change: transform, opacity;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+}
 
-    #et-fab.et-fab-active .et-fab-icon-close {
-        display: flex;
-    }
+.card-3d-left {
+    transform: translate3d(-20%, 0, 0) scale(0.88);
+    opacity: 0.45;
+    z-index: 10;
+}
 
-    #et-fab.et-fab-active {
-        animation: none;
-    }
+.card-3d-left:hover {
+    opacity: 0.75;
+    transform: translate3d(-20%, 0, 0) scale(0.90);
+}
 
-    #et-messages {
-        scrollbar-width: thin;
-        scrollbar-color: #334155 transparent;
-    }
+.card-3d-center {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 1;
+    z-index: 30;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+}
 
-    #et-messages::-webkit-scrollbar {
-        width: 5px;
-    }
+.card-3d-center:hover {
+    transform: translate3d(0, -3px, 0) scale(1.01);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.55), 0 0 20px rgba(37, 99, 235, 0.15);
+}
 
-    #et-messages::-webkit-scrollbar-thumb {
-        background: #334155;
-        border-radius: 10px;
-    }
+.card-3d-right {
+    transform: translate3d(20%, 0, 0) scale(0.88);
+    opacity: 0.45;
+    z-index: 10;
+}
 
-    @media (max-width: 480px) {
-        #et-panel {
-            right: 0 !important;
-            bottom: 0 !important;
-            width: 100vw !important;
-            height: 100vh !important;
-            max-height: 100vh !important;
-            border-radius: 0 !important;
-        }
+.card-3d-right:hover {
+    opacity: 0.75;
+    transform: translate3d(20%, 0, 0) scale(0.90);
+}
 
-        #et-fab {
-            bottom: 16px !important;
-            right: 16px !important;
-        }
-    }
-
-    /* Hero 3-Card Carousel Custom Styles - High-Definition Crisp Rendering */
-    .hero-carousel-container-3d {
-        position: relative;
-        -webkit-font-smoothing: antialiased;
-        -moz-osx-font-smoothing: grayscale;
-    }
-
-    .card-3d {
-        transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1), z-index 0.5s ease, box-shadow 0.5s ease;
-        will-change: transform, opacity;
-        backface-visibility: hidden;
-        -webkit-backface-visibility: hidden;
-        transform-style: flat;
-    }
-
+@media (max-width: 640px) {
     .card-3d-left {
-        transform: translate3d(-24%, 0, 0) scale(0.85);
-        opacity: 0.5;
-        z-index: 10;
+        transform: translate3d(-14%, 0, 0) scale(0.88);
+        opacity: 0.3;
     }
-
-    .card-3d-left:hover {
-        opacity: 0.8;
-        transform: translate3d(-24%, 0, 0) scale(0.87);
-    }
-
-    .card-3d-center {
-        transform: translate3d(0, 0, 0) scale(1);
-        opacity: 1;
-        z-index: 30;
-        box-shadow: 0 20px 50px -10px rgba(59, 130, 246, 0.4), 0 0 30px rgba(99, 102, 241, 0.25);
-    }
-
-    .card-3d-center:hover {
-        transform: translate3d(0, -4px, 0) scale(1.02);
-        box-shadow: 0 25px 60px -10px rgba(59, 130, 246, 0.55), 0 0 40px rgba(99, 102, 241, 0.35);
-    }
-
     .card-3d-right {
-        transform: translate3d(24%, 0, 0) scale(0.85);
-        opacity: 0.5;
-        z-index: 10;
+        transform: translate3d(14%, 0, 0) scale(0.88);
+        opacity: 0.3;
     }
+}
 
-    .card-3d-right:hover {
-        opacity: 0.8;
-        transform: translate3d(24%, 0, 0) scale(0.87);
-    }
+.hero-carousel-indicator {
+    transition: width 0.25s ease, background-color 0.25s ease;
+}
 
-    @media (max-width: 640px) {
-        .card-3d-left {
-            transform: translate3d(-15%, 0, 0) scale(0.86);
-            opacity: 0.35;
-        }
-        .card-3d-right {
-            transform: translate3d(15%, 0, 0) scale(0.86);
-            opacity: 0.35;
-        }
-    }
+.hero-carousel-indicator.active {
+    width: 1.75rem !important;
+    background-color: #2563eb !important;
+}
 
-    .hero-carousel-indicator {
-        transition: width 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease;
-    }
+/* ── Nav Link Active State (Precision Line Underline) ────────── */
+.nav-link-active-indicator {
+    position: relative;
+}
 
-    .hero-carousel-indicator.active {
-        width: 2rem !important;
-        background-color: #3b82f6 !important;
-        box-shadow: 0 0 12px rgba(59, 130, 246, 0.6);
-    }
+.nav-link-active-indicator::after {
+    content: '';
+    position: absolute;
+    bottom: -6px;
+    left: 12px;
+    right: 12px;
+    height: 2px;
+    background: #2563eb;
+    border-radius: 2px;
+}
