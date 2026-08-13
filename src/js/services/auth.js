@@ -421,7 +421,7 @@ function getRedirectTarget(user) {
   }
   const urlParams = new URLSearchParams(window.location.search);
   const redirectParam = urlParams.get('redirect');
-  return redirectParam ? `../index.html#${redirectParam}` : '../index.html#home';
+  return redirectParam ? `../../index.html#${redirectParam}` : '../../index.html#home';
 }
 
 export function handleLoginSubmit(e) {

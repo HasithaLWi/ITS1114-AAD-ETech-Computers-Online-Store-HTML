@@ -1,7 +1,7 @@
 // ETech Computers - Product Details Page Renderer & Logic
-import { getProductById, products } from './data.js';
-import { addToCart } from './cart.js';
-import renderProductDetails from '../components/product_detail_cart.js';
+import { getProductById, products } from './models/data.js';
+import { addToCart } from './services/cart.js';
+import renderProductDetails from './components/product_detail_cart.js';
 
 let selectedProductQuantity = 1;
 

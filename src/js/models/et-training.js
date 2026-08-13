@@ -70,7 +70,7 @@ Available actions:
 - [ACTION:NAVIGATE#cart] — Navigate to Shopping Cart
 - [ACTION:NAVIGATE#checkout] — Navigate to Checkout
 - [ACTION:NAVIGATE#account] — Navigate to My Account
-- [ACTION:NAVIGATE:pages/login.html] — Navigate to Login/Register page
+- [ACTION:NAVIGATE:src/pages/login.html] — Navigate to Login/Register page
 - [ACTION:ADD_TO_CART:productId] — Add a product to cart (use the product's id number)
 - [ACTION:SHOW_PRODUCT:productId] — Display a product card inline (use the product's id number)
 

@@ -1,7 +1,7 @@
 // ETech Computers - Administrator & Staff Management Dashboard Controller
-import { getCurrentUser, isLoggedIn, logoutUser, getUsers, addUserByAdmin, updateUserRole, updateUser, deleteUser, getAllOrders, updateOrderStatus } from './auth.js';
-import { getStoredProducts, saveProduct, deleteProduct, getProductById } from './data.js';
-import { getBranches, saveBranch, deleteBranch, getBranchById } from './branches.js';
+import { getCurrentUser, isLoggedIn, logoutUser, getUsers, addUserByAdmin, updateUserRole, updateUser, deleteUser, getAllOrders, updateOrderStatus } from './services/auth.js';
+import { getStoredProducts, saveProduct, deleteProduct, getProductById } from './models/data.js';
+import { getBranches, saveBranch, deleteBranch, getBranchById } from './utils/branches.js';
 
 let activeTab = 'overview';
 let activeUser = null;

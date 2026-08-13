@@ -1,4 +1,4 @@
-import { getProductById, products } from '../js/data.js';
+import { getProductById, products } from '../models/data.js';
 
 export default function renderProductDetails(productId) {
     const container = document.getElementById('product-details-container');

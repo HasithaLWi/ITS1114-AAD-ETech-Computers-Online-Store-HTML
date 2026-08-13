@@ -42,7 +42,7 @@
   }
 
   function getPathPrefix() {
-    return window.location.pathname.includes("/pages/") ? "../" : "";
+    return window.location.pathname.includes("/src/pages/") ? "../../" : "";
   }
 
   /** Simple markdown → HTML (bold, italic, bullets, line breaks) */

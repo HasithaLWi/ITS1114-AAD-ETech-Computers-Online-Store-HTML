@@ -1,10 +1,10 @@
 // ETech Computers - Single Page Section Toggle Router & Global App Logic
-import { products, getProductById, getFeaturedProducts, getNewArrivalProducts } from './data.js';
-import { legalPolicies, getPolicyData } from './policy-data.js';
-import { getCurrentUser, isLoggedIn, logoutUser, getUserOrders } from './auth.js';
-import { initCartLogic, initCheckoutLogic, updateCartBadge, addToCart, getCart, saveCart, showToast } from './cart.js';
+import { products, getProductById, getFeaturedProducts, getNewArrivalProducts } from './models/data.js';
+import { legalPolicies, getPolicyData } from './models/policy-data.js';
+import { getCurrentUser, isLoggedIn, logoutUser, getUserOrders } from './services/auth.js';
+import { initCartLogic, initCheckoutLogic, updateCartBadge, addToCart, getCart, saveCart, showToast } from './services/cart.js';
 import { renderProductDetailsPage, viewProductDetails } from './product-details.js';
-import { initShopLogic } from './shop.js';
+import { initShopLogic } from './utils/shop.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   initApp();
@@ -33,7 +33,7 @@ function handleRoute() {
 
   // ROUTE GUARDS: Protected pages require signup/login first
   if ((pageName === 'checkout' || pageName === 'account') && !isLoggedIn()) {
-    window.location.href = `pages/login.html?redirect=${pageName}`;
+    window.location.href = `src/pages/login.html?redirect=${pageName}`;
     return;
   }
 
@@ -130,7 +130,7 @@ function updateHeaderAuthUI() {
       authContainer.innerHTML = `
           <div class="flex items-center space-x-2 hidden md:flex">
             ${isAdminOrStaff ? `
-              <a href="pages/administrator_dashboard.html" class="flex items-center space-x-2 bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700/60 px-3 py-1.5 rounded-xl transition-all group">
+              <a href="src/pages/administrator_dashboard.html" class="flex items-center space-x-2 bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700/60 px-3 py-1.5 rounded-xl transition-all group">
                 <span class="flex items-center h-7 text-xs font-bold text-slate-200 group-hover:text-white max-w-[100px] truncate">Admin Console</span>
               </a>
             ` : ''}
@@ -144,7 +144,7 @@ function updateHeaderAuthUI() {
         `;
     } else {
       authContainer.innerHTML = `
-          <a href="pages/login.html" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold shadow-md transition-all flex items-center space-x-1.5">
+          <a href="src/pages/login.html" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold shadow-md transition-all flex items-center space-x-1.5">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/>
             </svg>
@@ -167,14 +167,14 @@ function updateHeaderAuthUI() {
             </div>
           </div>
           ${isAdminOrStaff ? `
-            <a href="pages/administrator_dashboard.html" class="block w-full text-center py-2 bg-purple-600 text-white rounded-lg text-xs font-bold">Open Admin Console</a>
+            <a href="src/pages/administrator_dashboard.html" class="block w-full text-center py-2 bg-purple-600 text-white rounded-lg text-xs font-bold">Open Admin Console</a>
           ` : ''}
           <button onclick="handleLogout()" class="w-full py-2 bg-rose-950/80 border border-rose-800 text-rose-300 rounded-lg text-xs font-bold">Sign Out</button>
         </div>
       `;
     } else {
       mobileDrawer.innerHTML = `
-        <a href="pages/login.html" class="block w-full text-center py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-bold text-xs">Sign In / Create Account</a>
+        <a href="src/pages/login.html" class="block w-full text-center py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-bold text-xs">Sign In / Create Account</a>
       `;
     }
   }
@@ -213,7 +213,7 @@ function initAccountLogic() {
 
   const user = getCurrentUser();
   if (!user) {
-    window.location.href = 'pages/login.html?redirect=account';
+    window.location.href = 'src/pages/login.html?redirect=account';
     return;
   }
 

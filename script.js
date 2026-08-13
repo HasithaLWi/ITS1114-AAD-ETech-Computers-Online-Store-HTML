@@ -7,28 +7,28 @@
 //  can resolve them at runtime.
 // ============================================================
 
-import { products, getProductById, getFeaturedProducts, getNewArrivalProducts, getStoredProducts, saveProduct, deleteProduct } from './js/data.js';
-import { legalPolicies, getPolicyData } from './js/policy-data.js';
-import { ET_CONFIG } from './js/et-training.js';
+import { products, getProductById, getFeaturedProducts, getNewArrivalProducts, getStoredProducts, saveProduct, deleteProduct } from './src/js/models/data.js';
+import { legalPolicies, getPolicyData } from './src/js/models/policy-data.js';
+import { ET_CONFIG } from './src/js/models/et-training.js';
 import {
     getUsers, registerUser, loginUser, setCurrentUser,
     getCurrentUser, isLoggedIn, logoutUser,
     saveOrder, getAllOrders, getUserOrders, updateOrderStatus,
     switchTab, togglePasswordVisibility, showAlert, handleLoginSubmit, handleSignupSubmit
-} from './js/auth.js';
-import { getBranches, calculateShippingFee, autoSelectFulfillmentBranch } from './js/branches.js';
+} from './src/js/services/auth.js';
+import { getBranches, calculateShippingFee, autoSelectFulfillmentBranch } from './src/js/utils/branches.js';
 import {
     getCart, saveCart, updateCartBadge, addToCart, showToast,
     initCartLogic, initCheckoutLogic,
     updateItemQuantity, removeItemFromCart
-} from './js/cart.js';
+} from './src/js/services/cart.js';
 import {
     viewProductDetails, renderProductDetailsPage,
     changeProductQuantity,
     handleAddToCartFromDetails, handleBuyNowFromDetails
-} from './js/product-details.js';
-import { initShopLogic, renderFilteredProducts } from './js/shop.js';
-import { handleLogout } from './js/app.js';
+} from './src/js/product-details.js';
+import { initShopLogic, renderFilteredProducts } from './src/js/utils/shop.js';
+import { handleLogout } from './src/js/app.js';
 
 // ── Bind everything to window in one shot ────────────────────
 Object.assign(window, {
