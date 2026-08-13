@@ -19,7 +19,7 @@ root/
 │   │
 │   ├── js/
 │   │   ├── app.js            SPA router & global app logic
-│   │   ├── admin_dashboard.js  Admin/staff management console
+│   │   ├── admin_dashboard_controller.js  Admin/staff management console
 │   │   ├── chatbot_controller.js        E-T AI chatbot widget
 │   │   ├── product-details_controller.js  Product detail page renderer
 │   │   ├── components/       UI rendering modules

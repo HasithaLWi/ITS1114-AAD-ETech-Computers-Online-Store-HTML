@@ -13,9 +13,8 @@ import { ET_CONFIG } from './src/js/models/et-training.js';
 import {
     getUsers, registerUser, loginUser, setCurrentUser,
     getCurrentUser, isLoggedIn, logoutUser,
-    saveOrder, getAllOrders, getUserOrders, updateOrderStatus,
     switchTab, togglePasswordVisibility, showAlert, handleLoginSubmit, handleSignupSubmit
-} from './src/js/app/login/login.js';
+} from './src/js/controller/login_controller.js';
 import { getBranches, calculateShippingFee, autoSelectFulfillmentBranch } from './src/js/controller/branch_controller.js';
 import {
     getCart, saveCart, updateCartBadge, addToCart, showToast,
@@ -29,6 +28,45 @@ import {
 } from './src/js/controller/product-details_controller.js';
 import { initShopLogic, renderFilteredProducts } from './src/js/controller/shop_controller.js';
 import { handleLogout } from './src/js/app/app.js';
+
+// Admin Dashboard Shell Imports
+import {
+    initAdminDashboard, switchAdminTab, closeAdminModal,
+    handleAdminLogout, filterProductsTable
+} from './src/js/controller/admin_dashboard_controller.js';
+
+// Product Management Controller Imports
+import {
+    renderProductsTab, confirmDeleteProduct, openProductFormPage,
+    renderFormImageInputs, addGalleryImageInput, removeGalleryImageInput,
+    renderFormSpecsInputs, addFormSpecInput, removeFormSpecInput,
+    renderFormFeaturesInputs, addFormFeatureInput, removeFormFeatureInput,
+    triggerProductFormSubmit, updateLivePreview, editProduct,
+    openProductModal, handleSaveProductSubmit
+} from './src/js/controller/product_management_controller.js';
+
+// Order Management Controller Imports
+import {
+    renderOrdersTab, changeOrderStatus,
+    saveOrder, getAllOrders, getUserOrders, updateOrderStatus
+} from './src/js/controller/order_management_controller.js';
+
+// Branch Management Controller Imports
+import {
+    renderBranchesTab, confirmDeleteBranch, openBranchModal,
+    editBranch, handleSaveBranchSubmit
+} from './src/js/controller/branch_management_controller.js';
+
+// User Management Controller Imports
+import {
+    renderUsersTab, changeUserRole, confirmDeleteUser,
+    openUserModal, handleSaveUserSubmit
+} from './src/js/controller/user_management_controller.js';
+
+// Analytics and Reports Controller Imports
+import {
+    renderAnalyticsTab
+} from './src/js/controller/analytics_and_report_controller.js';
 
 // ── Bind everything to window in one shot ────────────────────
 Object.assign(window, {
@@ -47,7 +85,6 @@ Object.assign(window, {
     // Authentication & Orders
     getUsers, registerUser, loginUser, setCurrentUser,
     getCurrentUser, isLoggedIn, logoutUser, handleLogout,
-    saveOrder, getAllOrders, getUserOrders, updateOrderStatus,
     switchTab, togglePasswordVisibility, showAlert, handleLoginSubmit, handleSignupSubmit,
 
     // Cart & Checkout
@@ -62,4 +99,30 @@ Object.assign(window, {
 
     // Shop Catalog
     initShopLogic, renderFilteredProducts,
+
+    // Admin Dashboard Shell
+    initAdminDashboard, switchAdminTab, closeAdminModal,
+    handleAdminLogout, filterProductsTable,
+
+    // Product Management
+    renderProductsTab, confirmDeleteProduct, openProductFormPage,
+    renderFormImageInputs, addGalleryImageInput, removeGalleryImageInput,
+    renderFormSpecsInputs, addFormSpecInput, removeFormSpecInput,
+    renderFormFeaturesInputs, addFormFeatureInput, removeFormFeatureInput,
+    triggerProductFormSubmit, updateLivePreview, editProduct,
+    openProductModal, handleSaveProductSubmit,
+
+    // Order Management
+    renderOrdersTab, changeOrderStatus, saveOrder, getAllOrders, getUserOrders, updateOrderStatus,
+
+    // Branch Management
+    renderBranchesTab, confirmDeleteBranch, openBranchModal,
+    editBranch, handleSaveBranchSubmit,
+
+    // User Management
+    renderUsersTab, changeUserRole, confirmDeleteUser,
+    openUserModal, handleSaveUserSubmit,
+
+    // Analytics & Reports
+    renderAnalyticsTab
 });
