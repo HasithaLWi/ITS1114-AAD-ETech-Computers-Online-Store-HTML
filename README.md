@@ -19,9 +19,9 @@ root/
 │   │
 │   ├── js/
 │   │   ├── app.js            SPA router & global app logic
-│   │   ├── admin-dashboard.js  Admin/staff management console
-│   │   ├── chatbot.js        E-T AI chatbot widget
-│   │   ├── product-details.js  Product detail page renderer
+│   │   ├── admin_dashboard.js  Admin/staff management console
+│   │   ├── chatbot_controller.js        E-T AI chatbot widget
+│   │   ├── product-details_controller.js  Product detail page renderer
 │   │   ├── components/       UI rendering modules
 │   │   ├── services/         Data flow & business logic (auth, cart)
 │   │   ├── utils/            Helper functions (branches, shop filters)

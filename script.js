@@ -15,20 +15,20 @@ import {
     getCurrentUser, isLoggedIn, logoutUser,
     saveOrder, getAllOrders, getUserOrders, updateOrderStatus,
     switchTab, togglePasswordVisibility, showAlert, handleLoginSubmit, handleSignupSubmit
-} from './src/js/services/auth.js';
-import { getBranches, calculateShippingFee, autoSelectFulfillmentBranch } from './src/js/utils/branches.js';
+} from './src/js/app/login/login.js';
+import { getBranches, calculateShippingFee, autoSelectFulfillmentBranch } from './src/js/controller/branch_controller.js';
 import {
     getCart, saveCart, updateCartBadge, addToCart, showToast,
     initCartLogic, initCheckoutLogic,
     updateItemQuantity, removeItemFromCart
-} from './src/js/services/cart.js';
+} from './src/js/controller/cart_controller.js';
 import {
     viewProductDetails, renderProductDetailsPage,
     changeProductQuantity,
     handleAddToCartFromDetails, handleBuyNowFromDetails
-} from './src/js/product-details.js';
-import { initShopLogic, renderFilteredProducts } from './src/js/utils/shop.js';
-import { handleLogout } from './src/js/app.js';
+} from './src/js/controller/product-details_controller.js';
+import { initShopLogic, renderFilteredProducts } from './src/js/controller/shop_controller.js';
+import { handleLogout } from './src/js/app/app.js';
 
 // ── Bind everything to window in one shot ────────────────────
 Object.assign(window, {

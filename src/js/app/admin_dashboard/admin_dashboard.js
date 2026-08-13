@@ -1,7 +1,7 @@
 // ETech Computers - Administrator & Staff Management Dashboard Controller
-import { getCurrentUser, isLoggedIn, logoutUser, getUsers, addUserByAdmin, updateUserRole, updateUser, deleteUser, getAllOrders, updateOrderStatus } from './services/auth.js';
-import { getStoredProducts, saveProduct, deleteProduct, getProductById } from './models/data.js';
-import { getBranches, saveBranch, deleteBranch, getBranchById } from './utils/branches.js';
+import { getCurrentUser, isLoggedIn, logoutUser, getUsers, addUserByAdmin, updateUserRole, updateUser, deleteUser, getAllOrders, updateOrderStatus } from '../login/login.js';
+import { getStoredProducts, saveProduct, deleteProduct, getProductById } from '../../models/data.js';
+import { getBranches, saveBranch, deleteBranch, getBranchById } from '../../controller/branch_controller.js';
 
 let activeTab = 'overview';
 let activeUser = null;
@@ -24,7 +24,7 @@ export function initAdminDashboard() {
   // Security Role Guard: Only STAFF and ADMIN allowed
   if (!activeUser || (activeUser.role !== 'ADMIN' && activeUser.role !== 'STAFF')) {
     alert('Access Denied: You do not have administrative privileges.');
-    window.location.href = '../index.html';
+    window.location.href = '../../../../index.html';
     return;
   }
 
@@ -1422,5 +1422,5 @@ window.closeAdminModal = function() {
 
 window.handleAdminLogout = function() {
   logoutUser();
-  window.location.href = '../index.html';
+  window.location.href = '../../../../index.html';
 };

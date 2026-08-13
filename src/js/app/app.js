@@ -1,10 +1,10 @@
 // ETech Computers - Single Page Section Toggle Router & Global App Logic
-import { products, getProductById, getFeaturedProducts, getNewArrivalProducts } from './models/data.js';
-import { legalPolicies, getPolicyData } from './models/policy-data.js';
-import { getCurrentUser, isLoggedIn, logoutUser, getUserOrders } from './services/auth.js';
-import { initCartLogic, initCheckoutLogic, updateCartBadge, addToCart, getCart, saveCart, showToast } from './services/cart.js';
-import { renderProductDetailsPage, viewProductDetails } from './product-details.js';
-import { initShopLogic } from './utils/shop.js';
+import { products, getProductById, getFeaturedProducts, getNewArrivalProducts } from '../models/data.js';
+import { legalPolicies, getPolicyData } from '../models/policy-data.js';
+import { getCurrentUser, isLoggedIn, logoutUser, getUserOrders } from './login/login.js';
+import { initCartLogic, initCheckoutLogic, updateCartBadge, addToCart, getCart, saveCart, showToast } from '../controller/cart_controller.js';
+import { renderProductDetailsPage, viewProductDetails } from '../controller/product-details_controller.js';
+import { initShopLogic } from '../controller/shop_controller.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   initApp();

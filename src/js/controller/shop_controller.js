@@ -1,7 +1,7 @@
 // ETech Computers - Shop Page Dynamic Logic
 import { products } from '../models/data.js';
-import { addToCart } from '../services/cart.js';
-import { viewProductDetails } from '../product-details.js';
+import { addToCart } from './cart_controller.js';
+import { viewProductDetails } from './product-details_controller.js';
 
 /**
  * Called by app.js router whenever #shop fragment is loaded into DOM

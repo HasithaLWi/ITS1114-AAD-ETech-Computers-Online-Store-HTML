@@ -1,7 +1,7 @@
 // ETech Computers - Shopping Cart & Checkout Logic
 import { products, getStoredProducts, deductBranchStock } from '../models/data.js';
-import { saveOrder, getCurrentUser } from './auth.js';
-import { autoSelectFulfillmentBranch } from '../utils/branches.js';
+import { saveOrder, getCurrentUser } from '../app/login/login.js';
+import { autoSelectFulfillmentBranch } from './branch_controller.js';
 
 /**
  * Global LocalStorage Cart State Helpers
