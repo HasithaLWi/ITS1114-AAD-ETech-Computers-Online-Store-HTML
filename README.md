@@ -56,25 +56,36 @@ root/
 
 3. **Open in browser** — Navigate to `http://localhost:3000` (or your server's port).
 
+## Backend Migration & REST API Integration
+
+> 📌 **Looking to integrate a Spring Boot & MySQL backend?**
+> Check out the complete **[Backend API Integration Specification (BACKEND_API_MIGRATION.md)](file:///f:/IJSE/SECOND%20SEM/SECOND%20SEM%20-%20ITS%201114%20-%20AAD/ITS1114-AAD-ETech-Computers-Online-Store-HTML/BACKEND_API_MIGRATION.md)** for:
+> - MySQL Relational Schema (DDL)
+> - Spring Boot Controller Endpoints (`/api/v1/products`, `/api/v1/orders`, `/api/v1/inventory`, `/api/v1/branches`, `/api/v1/auth`)
+> - Mapping from client `localStorage` keys to REST APIs
+> - Guide on which client-side validations/computations to strip out once the backend is connected
+
+---
+
 ## Tech Stack
 
 | Layer      | Technology                          |
 |------------|-------------------------------------|
-| Structure  | HTML5 (semantic)                    |
-| Styling    | Tailwind CSS v3 (CDN) + custom CSS |
-| Logic      | Vanilla JavaScript (ES Modules)    |
-| Fonts      | Plus Jakarta Sans (Google Fonts)   |
-| Data       | LocalStorage (client-side mock)    |
+| Structure  | HTML5 (Single-file SPA architecture)|
+| Styling    | Tailwind CSS v3 (CDN) + custom CSS  |
+| Logic      | Vanilla JavaScript (ES Modules)     |
+| Fonts      | Plus Jakarta Sans (Google Fonts)    |
+| Data       | LocalStorage (client mock) -> Spring Boot (target) |
 
 ## Key Features
 
-- **SPA-style routing** via hash-based navigation
-- **Product catalog** with category filtering, search, and sort
-- **Shopping cart** with quantity management and checkout flow
-- **User authentication** (LocalStorage-based registration/login)
-- **Admin dashboard** for product/order/branch/user management
-- **E-T AI Chatbot** with Gemini API integration
-- **Responsive design** optimized for mobile and desktop
+- **Single-page application (SPA)** with hash routing (`#home`, `#shop`, `#cart`, `#checkout`, `#login`, `#admin`)
+- **Product catalog & 5-image gallery** with category filtering, search, and sorting
+- **Stock Health & Advanced Inventory Alert Center** with regional warehouse monitoring (Colombo, Galle, Matara, Kandy)
+- **Shopping cart & checkout** with automated warehouse selection and distance calculation
+- **Role-based access** (`ADMIN`, `STAFF`, `CUSTOMER`)
+- **Admin & Staff Console** (Products, Orders, Stock Health, Branches, Users, Financial Reports)
+- **E-T AI Chatbot** with Gemini AI integration
 
 ## License
 
