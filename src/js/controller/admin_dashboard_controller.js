@@ -10,23 +10,17 @@ import { renderOrdersTab } from './order_management_controller.js';
 import { renderBranchesTab } from './branch_management_controller.js';
 import { renderUsersTab } from './user_management_controller.js';
 import { renderAnalyticsTab } from './analytics_and_report_controller.js';
+import { getStockHealthReport, renderStockHealthTab, navigateToStockHealthWithSearch } from './stock_health_controller.js';
 
 let activeTab = 'overview';
 let activeUser = null;
-
-// Initialize on DOMContentLoaded only if we are on the administrator dashboard page
-document.addEventListener('DOMContentLoaded', () => {
-  if (window.location.pathname.includes('administrator_dashboard.html')) {
-    initAdminDashboard();
-  }
-});
 
 /**
  * Initialize Dashboard & Security Guard
  */
 export function initAdminDashboard() {
   if (!isLoggedIn()) {
-    window.location.href = 'login.html?redirect=admin';
+    window.location.hash = '#login?redirect=admin';
     return;
   }
 
@@ -35,7 +29,7 @@ export function initAdminDashboard() {
   // Security Role Guard: Only STAFF and ADMIN allowed
   if (!activeUser || (activeUser.role !== 'ADMIN' && activeUser.role !== 'STAFF')) {
     alert('Access Denied: You do not have administrative privileges.');
-    window.location.href = '../../../index.html';
+    window.location.hash = '#home';
     return;
   }
 
@@ -81,7 +75,7 @@ function setupRoleBasedNavigation() {
 /**
  * Tab Switching Handler
  */
-export function switchAdminTab(tabName) {
+export function switchAdminTab(tabName, param = null) {
   // Prevent Staff from accessing Admin-only tabs
   if (activeUser.role !== 'ADMIN' && ['branches', 'users', 'analytics'].includes(tabName)) {
     tabName = 'overview';
@@ -114,6 +108,7 @@ export function switchAdminTab(tabName) {
   if (tabName === 'overview') renderOverviewTab();
   else if (tabName === 'products') renderProductsTab();
   else if (tabName === 'orders') renderOrdersTab();
+  else if (tabName === 'stock-health') renderStockHealthTab(param);
   else if (tabName === 'branches' && activeUser.role === 'ADMIN') renderBranchesTab();
   else if (tabName === 'users' && activeUser.role === 'ADMIN') renderUsersTab();
   else if (tabName === 'analytics' && activeUser.role === 'ADMIN') renderAnalyticsTab();
@@ -129,14 +124,13 @@ function renderOverviewTab() {
   if (!container) return;
 
   const orders = getAllOrders();
-  const products = getStoredProducts();
   const users = getUsers();
   const branches = getBranches();
+  const healthReport = getStockHealthReport();
 
   // Metrics
   const totalRevenue = orders.reduce((sum, o) => sum + (parseFloat((o.totalAmount || "0").toString().replace(/[^0-9.]/g, '')) || 0), 0);
   const pendingOrders = orders.filter(o => o.status === 'Pending' || o.status === 'Processing').length;
-  const lowStockProducts = products.filter(p => p.totalStock < 10);
 
   // Update Overview Stats Counters
   const totalRevenueEl = document.getElementById('overview-total-revenue');
@@ -156,7 +150,12 @@ function renderOverviewTab() {
 
   const lowStockCountEl = document.getElementById('overview-low-stock-count');
   if (lowStockCountEl) {
-    lowStockCountEl.textContent = lowStockProducts.length;
+    lowStockCountEl.textContent = healthReport.totalActiveAlerts;
+  }
+
+  const lowStockSubtitleEl = document.getElementById('overview-low-stock-subtitle');
+  if (lowStockSubtitleEl) {
+    lowStockSubtitleEl.textContent = `${healthReport.totalDepletedUnits} Depleted, ${healthReport.totalLowUnits} Low Stock`;
   }
 
   const registeredUsersEl = document.getElementById('overview-registered-users');
@@ -192,24 +191,57 @@ function renderOverviewTab() {
         `).join('') || '<p class="text-xs text-[#718096] py-3">No recent orders.</p>';
   }
 
-  // Populate Low Stock Alerts Warning Sidebar
+  // Populate Low Stock Alerts Warning Sidebar (Branch-Aware with Click-to-Search-Filter)
   const lowStocksAlerts = document.getElementById('low-stocks-alerts');
   if (lowStocksAlerts) {
-    lowStocksAlerts.innerHTML = lowStockProducts.map(p => `
-            <div class="bg-[#080b12] p-3 rounded-md border border-rose-950/60 flex items-center space-x-2.5">
-              <img src="${p.image}" class="w-9 h-9 object-cover rounded bg-[#101722] flex-shrink-0">
-              <div class="min-w-0 flex-1">
-                <p class="text-xs font-bold text-white truncate">${p.name}</p>
-                <div class="flex flex-wrap gap-1 mt-0.5">
-                  ${Object.entries(p.branchStock || {}).map(([bId, qty]) => `
-                    <span class="text-[9px] px-1 py-0.5 rounded font-mono ${qty < 3 ? 'bg-rose-500/20 text-rose-300 font-bold' : 'bg-[#141c28] text-[#a7b3c4]'}">
-                      ${bId.replace('BR-', '')}: ${qty}
-                    </span>
-                  `).join('')}
+    if (healthReport.alertItems.length === 0) {
+      lowStocksAlerts.innerHTML = `
+        <div class="p-4 bg-[#080b12] rounded-md border border-emerald-500/20 text-center space-y-1">
+          <span class="text-emerald-400 font-bold text-xs">✓ Optimal Inventory</span>
+          <p class="text-[10px] text-[#718096]">All regional warehouse stock levels are healthy.</p>
+        </div>
+      `;
+    } else {
+      lowStocksAlerts.innerHTML = healthReport.alertItems.map(item => {
+        const p = item.product;
+        const safeSearchQuery = (p.name || '').replace(/'/g, "\\'");
+        return `
+          <div onclick="navigateToStockHealthWithSearch('${safeSearchQuery}')"
+            class="bg-[#080b12] hover:bg-[#101722] p-3 rounded-md border ${item.worstStage === 'DEPLETED' ? 'border-rose-900/60 hover:border-rose-500/60 bg-rose-950/10' : 'border-amber-900/60 hover:border-amber-500/60 bg-amber-950/10'} space-y-2 cursor-pointer transition-all group"
+            title="Click to view & filter ${p.name} in Stock Health Center">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-2 min-w-0">
+                <img src="${p.image}" class="w-8 h-8 object-cover rounded bg-[#101722] flex-shrink-0 border border-[#202b3a]">
+                <div class="min-w-0 flex-1">
+                  <p class="text-xs font-bold text-white group-hover:text-blue-400 transition-colors truncate max-w-[150px]">${p.name}</p>
+                  <span class="text-[9px] text-[#718096] font-mono">${p.sku}</span>
                 </div>
               </div>
+              <button onclick="event.stopPropagation(); openQuickRestockModal(${p.id})"
+                class="px-2 py-1 bg-blue-600/20 hover:bg-blue-600 text-blue-300 hover:text-white rounded text-[10px] font-bold border border-blue-500/40 transition-all flex-shrink-0">
+                Restock
+              </button>
             </div>
-        `).join('') || '<p class="text-xs text-emerald-400 py-3">All branch stocks healthy!</p>';
+
+            <!-- Branch Stock Badges -->
+            <div class="flex flex-wrap gap-1 pt-1 border-t border-[#202b3a]/60">
+              ${Object.entries(p.branchStock || {}).map(([bId, qty]) => {
+                const isOut = parseInt(qty) === 0;
+                const isLow = parseInt(qty) > 0 && parseInt(qty) <= item.margin;
+                let badgeClass = 'bg-[#141c28] text-[#a7b3c4]';
+                if (isOut) badgeClass = 'bg-rose-500/25 text-rose-300 font-bold border border-rose-500/50';
+                else if (isLow) badgeClass = 'bg-amber-500/25 text-amber-300 font-bold border border-amber-500/50';
+                return `
+                  <span class="text-[9px] px-1.5 py-0.5 rounded font-mono ${badgeClass}">
+                    ${bId.replace('BR-', '')}: ${qty}
+                  </span>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
   }
 }
 
@@ -231,7 +263,7 @@ export function closeAdminModal() {
 
 export function handleAdminLogout() {
   logoutUser();
-  window.location.href = '../../../index.html';
+  window.location.hash = '#home';
 }
 
 export function filterProductsTable() {

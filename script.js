@@ -28,6 +28,8 @@ import {
 } from './src/js/controller/product-details_controller.js';
 import { initShopLogic, renderFilteredProducts } from './src/js/controller/shop_controller.js';
 import { handleLogout } from './src/js/app/app.js';
+import { renderLoginPage, initLoginPage } from './src/js/app/login/login.js';
+import { renderAdminPage, initAdminPage } from './src/js/app/administrator/administrator.js';
 
 // Admin Dashboard Shell Imports
 import {
@@ -68,10 +70,21 @@ import {
     renderAnalyticsTab
 } from './src/js/controller/analytics_and_report_controller.js';
 
+// Stock Health & Alerts Controller Imports
+import {
+    getStockHealthReport, renderStockHealthTab,
+    toggleProductAlert, updateProductStockMargin,
+    openQuickRestockModal, switchRestockModalMode,
+    handleQuickRestockSubmit, handleStockTransferSubmit,
+    filterStockHealthTable, clearStockSearch, navigateToStockHealthWithSearch
+} from './src/js/controller/stock_health_controller.js';
+import { updateProductStockSettings, quickAdjustStock, transferBranchStock } from './src/js/models/data.js';
+
 // ── Bind everything to window in one shot ────────────────────
 Object.assign(window, {
     // Data & Products
     products, getProductById, getFeaturedProducts, getNewArrivalProducts, getStoredProducts, saveProduct, deleteProduct,
+    updateProductStockSettings, quickAdjustStock, transferBranchStock,
 
     // Branches & Shipping
     getBranches, calculateShippingFee, autoSelectFulfillmentBranch,
@@ -122,6 +135,17 @@ Object.assign(window, {
     // User Management
     renderUsersTab, changeUserRole, confirmDeleteUser,
     openUserModal, handleSaveUserSubmit,
+
+    // Dynamic Page Generators (SPA)
+    renderLoginPage, initLoginPage,
+    renderAdminPage, initAdminPage,
+
+    // Stock Health & Alerts
+    getStockHealthReport, renderStockHealthTab,
+    toggleProductAlert, updateProductStockMargin,
+    openQuickRestockModal, switchRestockModalMode,
+    handleQuickRestockSubmit, handleStockTransferSubmit,
+    filterStockHealthTable, clearStockSearch, navigateToStockHealthWithSearch,
 
     // Analytics & Reports
     renderAnalyticsTab

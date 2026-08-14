@@ -113,12 +113,12 @@
           <!-- Dynamic Header Auth Button / Admin Console / User Menu -->
           <div id="header-auth-btn-container" class="flex items-center space-x-2">
             <!-- Fallback Static Admin Console Link -->
-            <a href="src/pages/administrator_dashboard.html"
+            <a href="#admin"
               class="hidden sm:inline-flex items-center px-3.5 py-2 rounded-lg bg-[#101722] hover:bg-[#141c28] text-[#a7b3c4] hover:text-white text-xs font-semibold border border-[#202b3a] hover:border-[#34445a] transition-all">
               Admin Console
             </a>
             <!-- Sign In button -->
-            <a href="src/pages/login.html"
+            <a href="#login"
               class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-all flex items-center space-x-1.5">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -146,7 +146,7 @@
         <a href="#shop" onclick="document.getElementById('mobile-menu').classList.add('hidden')"
           class="nav-link block px-4 py-2.5 rounded-lg text-base font-medium text-[#a7b3c4] hover:bg-[#101722] hover:text-blue-400 transition-all">Shop
           Catalog</a>
-        <a href="src/pages/administrator_dashboard.html"
+        <a href="#admin"
           class="block px-4 py-2.5 rounded-lg text-base font-medium text-[#a7b3c4] hover:bg-[#101722] hover:text-white transition-all">Admin
           Console</a>
         <div id="mobile-auth-drawer" class="pt-2 px-4"></div>
@@ -1028,6 +1028,12 @@
       </div>
     </section>
 
+    <!-- ================= SECTION 8: LOGIN & REGISTER PAGE ================= -->
+    <section id="login-page" class="page-section hidden"></section>
+
+    <!-- ================= SECTION 9: ADMINISTRATOR DASHBOARD ================= -->
+    <section id="admin-page" class="page-section hidden"></section>
+
   </main>
 
   <!-- Success Modal Popup -->
@@ -1075,7 +1081,7 @@
   <!-- ============================================================ -->
   <!-- 3. PERSISTENT FOOTER                                         -->
   <!-- ============================================================ -->
-  <footer class="bg-[#0c111b] border-t border-[#202b3a] text-[#718096] text-sm mt-auto">
+  <footer id="store-footer" class="bg-[#0c111b] border-t border-[#202b3a] text-[#718096] text-sm mt-auto">
     <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
 

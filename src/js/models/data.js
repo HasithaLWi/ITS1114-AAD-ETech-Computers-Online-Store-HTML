@@ -396,13 +396,21 @@ export function getStoredProducts() {
                 ...p,
                 branchStock: stockMap,
                 totalStock: totalStock,
-                inStock: totalStock > 0
+                inStock: totalStock > 0,
+                alertEnabled: p.alertEnabled !== undefined ? p.alertEnabled : true,
+                lowStockMargin: p.lowStockMargin !== undefined ? parseInt(p.lowStockMargin) : 5
             };
         });
         localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(seeded));
         return seeded;
     }
-    return JSON.parse(raw);
+    const parsed = JSON.parse(raw);
+    // Ensure all items have alertEnabled and lowStockMargin properties
+    return parsed.map(p => ({
+        ...p,
+        alertEnabled: p.alertEnabled !== undefined ? p.alertEnabled : true,
+        lowStockMargin: p.lowStockMargin !== undefined ? parseInt(p.lowStockMargin) : 5
+    }));
 }
 
 /**
@@ -482,7 +490,9 @@ export function saveProduct(productData) {
         features: productData.features || ["High Performance Tech Hardware"],
         branchStock: branchStock,
         totalStock: totalStock,
-        inStock: totalStock > 0
+        inStock: totalStock > 0,
+        alertEnabled: productData.alertEnabled !== undefined ? productData.alertEnabled : (index > -1 && all[index].alertEnabled !== undefined ? all[index].alertEnabled : true),
+        lowStockMargin: productData.lowStockMargin !== undefined ? parseInt(productData.lowStockMargin) : (index > -1 && all[index].lowStockMargin !== undefined ? all[index].lowStockMargin : 5)
     };
 
     if (index > -1) {
@@ -518,6 +528,64 @@ export function deductBranchStock(productId, branchId, quantity) {
         product.inStock = product.totalStock > 0;
         saveStoredProducts(all);
     }
+}
+
+/**
+ * Update stock alert configuration for a specific product
+ */
+export function updateProductStockSettings(productId, { alertEnabled, lowStockMargin }) {
+    const all = getStoredProducts();
+    const product = all.find(p => p.id === parseInt(productId));
+    if (product) {
+        if (alertEnabled !== undefined) product.alertEnabled = Boolean(alertEnabled);
+        if (lowStockMargin !== undefined) product.lowStockMargin = Math.max(1, parseInt(lowStockMargin) || 5);
+        saveStoredProducts(all);
+        return product;
+    }
+    return null;
+}
+
+/**
+ * Adjust stock quantity directly for a branch warehouse
+ */
+export function quickAdjustStock(productId, branchId, quantityOrDelta, isAbsolute = false) {
+    const all = getStoredProducts();
+    const product = all.find(p => p.id === parseInt(productId));
+    if (product) {
+        if (!product.branchStock) product.branchStock = { "BR-COL": 0, "BR-GAL": 0, "BR-MAT": 0, "BR-KND": 0 };
+        const current = parseInt(product.branchStock[branchId] || 0);
+        if (isAbsolute) {
+            product.branchStock[branchId] = Math.max(0, parseInt(quantityOrDelta) || 0);
+        } else {
+            product.branchStock[branchId] = Math.max(0, current + parseInt(quantityOrDelta || 0));
+        }
+        product.totalStock = Object.values(product.branchStock).reduce((a, b) => a + parseInt(b || 0), 0);
+        product.inStock = product.totalStock > 0;
+        saveStoredProducts(all);
+        return product;
+    }
+    return null;
+}
+
+/**
+ * Transfer stock from one branch warehouse to another
+ */
+export function transferBranchStock(productId, fromBranchId, toBranchId, transferQty) {
+    const all = getStoredProducts();
+    const product = all.find(p => p.id === parseInt(productId));
+    const qty = parseInt(transferQty) || 0;
+    if (product && qty > 0 && fromBranchId !== toBranchId) {
+        if (!product.branchStock) product.branchStock = { "BR-COL": 0, "BR-GAL": 0, "BR-MAT": 0, "BR-KND": 0 };
+        const sourceStock = parseInt(product.branchStock[fromBranchId] || 0);
+        const actualTransfer = Math.min(sourceStock, qty);
+        product.branchStock[fromBranchId] = Math.max(0, sourceStock - actualTransfer);
+        product.branchStock[toBranchId] = (parseInt(product.branchStock[toBranchId] || 0)) + actualTransfer;
+        product.totalStock = Object.values(product.branchStock).reduce((a, b) => a + parseInt(b || 0), 0);
+        product.inStock = product.totalStock > 0;
+        saveStoredProducts(all);
+        return { success: true, transferred: actualTransfer, product };
+    }
+    return { success: false, message: 'Invalid transfer parameters.' };
 }
 
 

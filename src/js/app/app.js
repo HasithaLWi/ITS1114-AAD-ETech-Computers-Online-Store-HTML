@@ -6,6 +6,8 @@ import { getUserOrders } from '../controller/order_management_controller.js';
 import { initCartLogic, initCheckoutLogic, updateCartBadge, addToCart, getCart, saveCart, showToast } from '../controller/cart_controller.js';
 import { renderProductDetailsPage, viewProductDetails } from '../controller/product-details_controller.js';
 import { initShopLogic } from '../controller/shop_controller.js';
+import { renderLoginPage } from './login/login.js';
+import { renderAdminPage } from './administrator/administrator.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   initApp();
@@ -34,13 +36,70 @@ function handleRoute() {
 
   // ROUTE GUARDS: Protected pages require signup/login first
   if ((pageName === 'checkout' || pageName === 'account') && !isLoggedIn()) {
-    window.location.href = `src/pages/login.html?redirect=${pageName}`;
+    window.location.hash = `#login?redirect=${pageName}`;
     return;
+  }
+
+  if (['admin', 'administrator'].includes(pageName)) {
+    if (!isLoggedIn()) {
+      window.location.hash = '#login?redirect=admin';
+      return;
+    }
+    const user = getCurrentUser();
+    if (!user || (user.role !== 'ADMIN' && user.role !== 'STAFF')) {
+      alert('Access Denied: You do not have administrative privileges.');
+      window.location.hash = '#home';
+      return;
+    }
+  }
+
+  // Manage Layout (Header, Footer, Chatbot) visibility for full-screen Admin Console
+  const storeHeader = document.querySelector('header');
+  const storeFooter = document.getElementById('store-footer');
+  const chatbot = document.getElementById('et-chatbot');
+
+  if (['admin', 'administrator'].includes(pageName)) {
+    if (storeHeader) storeHeader.classList.add('hidden');
+    if (storeFooter) storeFooter.classList.add('hidden');
+    if (chatbot) chatbot.classList.add('hidden');
+  } else {
+    if (storeHeader) storeHeader.classList.remove('hidden');
+    if (storeFooter) storeFooter.classList.remove('hidden');
+    if (chatbot) chatbot.classList.remove('hidden');
   }
 
   // 1. Hide all page sections
   const sections = document.querySelectorAll('.page-section');
   sections.forEach(sec => sec.classList.add('hidden'));
+
+  // Handle Dynamic Login Page route (#login)
+  if (pageName === 'login') {
+    if (isLoggedIn()) {
+      const user = getCurrentUser();
+      window.location.hash = (user && (user.role === 'ADMIN' || user.role === 'STAFF')) ? '#admin' : '#home';
+      return;
+    }
+    const loginSection = document.getElementById('login-page');
+    if (loginSection) {
+      loginSection.classList.remove('hidden');
+      window.scrollTo(0, 0);
+      renderLoginPage(queryPart);
+    }
+    updateActiveNavLinks(pageName);
+    updateHeaderAuthUI();
+    return;
+  }
+
+  // Handle Dynamic Administrator Dashboard route (#admin or #administrator)
+  if (['admin', 'administrator'].includes(pageName)) {
+    const adminSection = document.getElementById('admin-page');
+    if (adminSection) {
+      adminSection.classList.remove('hidden');
+      window.scrollTo(0, 0);
+      renderAdminPage(queryPart);
+    }
+    return;
+  }
 
   // Handle Legal Policy routes (privacy, terms, warranty, policy)
   if (['privacy', 'terms', 'warranty', 'policy'].includes(pageName)) {
@@ -130,7 +189,7 @@ function updateHeaderAuthUI() {
       authContainer.innerHTML = `
           <div class="flex items-center space-x-2 hidden md:flex">
             ${isAdminOrStaff ? `
-              <a href="src/pages/administrator_dashboard.html" class="flex items-center space-x-2 bg-[#101722] hover:bg-[#141c28] border border-[#202b3a] hover:border-[#34445a] px-3.5 py-2 rounded-md transition-all group">
+              <a href="#admin" class="flex items-center space-x-2 bg-[#101722] hover:bg-[#141c28] border border-[#202b3a] hover:border-[#34445a] px-3.5 py-2 rounded-md transition-all group">
                 <span class="text-xs font-semibold text-[#a7b3c4] group-hover:text-white max-w-[100px] truncate">Admin Console</span>
               </a>
             ` : ''}
@@ -144,10 +203,10 @@ function updateHeaderAuthUI() {
         `;
     } else {
       authContainer.innerHTML = `
-          <a href="src/pages/administrator_dashboard.html" class="hidden sm:inline-flex items-center px-3.5 py-2 rounded-md bg-[#101722] hover:bg-[#141c28] text-[#a7b3c4] hover:text-white text-xs font-semibold border border-[#202b3a] hover:border-[#34445a] transition-all">
+          <a href="#admin" class="hidden sm:inline-flex items-center px-3.5 py-2 rounded-md bg-[#101722] hover:bg-[#141c28] text-[#a7b3c4] hover:text-white text-xs font-semibold border border-[#202b3a] hover:border-[#34445a] transition-all">
             Admin Console
           </a>
-          <a href="src/pages/login.html" class="px-4 py-2 rounded-md bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-all flex items-center space-x-1.5 shadow-sm">
+          <a href="#login" class="px-4 py-2 rounded-md bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-all flex items-center space-x-1.5 shadow-sm">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/>
             </svg>
@@ -170,14 +229,14 @@ function updateHeaderAuthUI() {
             </div>
           </div>
           ${isAdminOrStaff ? `
-            <a href="src/pages/administrator_dashboard.html" class="block w-full text-center py-2 bg-[#141c28] border border-[#202b3a] text-white rounded-md text-xs font-bold">Open Admin Console</a>
+            <a href="#admin" class="block w-full text-center py-2 bg-[#141c28] border border-[#202b3a] text-white rounded-md text-xs font-bold">Open Admin Console</a>
           ` : ''}
           <button onclick="handleLogout()" class="w-full py-2 bg-rose-950/40 border border-rose-900/40 text-rose-300 rounded-md text-xs font-bold">Sign Out</button>
         </div>
       `;
     } else {
       mobileDrawer.innerHTML = `
-        <a href="src/pages/login.html" class="block w-full text-center py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-md font-bold text-xs">Sign In / Create Account</a>
+        <a href="#login" class="block w-full text-center py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-md font-bold text-xs">Sign In / Create Account</a>
       `;
     }
   }
@@ -220,7 +279,7 @@ function initAccountLogic() {
 
   const user = getCurrentUser();
   if (!user) {
-    window.location.href = 'src/pages/login.html?redirect=account';
+    window.location.hash = '#login?redirect=account';
     return;
   }
 

@@ -237,11 +237,25 @@ export function showAlert(message, isError = true) {
 
 function getRedirectTarget(user) {
   if (user && (user.role === 'ADMIN' || user.role === 'STAFF')) {
-    return 'administrator_dashboard.html';
+    return '#admin';
   }
-  const urlParams = new URLSearchParams(window.location.search);
-  const redirectParam = urlParams.get('redirect');
-  return redirectParam ? `../../index.html#${redirectParam}` : '../../index.html#home';
+  
+  // Check hash query first (#login?redirect=...) then fallback to search
+  let redirectParam = null;
+  const hash = window.location.hash || '';
+  if (hash.includes('?')) {
+    const params = new URLSearchParams(hash.split('?')[1]);
+    redirectParam = params.get('redirect');
+  }
+  if (!redirectParam) {
+    const urlParams = new URLSearchParams(window.location.search);
+    redirectParam = urlParams.get('redirect');
+  }
+
+  if (redirectParam) {
+    return redirectParam.startsWith('#') ? redirectParam : `#${redirectParam}`;
+  }
+  return '#home';
 }
 
 export function handleLoginSubmit(e) {
@@ -253,8 +267,9 @@ export function handleLoginSubmit(e) {
   if (res.success) {
     showAlert(`Welcome back, ${res.user.name}! Redirecting...`, false);
     setTimeout(() => {
-      window.location.href = getRedirectTarget(res.user);
-    }, 800);
+      const target = getRedirectTarget(res.user);
+      window.location.hash = target;
+    }, 600);
   } else {
     showAlert(res.message, true);
   }
@@ -276,8 +291,9 @@ export function handleSignupSubmit(e) {
   if (res.success) {
     showAlert(res.message, false);
     setTimeout(() => {
-      window.location.href = getRedirectTarget();
-    }, 800);
+      const target = getRedirectTarget(res.user);
+      window.location.hash = target;
+    }, 600);
   } else {
     showAlert(res.message, true);
   }
