@@ -27,7 +27,7 @@ import {
     handleAddToCartFromDetails, handleBuyNowFromDetails
 } from './src/js/controller/product-details_controller.js';
 import { initShopLogic, renderFilteredProducts } from './src/js/controller/shop_controller.js';
-import { handleLogout } from './src/js/app/app.js';
+import { handleLogout, updateHeaderAuthUI } from './src/js/app/app.js';
 import { renderLoginPage, initLoginPage } from './src/js/app/login/login.js';
 import { renderAdminPage, initAdminPage } from './src/js/app/administrator/administrator.js';
 
@@ -97,7 +97,7 @@ Object.assign(window, {
 
     // Authentication & Orders
     getUsers, registerUser, loginUser, setCurrentUser,
-    getCurrentUser, isLoggedIn, logoutUser, handleLogout,
+    getCurrentUser, isLoggedIn, logoutUser, handleLogout, updateHeaderAuthUI,
     switchTab, togglePasswordVisibility, showAlert, handleLoginSubmit, handleSignupSubmit,
 
     // Cart & Checkout

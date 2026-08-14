@@ -225,8 +225,14 @@ CREATE TABLE order_items (
 
 ---
 
-## 5. Client-Side Simplifications (What to Remove Upon Backend Integration)
+## 5. Client-Side Simplifications & Role-Based UI Security (RBAC)
 
+### Role-Based Access & Header Visibility Rules
+- 👑 **`ADMIN` Role**: Full access to Admin Console navigation and all management tabs (Products, Orders, Stock Health, Branches, Users, Financial Reports). Header shows `[Admin Console]` and account profile.
+- 🧑‍💼 **`STAFF` Role**: Access to operational tabs (Products, Orders, Stock Health). System configuration tabs (Branches, Users, Financials) are hidden. Header shows `[Admin Console]` and account profile.
+- 👤 **`CUSTOMER` / Guest**: `Admin Console` button is **completely hidden** from both desktop header and mobile drawer. Direct URL navigation to `#admin` is blocked by route guards and redirects to `#home` or `#login`. On the backend, Spring Security will enforce `@PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")` returning `403 Forbidden`.
+
+### What to Strip Out Upon Backend Integration
 When connecting the frontend to Spring Boot, the following complex/unnecessary client-side logic should be **stripped out** and left to the backend:
 
 1. **Client-Side ID Generation**:

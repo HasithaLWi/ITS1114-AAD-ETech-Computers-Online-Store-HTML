@@ -174,7 +174,7 @@ function triggerPageHooks(pageName, queryPart) {
 /**
  * Updates top navigation bar to reflect active authentication state
  */
-function updateHeaderAuthUI() {
+export function updateHeaderAuthUI() {
   const authContainer = document.getElementById('header-auth-btn-container');
   const mobileDrawer = document.getElementById('mobile-auth-drawer');
 
@@ -203,9 +203,6 @@ function updateHeaderAuthUI() {
         `;
     } else {
       authContainer.innerHTML = `
-          <a href="#admin" class="hidden sm:inline-flex items-center px-3.5 py-2 rounded-md bg-[#101722] hover:bg-[#141c28] text-[#a7b3c4] hover:text-white text-xs font-semibold border border-[#202b3a] hover:border-[#34445a] transition-all">
-            Admin Console
-          </a>
           <a href="#login" class="px-4 py-2 rounded-md bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-all flex items-center space-x-1.5 shadow-sm">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/>
