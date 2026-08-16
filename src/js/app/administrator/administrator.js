@@ -1,7 +1,7 @@
 // ============================================================
 //  administrator.js — Dynamic Administrator Dashboard View Generator
 // ============================================================
-import { initAdminDashboard, switchAdminTab } from '../../controller/admin_dashboard_controller.js';
+import { initAdminDashboard, switchAdminTab, closeAdminSidebar, toggleAdminSidebar } from '../../controller/admin_dashboard_controller.js';
 import { isLoggedIn, getCurrentUser } from '../../controller/login_controller.js';
 
 /**
@@ -15,110 +15,147 @@ export function renderAdminPage(queryPart) {
   if (!container) return;
 
   container.innerHTML = `
-    <div class="flex h-screen overflow-hidden bg-[#080b12] text-[#f4f7fb] font-sans antialiased selection:bg-blue-600 selection:text-white">
+    <div class="flex h-screen overflow-hidden bg-[#080b12] text-[#f4f7fb] font-sans antialiased selection:bg-blue-600 selection:text-white relative">
 
       <!-- ============================================================ -->
-      <!-- 1. FIXED SIDEBAR NAVIGATION (Worker Navigation)            -->
+      <!-- BACKDROP OVERLAY FOR EXPANDED SIDEBAR ON MOBILE/TABLET       -->
+      <!-- ============================================================ -->
+      <div
+        id="admin-sidebar-backdrop"
+        onclick="closeAdminSidebar()"
+        class="fixed inset-0 bg-[#080b12]/80 backdrop-blur-xs z-40 hidden opacity-0 transition-opacity duration-300">
+      </div>
+
+      <!-- ============================================================ -->
+      <!-- 1. RESPONSIVE SIDEBAR NAVIGATION (Worker Navigation)        -->
       <!-- ============================================================ -->
       <aside
-        class="w-64 bg-[#0c111b] border-r border-[#202b3a] flex flex-col justify-between flex-shrink-0 z-30 shadow-xl">
+        id="admin-sidebar"
+        class="admin-sidebar w-16 lg:w-64 bg-[#0c111b] border-r border-[#202b3a] flex flex-col justify-between flex-shrink-0 z-30 shadow-xl transition-all duration-300 ease-in-out">
 
         <!-- Top Brand & Header -->
-        <div class="p-5 space-y-5">
-          <!-- Brand Logo -->
-          <a href="#home" class="flex items-center space-x-2.5 group">
-            <div class="flex flex-col">
-              <span class="text-xl font-extrabold tracking-tight text-[#f4f7fb]">
-                ETech<span class="text-blue-500">Console</span>
-              </span>
-              <span class="text-[10px] tracking-[0.2em] uppercase text-[#718096] font-semibold">Worker Workspace</span>
-            </div>
-          </a>
+        <div class="p-3 lg:p-5 space-y-5">
+          <!-- Brand Logo with ET Monogram & Close Button -->
+          <div class="flex items-center justify-between w-full py-1">
+            <a href="#home" onclick="closeAdminSidebar()" title="ETech Computers" class="flex items-center justify-center lg:justify-start space-x-0 lg:space-x-3 group flex-1 min-w-0">
+              <!-- ET Monogram Logo Emblem (E-Blue, T-White) -->
+              <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600/25 to-blue-950/40 border border-blue-500/30 flex items-center justify-center font-extrabold text-base tracking-tight flex-shrink-0 shadow-md group-hover:border-blue-400 group-hover:shadow-[0_0_12px_rgba(59,130,246,0.3)] transition-all flex lg:hidden">
+                <span class="text-blue-500">E</span><span class="text-white">T</span>
+              </div>
+              <!-- Expanded Brand Text -->
+              <div class="sidebar-text-label hidden lg:flex flex-col min-w-0">
+                <span class="text-base font-extrabold tracking-tight text-[#f4f7fb] truncate">
+                  ETech<span class="text-blue-500">Console</span>
+                </span>
+                <span class="text-[9px] tracking-[0.2em] uppercase text-[#718096] font-semibold truncate">Worker Workspace</span>
+              </div>
+            </a>
+
+            <!-- Mobile Close Button (Visible when sidebar is expanded on mobile/tablet) -->
+            <button
+              id="admin-sidebar-close-btn"
+              onclick="closeAdminSidebar()"
+              title="Close Sidebar"
+              class="sidebar-close-btn hidden p-1.5 rounded-lg text-[#a7b3c4] hover:text-white bg-[#101722] hover:bg-[#141c28] border border-[#202b3a] transition-all flex-shrink-0 focus:outline-none ml-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
 
           <!-- Navigation Links -->
-          <nav class="space-y-1 pt-1">
-            <button data-tab="overview" onclick="switchAdminTab('overview')"
-              class="sidebar-nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-md font-bold text-xs bg-blue-600 text-white shadow-sm transition-all">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <nav class="space-y-1.5 pt-1">
+            <button data-tab="overview" onclick="switchAdminTab('overview')" title="Overview"
+              class="sidebar-nav-btn w-full flex items-center justify-center lg:justify-start space-x-0 lg:space-x-3 px-2 lg:px-3.5 py-2.5 rounded-lg font-bold text-xs bg-blue-600 text-white shadow-sm transition-all relative group">
+              <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
               </svg>
-              <span>Overview</span>
+              <span class="sidebar-text-label hidden lg:inline whitespace-nowrap">Overview</span>
+              <div class="sidebar-tooltip">Overview</div>
             </button>
 
-            <button data-tab="products" onclick="switchAdminTab('products')"
-              class="sidebar-nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-md font-medium text-xs text-[#a7b3c4] hover:text-white hover:bg-[#141c28] transition-all">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <button data-tab="products" onclick="switchAdminTab('products')" title="Product Catalog"
+              class="sidebar-nav-btn w-full flex items-center justify-center lg:justify-start space-x-0 lg:space-x-3 px-2 lg:px-3.5 py-2.5 rounded-lg font-medium text-xs text-[#a7b3c4] hover:text-white hover:bg-[#141c28] transition-all relative group">
+              <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
               </svg>
-              <span>Product Catalog</span>
+              <span class="sidebar-text-label hidden lg:inline whitespace-nowrap">Product Catalog</span>
+              <div class="sidebar-tooltip">Product Catalog</div>
             </button>
 
-            <button data-tab="orders" onclick="switchAdminTab('orders')"
-              class="sidebar-nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-md font-medium text-xs text-[#a7b3c4] hover:text-white hover:bg-[#141c28] transition-all">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <button data-tab="orders" onclick="switchAdminTab('orders')" title="Orders Processing"
+              class="sidebar-nav-btn w-full flex items-center justify-center lg:justify-start space-x-0 lg:space-x-3 px-2 lg:px-3.5 py-2.5 rounded-lg font-medium text-xs text-[#a7b3c4] hover:text-white hover:bg-[#141c28] transition-all relative group">
+              <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
               </svg>
-              <span>Orders Processing</span>
+              <span class="sidebar-text-label hidden lg:inline whitespace-nowrap">Orders Processing</span>
+              <div class="sidebar-tooltip">Orders Processing</div>
             </button>
 
-            <button data-tab="stock-health" onclick="switchAdminTab('stock-health')"
-              class="sidebar-nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-md font-medium text-xs text-[#a7b3c4] hover:text-white hover:bg-[#141c28] transition-all">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <button data-tab="stock-health" onclick="switchAdminTab('stock-health')" title="Stock Health & Alerts"
+              class="sidebar-nav-btn w-full flex items-center justify-center lg:justify-start space-x-0 lg:space-x-3 px-2 lg:px-3.5 py-2.5 rounded-lg font-medium text-xs text-[#a7b3c4] hover:text-white hover:bg-[#141c28] transition-all relative group">
+              <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
               </svg>
-              <span>Stock Health & Alerts</span>
+              <span class="sidebar-text-label hidden lg:inline whitespace-nowrap">Stock Health & Alerts</span>
+              <div class="sidebar-tooltip">Stock Health & Alerts</div>
             </button>
 
-            <button data-tab="branches" onclick="switchAdminTab('branches')"
-              class="admin-only-nav sidebar-nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-md font-medium text-xs text-[#a7b3c4] hover:text-white hover:bg-[#141c28] transition-all">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <button data-tab="branches" onclick="switchAdminTab('branches')" title="Store Branches"
+              class="admin-only-nav sidebar-nav-btn w-full flex items-center justify-center lg:justify-start space-x-0 lg:space-x-3 px-2 lg:px-3.5 py-2.5 rounded-lg font-medium text-xs text-[#a7b3c4] hover:text-white hover:bg-[#141c28] transition-all relative group">
+              <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
               </svg>
-              <span>Store Branches</span>
+              <span class="sidebar-text-label hidden lg:inline whitespace-nowrap">Store Branches</span>
+              <div class="sidebar-tooltip">Store Branches</div>
             </button>
 
-            <button data-tab="users" onclick="switchAdminTab('users')"
-              class="admin-only-nav sidebar-nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-md font-medium text-xs text-[#a7b3c4] hover:text-white hover:bg-[#141c28] transition-all">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <button data-tab="users" onclick="switchAdminTab('users')" title="User Directory"
+              class="admin-only-nav sidebar-nav-btn w-full flex items-center justify-center lg:justify-start space-x-0 lg:space-x-3 px-2 lg:px-3.5 py-2.5 rounded-lg font-medium text-xs text-[#a7b3c4] hover:text-white hover:bg-[#141c28] transition-all relative group">
+              <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
               </svg>
-              <span>User Directory</span>
+              <span class="sidebar-text-label hidden lg:inline whitespace-nowrap">User Directory</span>
+              <div class="sidebar-tooltip">User Directory</div>
             </button>
 
-            <button data-tab="analytics" onclick="switchAdminTab('analytics')"
-              class="admin-only-nav sidebar-nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-md font-medium text-xs text-[#a7b3c4] hover:text-white hover:bg-[#141c28] transition-all">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <button data-tab="analytics" onclick="switchAdminTab('analytics')" title="Financial Reports"
+              class="admin-only-nav sidebar-nav-btn w-full flex items-center justify-center lg:justify-start space-x-0 lg:space-x-3 px-2 lg:px-3.5 py-2.5 rounded-lg font-medium text-xs text-[#a7b3c4] hover:text-white hover:bg-[#141c28] transition-all relative group">
+              <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
               </svg>
-              <span>Financial Reports</span>
+              <span class="sidebar-text-label hidden lg:inline whitespace-nowrap">Financial Reports</span>
+              <div class="sidebar-tooltip">Financial Reports</div>
             </button>
           </nav>
         </div>
 
         <!-- Bottom Quick Links & Store Switch -->
-        <div class="p-4 border-t border-[#202b3a] space-y-2">
-          <a href="#home"
-            class="flex items-center space-x-2 text-xs font-semibold text-[#a7b3c4] hover:text-white px-3 py-2 rounded-md bg-[#101722] hover:bg-[#141c28] border border-[#202b3a] transition-colors">
-            <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="p-2 lg:p-4 border-t border-[#202b3a] space-y-2">
+          <a href="#home" onclick="closeAdminSidebar()" title="Return to Store Front"
+            class="flex items-center justify-center lg:justify-start space-x-0 lg:space-x-2 text-xs font-semibold text-[#a7b3c4] hover:text-white px-2 lg:px-3 py-2.5 rounded-lg bg-[#101722] hover:bg-[#141c28] border border-[#202b3a] transition-all relative group">
+            <svg class="w-4 h-4 text-blue-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
-            <span>Return to Store Front</span>
+            <span class="sidebar-text-label hidden lg:inline whitespace-nowrap">Return to Store</span>
+            <div class="sidebar-tooltip">Return to Store Front</div>
           </a>
 
-          <button onclick="handleAdminLogout()"
-            class="w-full text-left flex items-center space-x-2 text-xs font-semibold text-rose-400 hover:text-rose-300 px-3 py-2 rounded-md bg-rose-950/30 hover:bg-rose-950/60 border border-rose-900/40 transition-colors">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <button onclick="handleAdminLogout(); closeAdminSidebar();" title="Sign Out Session"
+            class="w-full text-left flex items-center justify-center lg:justify-start space-x-0 lg:space-x-2 text-xs font-semibold text-rose-400 hover:text-rose-300 px-2 lg:px-3 py-2.5 rounded-lg bg-rose-950/30 hover:bg-rose-950/60 border border-rose-900/40 transition-all relative group">
+            <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
             </svg>
-            <span>Sign Out Session</span>
+            <span class="sidebar-text-label hidden lg:inline whitespace-nowrap">Sign Out Session</span>
+            <div class="sidebar-tooltip">Sign Out Session</div>
           </button>
         </div>
 
@@ -130,10 +167,19 @@ export function renderAdminPage(queryPart) {
       <div class="flex-1 flex flex-col min-w-0 h-screen overflow-hidden bg-[#080b12]">
 
         <!-- Top Workspace Utility Bar -->
-        <header class="h-16 bg-[#0c111b] border-b border-[#202b3a] px-6 flex items-center justify-between flex-shrink-0">
-          <div>
-            <h2 class="text-sm font-extrabold text-white">Management Console</h2>
-            <p class="text-[10px] text-[#718096]">ETech Operations & Branch Warehouse Control</p>
+        <header class="h-16 bg-[#0c111b] border-b border-[#202b3a] px-4 sm:px-6 flex items-center justify-between flex-shrink-0">
+          <div class="flex items-center space-x-3">
+            <!-- Sidebar Collapse / Expand Toggle Button -->
+            <button id="admin-sidebar-toggle" onclick="toggleAdminSidebar()" title="Toggle Sidebar"
+              class="p-2 rounded-lg text-[#a7b3c4] hover:text-white bg-[#101722] hover:bg-[#141c28] border border-[#202b3a] transition-all flex items-center justify-center focus:outline-none focus:border-blue-500 flex lg:hidden">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+            <div>
+              <h2 class="text-sm font-extrabold text-white">Management Console</h2>
+              <p class="text-[10px] text-[#718096]">ETech Operations & Branch Warehouse Control</p>
+            </div>
           </div>
 
           <!-- Active Worker Profile Badge -->

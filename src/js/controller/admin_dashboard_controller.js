@@ -14,6 +14,7 @@ import { getStockHealthReport, renderStockHealthTab, navigateToStockHealthWithSe
 
 let activeTab = 'overview';
 let activeUser = null;
+let sidebarListenersInitialized = false;
 
 /**
  * Initialize Dashboard & Security Guard
@@ -35,7 +36,41 @@ export function initAdminDashboard() {
 
   updateUserInfoHeader();
   setupRoleBasedNavigation();
+  setupSidebarEventListeners();
   switchAdminTab(activeTab);
+}
+
+/**
+ * Setup Global Sidebar Event Listeners (Outside Click, ESC Key, Window Resize)
+ */
+function setupSidebarEventListeners() {
+  if (sidebarListenersInitialized) return;
+  sidebarListenersInitialized = true;
+
+  // Click outside sidebar to close when expanded on mobile
+  document.addEventListener('click', (e) => {
+    const sidebar = document.getElementById('admin-sidebar');
+    const toggleBtn = document.getElementById('admin-sidebar-toggle');
+    if (!sidebar || !sidebar.classList.contains('sidebar-force-expanded')) return;
+
+    if (!sidebar.contains(e.target) && (!toggleBtn || !toggleBtn.contains(e.target))) {
+      closeAdminSidebar();
+    }
+  });
+
+  // ESC key to close sidebar on mobile
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      closeAdminSidebar();
+    }
+  });
+
+  // Clean up mobile expanded state when resized to desktop (>= 1024px)
+  window.addEventListener('resize', () => {
+    if (window.innerWidth >= 1024) {
+      closeAdminSidebar();
+    }
+  });
 }
 
 /**
@@ -77,20 +112,25 @@ function setupRoleBasedNavigation() {
  */
 export function switchAdminTab(tabName, param = null) {
   // Prevent Staff from accessing Admin-only tabs
-  if (activeUser.role !== 'ADMIN' && ['branches', 'users', 'analytics'].includes(tabName)) {
+  if (activeUser && activeUser.role !== 'ADMIN' && ['branches', 'users', 'analytics'].includes(tabName)) {
     tabName = 'overview';
   }
 
   activeTab = tabName;
+
+  // Auto-close sidebar on mobile/tablet or when expanded
+  closeAdminSidebar();
 
   // Update Nav items highlight
   const navBtns = document.querySelectorAll('.sidebar-nav-btn');
   navBtns.forEach(btn => {
     const target = btn.getAttribute('data-tab');
     if (target === tabName) {
-      btn.className = 'sidebar-nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-md font-bold text-xs bg-blue-600 text-white shadow-sm transition-all';
+      btn.classList.add('bg-blue-600', 'text-white', 'shadow-sm', 'font-bold');
+      btn.classList.remove('text-[#a7b3c4]', 'hover:text-white', 'hover:bg-[#141c28]', 'font-medium');
     } else {
-      btn.className = 'sidebar-nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-md font-medium text-xs text-[#a7b3c4] hover:text-white hover:bg-[#141c28] transition-all';
+      btn.classList.remove('bg-blue-600', 'text-white', 'shadow-sm', 'font-bold');
+      btn.classList.add('text-[#a7b3c4]', 'hover:text-white', 'hover:bg-[#141c28]', 'font-medium');
     }
   });
 
@@ -109,9 +149,76 @@ export function switchAdminTab(tabName, param = null) {
   else if (tabName === 'products') renderProductsTab();
   else if (tabName === 'orders') renderOrdersTab();
   else if (tabName === 'stock-health') renderStockHealthTab(param);
-  else if (tabName === 'branches' && activeUser.role === 'ADMIN') renderBranchesTab();
-  else if (tabName === 'users' && activeUser.role === 'ADMIN') renderUsersTab();
-  else if (tabName === 'analytics' && activeUser.role === 'ADMIN') renderAnalyticsTab();
+  else if (tabName === 'branches' && activeUser && activeUser.role === 'ADMIN') renderBranchesTab();
+  else if (tabName === 'users' && activeUser && activeUser.role === 'ADMIN') renderUsersTab();
+  else if (tabName === 'analytics' && activeUser && activeUser.role === 'ADMIN') renderAnalyticsTab();
+}
+
+/**
+ * Open Admin Sidebar on Mobile/Tablet
+ */
+export function openAdminSidebar() {
+  const sidebar = document.getElementById('admin-sidebar');
+  const backdrop = document.getElementById('admin-sidebar-backdrop');
+  if (!sidebar) return;
+
+  const isDesktop = window.innerWidth >= 1024;
+  if (isDesktop) {
+    sidebar.classList.remove('sidebar-force-collapsed');
+  } else {
+    sidebar.classList.add('sidebar-force-expanded');
+    sidebar.classList.remove('sidebar-force-collapsed');
+    if (backdrop) {
+      backdrop.classList.remove('hidden');
+      requestAnimationFrame(() => {
+        backdrop.classList.remove('opacity-0');
+        backdrop.classList.add('opacity-100');
+      });
+    }
+  }
+}
+
+/**
+ * Close Admin Sidebar on Mobile/Tablet or Collapsed mode
+ */
+export function closeAdminSidebar() {
+  const sidebar = document.getElementById('admin-sidebar');
+  const backdrop = document.getElementById('admin-sidebar-backdrop');
+  if (!sidebar) return;
+
+  sidebar.classList.remove('sidebar-force-expanded');
+  if (backdrop) {
+    backdrop.classList.remove('opacity-100');
+    backdrop.classList.add('opacity-0');
+    setTimeout(() => {
+      if (!sidebar.classList.contains('sidebar-force-expanded')) {
+        backdrop.classList.add('hidden');
+      }
+    }, 200);
+  }
+}
+
+/**
+ * Toggle Admin Sidebar between Collapsed & Expanded states
+ */
+export function toggleAdminSidebar() {
+  const sidebar = document.getElementById('admin-sidebar');
+  if (!sidebar) return;
+
+  const isDesktop = window.innerWidth >= 1024;
+  if (isDesktop) {
+    sidebar.classList.toggle('sidebar-force-collapsed');
+    sidebar.classList.remove('sidebar-force-expanded');
+    const backdrop = document.getElementById('admin-sidebar-backdrop');
+    if (backdrop) backdrop.classList.add('hidden');
+  } else {
+    const isExpanded = sidebar.classList.contains('sidebar-force-expanded');
+    if (isExpanded) {
+      closeAdminSidebar();
+    } else {
+      openAdminSidebar();
+    }
+  }
 }
 
 /**

@@ -34,7 +34,8 @@ import { renderAdminPage, initAdminPage } from './src/js/app/administrator/admin
 // Admin Dashboard Shell Imports
 import {
     initAdminDashboard, switchAdminTab, closeAdminModal,
-    handleAdminLogout, filterProductsTable
+    handleAdminLogout, filterProductsTable, toggleAdminSidebar,
+    openAdminSidebar, closeAdminSidebar
 } from './src/js/controller/admin_dashboard_controller.js';
 
 // Product Management Controller Imports
@@ -115,7 +116,8 @@ Object.assign(window, {
 
     // Admin Dashboard Shell
     initAdminDashboard, switchAdminTab, closeAdminModal,
-    handleAdminLogout, filterProductsTable,
+    handleAdminLogout, filterProductsTable, toggleAdminSidebar,
+    openAdminSidebar, closeAdminSidebar,
 
     // Product Management
     renderProductsTab, confirmDeleteProduct, openProductFormPage,

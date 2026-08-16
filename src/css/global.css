@@ -277,3 +277,132 @@ textarea:focus {
     background: #2563eb;
     border-radius: 2px;
 }
+
+/* ── Admin Management Console Responsive Sidebar ───────────── */
+.admin-sidebar {
+    transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1), padding 0.25s ease;
+}
+
+/* Sleek Tooltips for collapsed/icon-only sidebar */
+.sidebar-tooltip {
+    position: absolute;
+    left: calc(100% + 12px);
+    top: 50%;
+    transform: translateY(-50%) translateX(-6px);
+    background-color: #101722;
+    color: #f4f7fb;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+    padding: 6px 12px;
+    border-radius: 8px;
+    border: 1px solid #202b3a;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.6), 0 0 12px rgba(37, 99, 235, 0.15);
+    opacity: 0;
+    pointer-events: none;
+    visibility: hidden;
+    z-index: 100;
+    transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s;
+}
+
+.sidebar-tooltip::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: -4px;
+    transform: translateY(-50%) rotate(45deg);
+    width: 8px;
+    height: 8px;
+    background-color: #101722;
+    border-left: 1px solid #202b3a;
+    border-bottom: 1px solid #202b3a;
+}
+
+/* Show tooltip on hover in icon-only mode (on small screens or when forced collapsed) */
+@media (max-width: 1023px) {
+    .admin-sidebar:not(.sidebar-force-expanded) .sidebar-nav-btn:hover .sidebar-tooltip,
+    .admin-sidebar:not(.sidebar-force-expanded) a:hover .sidebar-tooltip,
+    .admin-sidebar:not(.sidebar-force-expanded) button:hover .sidebar-tooltip {
+        opacity: 1;
+        transform: translateY(-50%) translateX(0);
+        visibility: visible;
+    }
+}
+
+@media (min-width: 1024px) {
+    .admin-sidebar:not(.sidebar-force-collapsed) .sidebar-tooltip {
+        display: none !important;
+    }
+}
+
+/* Manual collapse overrides on desktop */
+.admin-sidebar.sidebar-force-collapsed {
+    width: 4.5rem !important; /* 72px */
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+}
+
+.admin-sidebar.sidebar-force-collapsed .sidebar-text-label {
+    display: none !important;
+}
+
+.admin-sidebar.sidebar-force-collapsed .sidebar-nav-btn,
+.admin-sidebar.sidebar-force-collapsed a,
+.admin-sidebar.sidebar-force-collapsed button {
+    justify-content: center !important;
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+    gap: 0 !important;
+}
+
+.admin-sidebar.sidebar-force-collapsed .sidebar-nav-btn:hover .sidebar-tooltip,
+.admin-sidebar.sidebar-force-collapsed a:hover .sidebar-tooltip,
+.admin-sidebar.sidebar-force-collapsed button:hover .sidebar-tooltip {
+    display: block !important;
+    opacity: 1 !important;
+    transform: translateY(-50%) translateX(0) !important;
+    visibility: visible !important;
+}
+
+/* Manual expand override on mobile/tablet */
+.admin-sidebar.sidebar-force-expanded {
+    width: 16rem !important; /* 256px */
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 50;
+    box-shadow: 10px 0 35px rgba(0, 0, 0, 0.85);
+}
+
+.admin-sidebar.sidebar-force-expanded .sidebar-close-btn {
+    display: flex !important;
+}
+
+@media (min-width: 1024px) {
+    .admin-sidebar.sidebar-force-expanded .sidebar-close-btn,
+    .sidebar-close-btn {
+        display: none !important;
+    }
+}
+
+.admin-sidebar.sidebar-force-expanded .sidebar-text-label {
+    display: flex !important;
+}
+
+.admin-sidebar.sidebar-force-expanded span.sidebar-text-label {
+    display: inline !important;
+}
+
+.admin-sidebar.sidebar-force-expanded .sidebar-nav-btn,
+.admin-sidebar.sidebar-force-expanded a,
+.admin-sidebar.sidebar-force-expanded button {
+    justify-content: flex-start !important;
+    padding-left: 0.875rem !important;
+    padding-right: 0.875rem !important;
+    gap: 0.75rem !important;
+}
+
+.admin-sidebar.sidebar-force-expanded .sidebar-tooltip {
+    display: none !important;
+}
