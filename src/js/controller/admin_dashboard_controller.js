@@ -150,10 +150,7 @@ export function switchAdminTab(tabName, param = null) {
   else if (tabName === 'products') renderProductsTab();
   else if (tabName === 'orders') renderOrdersTab();
   else if (tabName === 'stock-health') renderStockHealthTab(param);
-<<<<<<< HEAD
   else if (tabName === 'taxonomy') renderTaxonomyTab();
-=======
->>>>>>> 35344e69ddaab3ece5bb1ebb6216c6aaef3cf7bd
   else if (tabName === 'branches' && activeUser && activeUser.role === 'ADMIN') renderBranchesTab();
   else if (tabName === 'users' && activeUser && activeUser.role === 'ADMIN') renderUsersTab();
   else if (tabName === 'analytics' && activeUser && activeUser.role === 'ADMIN') renderAnalyticsTab();
@@ -338,17 +335,17 @@ function renderOverviewTab() {
             <!-- Branch Stock Badges -->
             <div class="flex flex-wrap gap-1 pt-1 border-t border-[#202b3a]/60">
               ${Object.entries(p.branchStock || {}).map(([bId, qty]) => {
-                const isOut = parseInt(qty) === 0;
-                const isLow = parseInt(qty) > 0 && parseInt(qty) <= item.margin;
-                let badgeClass = 'bg-[#141c28] text-[#a7b3c4]';
-                if (isOut) badgeClass = 'bg-rose-500/25 text-rose-300 font-bold border border-rose-500/50';
-                else if (isLow) badgeClass = 'bg-amber-500/25 text-amber-300 font-bold border border-amber-500/50';
-                return `
+          const isOut = parseInt(qty) === 0;
+          const isLow = parseInt(qty) > 0 && parseInt(qty) <= item.margin;
+          let badgeClass = 'bg-[#141c28] text-[#a7b3c4]';
+          if (isOut) badgeClass = 'bg-rose-500/25 text-rose-300 font-bold border border-rose-500/50';
+          else if (isLow) badgeClass = 'bg-amber-500/25 text-amber-300 font-bold border border-amber-500/50';
+          return `
                   <span class="text-[9px] px-1.5 py-0.5 rounded font-mono ${badgeClass}">
                     ${bId.replace('BR-', '')}: ${qty}
                   </span>
                 `;
-              }).join('')}
+        }).join('')}
             </div>
           </div>
         `;
