@@ -12,6 +12,7 @@ import { renderUsersTab } from './user_management_controller.js';
 import { renderAnalyticsTab } from './analytics_and_report_controller.js';
 import { getStockHealthReport, renderStockHealthTab, navigateToStockHealthWithSearch } from './stock_health_controller.js';
 import { renderTaxonomyTab } from './taxonomy_controller.js';
+import { renderPoliciesTab } from './policy_management_controller.js';
 
 let activeTab = 'overview';
 let activeUser = null;
@@ -113,7 +114,7 @@ function setupRoleBasedNavigation() {
  */
 export function switchAdminTab(tabName, param = null) {
   // Prevent Staff from accessing Admin-only tabs
-  if (activeUser && activeUser.role !== 'ADMIN' && ['branches', 'users', 'analytics'].includes(tabName)) {
+  if (activeUser && activeUser.role !== 'ADMIN' && ['branches', 'users', 'analytics', 'policies'].includes(tabName)) {
     tabName = 'overview';
   }
 
@@ -154,6 +155,7 @@ export function switchAdminTab(tabName, param = null) {
   else if (tabName === 'branches' && activeUser && activeUser.role === 'ADMIN') renderBranchesTab();
   else if (tabName === 'users' && activeUser && activeUser.role === 'ADMIN') renderUsersTab();
   else if (tabName === 'analytics' && activeUser && activeUser.role === 'ADMIN') renderAnalyticsTab();
+  else if (tabName === 'policies' && activeUser && activeUser.role === 'ADMIN') renderPoliciesTab();
 }
 
 /**

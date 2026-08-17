@@ -8,12 +8,19 @@
 // ============================================================
 
 import { products, getProductById, getFeaturedProducts, getNewArrivalProducts, getStoredProducts, saveProduct, deleteProduct } from './src/js/models/data.js';
-import { legalPolicies, getPolicyData } from './src/js/models/policy-data.js';
+import {
+    legalPolicies, getPolicyData, getBusinessInfo, saveBusinessInfo,
+    getStoredPolicies, saveStoredPolicies, updatePolicyDocument,
+    DEFAULT_BUSINESS_INFO, DEFAULT_LEGAL_POLICIES
+} from './src/js/models/policy-data.js';
 import { ET_CONFIG } from './src/js/models/et-training.js';
 import {
     getUsers, registerUser, loginUser, setCurrentUser,
     getCurrentUser, isLoggedIn, logoutUser,
-    switchTab, togglePasswordVisibility, showAlert, handleLoginSubmit, handleSignupSubmit
+    switchTab, togglePasswordVisibility, showAlert, handleLoginSubmit, handleSignupSubmit,
+    updateUserProfile, changeUserPassword, openEditProfileModal, closeEditProfileModal,
+    switchProfileModalTab, toggleModalPasswordVisibility, handleSaveProfileDetailsSubmit,
+    handleChangePasswordSubmit
 } from './src/js/controller/login_controller.js';
 import { getBranches, calculateShippingFee, autoSelectFulfillmentBranch } from './src/js/controller/branch_controller.js';
 import {
@@ -39,6 +46,12 @@ import {
 import { handleLogout, updateHeaderAuthUI } from './src/js/app/app.js';
 import { renderLoginPage, initLoginPage } from './src/js/app/login/login.js';
 import { renderAdminPage, initAdminPage } from './src/js/app/administrator/administrator.js';
+import { renderAboutPage } from './src/js/app/about/about.js';
+import {
+    renderPoliciesTab, openBusinessInfoModal, handleSaveBusinessInfoSubmit,
+    openPolicyEditorModal, handleSavePolicySubmit, addClauseSection,
+    removeClauseSection, confirmResetPolicies
+} from './src/js/controller/policy_management_controller.js';
 
 // Admin Dashboard Shell Imports
 import {
@@ -111,16 +124,25 @@ Object.assign(window, {
     // Branches & Shipping
     getBranches, calculateShippingFee, autoSelectFulfillmentBranch,
 
-    // Legal Policies
-    legalPolicies, getPolicyData,
+    // Legal Policies & Corporate Profile
+    legalPolicies, getPolicyData, getBusinessInfo, saveBusinessInfo,
+    getStoredPolicies, saveStoredPolicies, updatePolicyDocument,
+    DEFAULT_BUSINESS_INFO, DEFAULT_LEGAL_POLICIES,
+    renderAboutPage,
+    renderPoliciesTab, openBusinessInfoModal, handleSaveBusinessInfoSubmit,
+    openPolicyEditorModal, handleSavePolicySubmit, addClauseSection,
+    removeClauseSection, confirmResetPolicies,
 
     // Chatbot Config
     ET_CONFIG,
 
-    // Authentication & Orders
+    // Authentication & User Profile Management
     getUsers, registerUser, loginUser, setCurrentUser,
     getCurrentUser, isLoggedIn, logoutUser, handleLogout, updateHeaderAuthUI,
     switchTab, togglePasswordVisibility, showAlert, handleLoginSubmit, handleSignupSubmit,
+    updateUserProfile, changeUserPassword, openEditProfileModal, closeEditProfileModal,
+    switchProfileModalTab, toggleModalPasswordVisibility, handleSaveProfileDetailsSubmit,
+    handleChangePasswordSubmit,
 
     // Cart & Checkout
     getCart, saveCart, updateCartBadge, addToCart, showToast,

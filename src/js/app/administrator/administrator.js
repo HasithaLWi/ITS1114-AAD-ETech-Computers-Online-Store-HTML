@@ -142,6 +142,16 @@ export function renderAdminPage(queryPart) {
               <span class="sidebar-text-label hidden lg:inline whitespace-nowrap">Financial Reports</span>
               <div class="sidebar-tooltip">Financial Reports</div>
             </button>
+
+            <button data-tab="policies" onclick="switchAdminTab('policies')" title="Store Profile & Legal Policies"
+              class="admin-only-nav sidebar-nav-btn w-full flex items-center justify-center lg:justify-start space-x-0 lg:space-x-3 px-2 lg:px-3.5 py-2.5 rounded-lg font-medium text-xs text-[#a7b3c4] hover:text-white hover:bg-[#141c28] transition-all relative group">
+              <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              <span class="sidebar-text-label hidden lg:inline whitespace-nowrap">Store Profile & Policies</span>
+              <div class="sidebar-tooltip">Store Profile & Policies</div>
+            </button>
           </nav>
         </div>
 
@@ -467,7 +477,7 @@ export function renderAdminPage(queryPart) {
                   <thead
                     class="bg-[#080b12] uppercase font-bold text-[10px] tracking-wider text-[#718096] border-b border-[#202b3a]">
                     <tr>
-                      <th class="py-3 px-3.5">User ID & Name</th>
+                      <th class="py-3 px-3.5">User & Username</th>
                       <th class="py-3 px-3.5">Email</th>
                       <th class="py-3 px-3.5">Current Role</th>
                       <th class="py-3 px-3.5">Assigned Branch</th>
@@ -499,6 +509,11 @@ export function renderAdminPage(queryPart) {
                 </div>
               </div>
             </div>
+          </div>
+
+          <!-- Tab Panel: Store Profile & Legal Policies Management -->
+          <div id="tab-panel-policies" class="dashboard-tab-panel hidden">
+            <!-- Dynamic content rendered by policy_management_controller.js -->
           </div>
 
           <!-- Tab Panel 7: Product Form (Add / Edit Full Page View) -->

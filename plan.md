@@ -83,6 +83,7 @@ New color palette
   --space-12: 3rem;
   --space-16: 4rem;
   --space-20: 5rem;
+  
 
   /* ── More Professional Radius ──────────────────────────── */
   --radius-sm: 0.25rem;

@@ -24,7 +24,7 @@ export function renderUsersTab() {
           </div>
           <div>
             <p class="font-bold text-white text-xs">${u.name}</p>
-            <p class="text-[10px] text-[#718096] font-mono">${u.id}</p>
+            <p class="text-[10px] text-blue-400 font-mono">@${u.username || (u.email ? u.email.split('@')[0] : u.id)}</p>
           </div>
         </div>
       </td>
@@ -89,7 +89,7 @@ export function openUserModal(userId = null) {
         <div class="flex items-center justify-between border-b border-[#202b3a] pb-3">
           <div>
             <h3 class="text-base font-extrabold text-white">${targetUser ? 'Edit User Account' : 'Create Staff / Admin Account'}</h3>
-            ${targetUser ? `<span class="text-[10px] text-blue-400 font-mono">${targetUser.id}</span>` : ''}
+            ${targetUser ? `<span class="text-[10px] text-blue-400 font-mono">${targetUser.id} (@${targetUser.username || ''})</span>` : ''}
           </div>
           <button onclick="closeAdminModal()" class="text-[#718096] hover:text-white">&times;</button>
         </div>
@@ -100,14 +100,20 @@ export function openUserModal(userId = null) {
             <input type="text" id="modal-u-name" required value="${targetUser ? targetUser.name : ''}" placeholder="Jane Smith" class="w-full px-3 py-2 rounded-md bg-[#080b12] border border-[#202b3a] text-white focus:border-blue-500">
           </div>
 
-          <div>
-            <label class="block text-[#a7b3c4] font-bold mb-1">Email Address *</label>
-            <input type="email" id="modal-u-email" required value="${targetUser ? targetUser.email : ''}" placeholder="staff@etech.com" class="w-full px-3 py-2 rounded-md bg-[#080b12] border border-[#202b3a] text-white focus:border-blue-500">
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-[#a7b3c4] font-bold mb-1">Username *</label>
+              <input type="text" id="modal-u-username" required pattern="[a-zA-Z0-9_.-]+" minlength="3" value="${targetUser ? (targetUser.username || '') : ''}" placeholder="jane_staff" class="w-full px-3 py-2 rounded-md bg-[#080b12] border border-[#202b3a] text-white focus:border-blue-500">
+            </div>
+            <div>
+              <label class="block text-[#a7b3c4] font-bold mb-1">Email Address *</label>
+              <input type="email" id="modal-u-email" required value="${targetUser ? targetUser.email : ''}" placeholder="staff@etech.com" class="w-full px-3 py-2 rounded-md bg-[#080b12] border border-[#202b3a] text-white focus:border-blue-500">
+            </div>
           </div>
 
           <div>
             <label class="block text-[#a7b3c4] font-bold mb-1">${targetUser ? 'New Password (Optional)' : 'Password *'}</label>
-            <input type="password" id="modal-u-password" ${targetUser ? '' : 'required'} placeholder="${targetUser ? 'Leave blank to keep current password' : '••••••••'}" class="w-full px-3 py-2 rounded-md bg-[#080b12] border border-[#202b3a] text-white focus:border-blue-500">
+            <input type="password" id="modal-u-password" ${targetUser ? '' : 'required'} minlength="6" placeholder="${targetUser ? 'Leave blank to keep current password' : '•••••••• (min 6 chars)'}" class="w-full px-3 py-2 rounded-md bg-[#080b12] border border-[#202b3a] text-white focus:border-blue-500">
           </div>
 
           <div class="grid grid-cols-2 gap-3">
@@ -141,7 +147,8 @@ export function openUserModal(userId = null) {
 export function handleSaveUserSubmit(e, userId) {
   e.preventDefault();
   const name = document.getElementById('modal-u-name').value.trim();
-  const email = document.getElementById('modal-u-email').value.trim();
+  const username = document.getElementById('modal-u-username').value.trim().toLowerCase();
+  const email = document.getElementById('modal-u-email').value.trim().toLowerCase();
   const password = document.getElementById('modal-u-password').value;
   const role = document.getElementById('modal-u-role').value;
   const branch = document.getElementById('modal-u-branch').value;
@@ -152,7 +159,22 @@ export function handleSaveUserSubmit(e, userId) {
     // Edit existing
     const user = users.find(u => u.id === userId);
     if (user) {
+      // Check if username is taken by another user
+      const duplicateUsername = users.find(u => u.id !== userId && u.username && u.username.toLowerCase() === username);
+      if (duplicateUsername) {
+        alert('This username is already taken by another account.');
+        return;
+      }
+
+      // Check if email is taken by another user
+      const duplicateEmail = users.find(u => u.id !== userId && u.email.toLowerCase() === email);
+      if (duplicateEmail) {
+        alert('This email address is already taken by another account.');
+        return;
+      }
+
       user.name = name;
+      user.username = username;
       user.email = email;
       if (password) user.password = password;
       user.role = role;
@@ -166,14 +188,21 @@ export function handleSaveUserSubmit(e, userId) {
       }
     }
   } else {
+    // Check if username already exists
+    if (users.find(u => u.username && u.username.toLowerCase() === username)) {
+      alert('A user account with this username already exists.');
+      return;
+    }
+
     // Check if email already exists
-    if (users.find(u => u.email.toLowerCase() === email.toLowerCase())) {
+    if (users.find(u => u.email.toLowerCase() === email)) {
       alert('A user account with this email address already exists.');
       return;
     }
 
     const newUser = {
       id: `USR-${Math.floor(100000 + Math.random() * 900000)}`,
+      username: username,
       name: name,
       email: email,
       password: password,

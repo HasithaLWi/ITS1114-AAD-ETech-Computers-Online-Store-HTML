@@ -1,22 +1,47 @@
-// ETech Computers - Legal & Compliance Policy Store
-// Editable dataset for Privacy Policy, Terms of Service, and Guarantee & Warranty
+// ============================================================
+//  policy-data.js — Store Business Profile & Legal Policies Model
+// ============================================================
 
-export const legalPolicies = {
+const POLICIES_STORAGE_KEY = 'etech_policies';
+const BUSINESS_INFO_STORAGE_KEY = 'etech_business_info';
+
+export const DEFAULT_BUSINESS_INFO = {
+  storeName: "ETech Computers Inc.",
+  tagline: "Next-Gen Tech Store & High-Performance Hardware Importer",
+  foundedYear: "2021",
+  registrationNo: "PV-109842 / Western Province",
+  taxId: "VAT-984201948",
+  isoCert: "ISO 9001:2015 Quality Certified Hardware Assembly",
+  supportEmail: "support@etechcomputers.com",
+  hotline: "+94 (11) 234-5678 / 077 123 4567",
+  headquarters: "No. 42, Galle Road, Colombo 03, Sri Lanka",
+  workingHours: "Monday - Saturday: 8:30 AM - 7:30 PM (Sunday: 10:00 AM - 4:00 PM)",
+  stats: {
+    customersServed: "15,000+",
+    regionalHubs: "4 Regional Hubs (Colombo, Galle, Matara, Kandy)",
+    onTimeDelivery: "99.8%",
+    avgRating: "4.9 / 5.0"
+  },
+  mission: "Empower Sri Lankan gamers, creators, software engineers, and enterprise studios with the world's most powerful, 100% genuine hardware at transparent pricing with relentless post-purchase warranty support.",
+  story: "Founded by passionate hardware enthusiasts, ETech Computers started as a specialized custom liquid cooling lab. Today, we stand as a premier importer and nationwide distribution network across 4 regional warehouse hubs."
+};
+
+export const DEFAULT_LEGAL_POLICIES = {
   privacy: {
     id: "privacy",
     title: "Privacy Policy",
     subtitle: "How we collect, protect, and handle your personal data at ETech Computers",
-    icon: `<svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>`,
+    icon: `<svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>`,
     lastUpdated: "August 1, 2026",
     sections: [
       {
         heading: "1. Information We Collect",
         content: "At ETech Computers, we prioritize customer privacy. When you browse or place an order from our hardware store, we collect minimal necessary details including:",
         bullets: [
-          "Account Registration Details: Your full name, email address, contact phone number, and password hashes.",
-          "Order & Delivery Information: Billing and shipping addresses required for full fulfillment of computer rigs and peripherals.",
-          "Payment Processing: Transaction data is handled securely via encrypted payment gateways. We do not store raw credit card numbers or CVV codes.",
-          "Technical Diagnostics: Anonymized browser information, IP addresses, and device signatures used strictly for site security and performance optimization."
+          "Account Registration Details: Full name, username, email address, phone number, and password hashes.",
+          "Order & Delivery Information: Billing and shipping addresses required for fulfillment of computer rigs and peripherals.",
+          "Payment Processing: Transaction data is handled securely via encrypted gateways. We do not store raw credit card numbers or CVV codes.",
+          "Technical Diagnostics: Anonymized browser information, IP addresses, and device signatures used strictly for site security."
         ]
       },
       {
@@ -35,7 +60,7 @@ export const legalPolicies = {
       },
       {
         heading: "4. Third-Party Sharing & Cookies",
-        content: "ETech Computers does NOT sell, rent, or trade customer personal data to third-party marketing brokers. We only share essential logistics data with verified courier partners (e.g. FedEx, DHL) strictly to deliver your hardware packages."
+        content: "ETech Computers does NOT sell, rent, or trade customer personal data to third-party marketing brokers. We only share essential logistics data with verified courier partners strictly to deliver your hardware packages."
       },
       {
         heading: "5. Your Data Rights & Choices",
@@ -48,7 +73,7 @@ export const legalPolicies = {
     id: "terms",
     title: "Terms of Service",
     subtitle: "Store terms, conditions, and user agreements for purchasing from ETech Computers",
-    icon: `<svg class="w-6 h-6 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>`,
+    icon: `<svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>`,
     lastUpdated: "August 1, 2026",
     sections: [
       {
@@ -66,7 +91,7 @@ export const legalPolicies = {
       },
       {
         heading: "3. User Accounts & Security",
-        content: "When creating an ETech customer account, you are responsible for maintaining the confidentiality of your credentials. You agree to accept responsibility for all order activities performed under your account."
+        content: "When creating an ETech customer account, you are responsible for maintaining the confidentiality of your username and password credentials. You agree to accept responsibility for all order activities performed under your account."
       },
       {
         heading: "4. Shipping & Delivery Guidelines",
@@ -83,7 +108,7 @@ export const legalPolicies = {
     id: "warranty",
     title: "Guarantee & Warranty",
     subtitle: "Complete hardware warranty protection, returns policy, and replacement guarantees",
-    icon: `<svg class="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>`,
+    icon: `<svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>`,
     lastUpdated: "August 1, 2026",
     sections: [
       {
@@ -120,8 +145,73 @@ export const legalPolicies = {
   }
 };
 
-export function getPolicyData(key) {
-  return legalPolicies[key] || legalPolicies.privacy;
+/**
+ * Retrieve business info from localStorage (or fallback to defaults)
+ */
+export function getBusinessInfo() {
+  const data = localStorage.getItem(BUSINESS_INFO_STORAGE_KEY);
+  if (!data) {
+    localStorage.setItem(BUSINESS_INFO_STORAGE_KEY, JSON.stringify(DEFAULT_BUSINESS_INFO));
+    return DEFAULT_BUSINESS_INFO;
+  }
+  try {
+    return JSON.parse(data);
+  } catch (e) {
+    return DEFAULT_BUSINESS_INFO;
+  }
 }
 
+/**
+ * Save business info to localStorage
+ */
+export function saveBusinessInfo(info) {
+  localStorage.setItem(BUSINESS_INFO_STORAGE_KEY, JSON.stringify(info));
+  return { success: true, message: 'Business profile updated successfully!' };
+}
 
+/**
+ * Retrieve all legal policies from localStorage (or fallback to defaults)
+ */
+export function getStoredPolicies() {
+  const data = localStorage.getItem(POLICIES_STORAGE_KEY);
+  if (!data) {
+    localStorage.setItem(POLICIES_STORAGE_KEY, JSON.stringify(DEFAULT_LEGAL_POLICIES));
+    return DEFAULT_LEGAL_POLICIES;
+  }
+  try {
+    return JSON.parse(data);
+  } catch (e) {
+    return DEFAULT_LEGAL_POLICIES;
+  }
+}
+
+/**
+ * Save all policies to localStorage
+ */
+export function saveStoredPolicies(policies) {
+  localStorage.setItem(POLICIES_STORAGE_KEY, JSON.stringify(policies));
+}
+
+/**
+ * Get specific policy by key ('privacy' | 'terms' | 'warranty')
+ */
+export function getPolicyData(key) {
+  const policies = getStoredPolicies();
+  return policies[key] || policies.privacy;
+}
+
+/**
+ * Update single policy document
+ */
+export function updatePolicyDocument(key, policyData) {
+  const policies = getStoredPolicies();
+  policies[key] = {
+    ...policies[key],
+    ...policyData,
+    id: key
+  };
+  saveStoredPolicies(policies);
+  return { success: true, message: `${policyData.title || key} updated successfully!` };
+}
+
+export const legalPolicies = DEFAULT_LEGAL_POLICIES;

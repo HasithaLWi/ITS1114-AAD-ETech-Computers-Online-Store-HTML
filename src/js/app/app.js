@@ -1,6 +1,6 @@
 // ETech Computers - Single Page Section Toggle Router & Global App Logic
 import { products, getProductById, getFeaturedProducts, getNewArrivalProducts } from '../models/data.js';
-import { legalPolicies, getPolicyData } from '../models/policy-data.js';
+import { legalPolicies, getPolicyData, getStoredPolicies } from '../models/policy-data.js';
 import { getCurrentUser, isLoggedIn, logoutUser } from '../controller/login_controller.js';
 import { getUserOrders } from '../controller/order_management_controller.js';
 import { initCartLogic, initCheckoutLogic, updateCartBadge, addToCart, getCart, saveCart, showToast } from '../controller/cart_controller.js';
@@ -8,6 +8,7 @@ import { renderProductDetailsPage, viewProductDetails } from '../controller/prod
 import { initShopLogic } from '../controller/shop_controller.js';
 import { renderLoginPage } from './login/login.js';
 import { renderAdminPage } from './administrator/administrator.js';
+import { renderAboutPage } from './about/about.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   initApp();
@@ -101,13 +102,26 @@ function handleRoute() {
     return;
   }
 
-  // Handle Legal Policy routes (privacy, terms, warranty, policy)
-  if (['privacy', 'terms', 'warranty', 'policy'].includes(pageName)) {
+  // Handle About Us route (#about)
+  if (pageName === 'about') {
+    const aboutSection = document.getElementById('about-page');
+    if (aboutSection) {
+      aboutSection.classList.remove('hidden');
+      window.scrollTo(0, 0);
+      renderAboutPage();
+    }
+    updateActiveNavLinks(pageName);
+    updateHeaderAuthUI();
+    return;
+  }
+
+  // Handle Legal Policy routes (privacy, terms, warranty, policy, policies)
+  if (['privacy', 'terms', 'warranty', 'policy', 'policies'].includes(pageName)) {
     const policySection = document.getElementById('policy-page');
     if (policySection) {
       policySection.classList.remove('hidden');
       window.scrollTo(0, 0);
-      const activeKey = (pageName === 'policy') ? (queryPart || 'privacy') : pageName;
+      const activeKey = (pageName === 'policy' || pageName === 'policies') ? (queryPart || 'privacy') : pageName;
       renderPolicyPage(activeKey);
     }
     updateActiveNavLinks(pageName);
@@ -283,15 +297,21 @@ function initAccountLogic() {
   // Update Profile elements
   const avatarEl = document.getElementById('account-avatar');
   const nameEl = document.getElementById('account-user-name');
+  const handleEl = document.getElementById('account-user-handle');
+  const usernameEl = document.getElementById('account-user-username');
   const emailEl = document.getElementById('account-user-email');
   const idEl = document.getElementById('account-user-id');
   const joinedEl = document.getElementById('account-user-joined');
+  const roleTextEl = document.getElementById('account-user-role-text');
 
-  if (avatarEl) avatarEl.textContent = user.name.charAt(0).toUpperCase();
+  if (avatarEl) avatarEl.textContent = user.name ? user.name.charAt(0).toUpperCase() : 'U';
   if (nameEl) nameEl.textContent = user.name;
+  if (handleEl) handleEl.textContent = `@${user.username || (user.email ? user.email.split('@')[0] : 'user')}`;
+  if (usernameEl) usernameEl.textContent = `@${user.username || (user.email ? user.email.split('@')[0] : 'user')}`;
   if (emailEl) emailEl.textContent = user.email;
   if (idEl) idEl.textContent = user.id || 'USR-882910';
   if (joinedEl) joinedEl.textContent = user.createdAt || 'Member';
+  if (roleTextEl) roleTextEl.textContent = `${user.role || 'CUSTOMER'} Account`;
 
   renderUserOrderHistory(user);
 }
@@ -657,22 +677,23 @@ window.addEventListener('productsUpdated', () => {
 function renderPolicyPage(policyKey = 'privacy') {
   const container = document.getElementById('policy-content-area');
   const tabsContainer = document.getElementById('policy-tabs-container');
-  if (!container || typeof legalPolicies === 'undefined') return;
+  if (!container) return;
 
-  const key = legalPolicies[policyKey] ? policyKey : 'privacy';
-  const policy = legalPolicies[key];
+  const policies = getStoredPolicies();
+  const key = policies[policyKey] ? policyKey : 'privacy';
+  const policy = policies[key];
 
   // Render Tabs
   if (tabsContainer) {
-    tabsContainer.innerHTML = Object.keys(legalPolicies).map(k => {
-      const p = legalPolicies[k];
+    tabsContainer.innerHTML = Object.keys(policies).map(k => {
+      const p = policies[k];
       const isActive = k === key;
       return `
         <a href="#${k}" class="flex items-center space-x-2 px-4 py-2 rounded-md font-bold text-xs transition-all ${isActive
           ? 'bg-blue-600 text-white shadow-sm'
           : 'bg-[#141c28] text-[#a7b3c4] hover:text-white hover:bg-[#192332] border border-[#202b3a]'
         }">
-          ${p.icon}
+          ${p.icon || '📄'}
           <span>${p.title}</span>
         </a>
       `;

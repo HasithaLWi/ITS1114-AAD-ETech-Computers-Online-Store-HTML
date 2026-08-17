@@ -20,6 +20,7 @@ export function updateCartBadge() {
   const badge = document.getElementById('cart-count-badge');
   if (!badge) return;
 
+
   const cart = getCart();
   const totalCount = cart.reduce((sum, item) => sum + item.quantity, 0);
   badge.textContent = totalCount;

@@ -69,14 +69,14 @@ export function renderLoginPage(queryPart) {
           <!-- ================= TAB 1: LOGIN FORM ================= -->
           <form id="login-form" onsubmit="handleLoginSubmit(event)" class="space-y-4">
             <div>
-              <label class="block text-xs font-semibold text-[#a7b3c4] uppercase tracking-wider mb-1">Email Address</label>
+              <label class="block text-xs font-semibold text-[#a7b3c4] uppercase tracking-wider mb-1">Username or Email Address</label>
               <div class="relative">
-                <input type="email" id="login-email" required placeholder="name@example.com"
+                <input type="text" id="login-username" required placeholder="admin or name@example.com"
                   class="w-full px-3.5 py-2.5 rounded-lg bg-[#080b12] border border-[#202b3a] text-white placeholder-[#718096] text-sm focus:border-blue-500 transition-colors">
                 <svg class="w-4 h-4 text-[#718096] absolute right-3.5 top-3" fill="none" stroke="currentColor"
                   viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
+                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
               </div>
             </div>
@@ -84,8 +84,8 @@ export function renderLoginPage(queryPart) {
             <div>
               <div class="flex items-center justify-between mb-1">
                 <label class="block text-xs font-semibold text-[#a7b3c4] uppercase tracking-wider">Password</label>
-                <a href="javascript:void(0)" onclick="alert('Password reset demo: Use admin@etech.com / admin123 or customer@etech.com / customer123')"
-                  class="text-xs text-blue-400 hover:underline">Forgot?</a>
+                <a href="javascript:void(0)" onclick="alert('Demo Credentials:\n• Admin: admin / admin123\n• Staff: staff / staff123\n• Customer: customer / customer123')"
+                  class="text-xs text-blue-400 hover:underline">Demo Accounts?</a>
               </div>
               <div class="relative">
                 <input type="password" id="login-password" required placeholder="••••••••"
@@ -114,7 +114,7 @@ export function renderLoginPage(queryPart) {
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/>
               </svg>
-              <span>Sign In to Account</span>
+              <span>Sign In with Username / Email</span>
             </button>
           </form>
 
@@ -124,6 +124,13 @@ export function renderLoginPage(queryPart) {
               <label class="block text-xs font-semibold text-[#a7b3c4] uppercase tracking-wider mb-1">Full Name *</label>
               <input type="text" id="signup-name" required placeholder="John Doe"
                 class="w-full px-3.5 py-2.5 rounded-lg bg-[#080b12] border border-[#202b3a] text-white placeholder-[#718096] text-sm focus:border-blue-500 transition-colors">
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-[#a7b3c4] uppercase tracking-wider mb-1">Username *</label>
+              <input type="text" id="signup-username" required pattern="[a-zA-Z0-9_.-]+" minlength="3" placeholder="e.g. john_doe"
+                class="w-full px-3.5 py-2.5 rounded-lg bg-[#080b12] border border-[#202b3a] text-white placeholder-[#718096] text-sm focus:border-blue-500 transition-colors">
+              <p class="text-[10px] text-[#718096] mt-0.5">Used to log in to your account (min. 3 alphanumeric characters).</p>
             </div>
 
             <div>
