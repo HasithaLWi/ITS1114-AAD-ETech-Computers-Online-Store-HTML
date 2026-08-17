@@ -104,8 +104,6 @@ export function renderAdminPage(queryPart) {
               <span class="sidebar-text-label hidden lg:inline whitespace-nowrap">Stock Health & Alerts</span>
               <div class="sidebar-tooltip">Stock Health & Alerts</div>
             </button>
-
-<<<<<<< HEAD
             <button data-tab="taxonomy" onclick="switchAdminTab('taxonomy')" title="Categories & Badges"
               class="sidebar-nav-btn w-full flex items-center justify-center lg:justify-start space-x-0 lg:space-x-3 px-2 lg:px-3.5 py-2.5 rounded-lg font-medium text-xs text-[#a7b3c4] hover:text-white hover:bg-[#141c28] transition-all relative group">
               <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -115,9 +113,6 @@ export function renderAdminPage(queryPart) {
               <span class="sidebar-text-label hidden lg:inline whitespace-nowrap">Categories & Badges</span>
               <div class="sidebar-tooltip">Categories & Badges</div>
             </button>
-
-=======
->>>>>>> 35344e69ddaab3ece5bb1ebb6216c6aaef3cf7bd
             <button data-tab="branches" onclick="switchAdminTab('branches')" title="Store Branches"
               class="admin-only-nav sidebar-nav-btn w-full flex items-center justify-center lg:justify-start space-x-0 lg:space-x-3 px-2 lg:px-3.5 py-2.5 rounded-lg font-medium text-xs text-[#a7b3c4] hover:text-white hover:bg-[#141c28] transition-all relative group">
               <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
