@@ -24,9 +24,18 @@ import {
 import {
     viewProductDetails, renderProductDetailsPage,
     changeProductQuantity,
-    handleAddToCartFromDetails, handleBuyNowFromDetails
+    handleAddToCartFromDetails, handleBuyNowFromDetails,
+    handleRateProduct, selectRatingStar, handleSubmitProductReview,
+    hoverProductRatingStars, resetProductRatingStars
 } from './src/js/controller/product-details_controller.js';
-import { initShopLogic, renderFilteredProducts } from './src/js/controller/shop_controller.js';
+import {
+    getAllReviews, getProductReviews, getUserReviewForProduct, hasUserReviewedProduct, submitProductReview,
+    getAllRatings, getProductRatings, getUserRatingForProduct, hasUserRatedProduct, submitProductRating
+} from './src/js/models/rating_data.js';
+import { 
+    initShopLogic, renderFilteredProducts, 
+    addCategoryFilter, removeCategoryFilter, clearCategoryFilters, getSelectedCategories 
+} from './src/js/controller/shop_controller.js';
 import { handleLogout, updateHeaderAuthUI } from './src/js/app/app.js';
 import { renderLoginPage, initLoginPage } from './src/js/app/login/login.js';
 import { renderAdminPage, initAdminPage } from './src/js/app/administrator/administrator.js';
@@ -81,6 +90,18 @@ import {
 } from './src/js/controller/stock_health_controller.js';
 import { updateProductStockSettings, quickAdjustStock, transferBranchStock } from './src/js/models/data.js';
 
+import {
+    renderTaxonomyTab, runAutoBadgeAssigner,
+    openCategoryModal, handleSaveCategorySubmit, confirmDeleteCategory,
+    openBadgeModal, updateBadgeThresholdsUI, handleSaveBadgeSubmit, confirmDeleteBadge
+} from './src/js/controller/taxonomy_controller.js';
+import {
+    getCategories, saveCategory, deleteCategory, getCategoryBySlug,
+    getBadges, saveBadge, deleteBadge, getBadgeById, getBadgeThresholdSummary,
+    getProductBehaviorHistory, recordProductBehaviorEvent, getProductHistory, clearProductBehaviorHistory,
+    runAutoBadgeAssignment
+} from './src/js/models/taxonomy_data.js';
+
 // ── Bind everything to window in one shot ────────────────────
 Object.assign(window, {
     // Data & Products
@@ -106,13 +127,18 @@ Object.assign(window, {
     initCartLogic, initCheckoutLogic,
     updateItemQuantity, removeItemFromCart,
 
-    // Product Details
+    // Product Details, Ratings & Reviews
     viewProductDetails, renderProductDetailsPage,
     changeProductQuantity,
     handleAddToCartFromDetails, handleBuyNowFromDetails,
+    handleRateProduct, selectRatingStar, handleSubmitProductReview,
+    hoverProductRatingStars, resetProductRatingStars,
+    getAllReviews, getProductReviews, getUserReviewForProduct, hasUserReviewedProduct, submitProductReview,
+    getAllRatings, getProductRatings, getUserRatingForProduct, hasUserRatedProduct, submitProductRating,
 
     // Shop Catalog
     initShopLogic, renderFilteredProducts,
+    addCategoryFilter, removeCategoryFilter, clearCategoryFilters, getSelectedCategories,
 
     // Admin Dashboard Shell
     initAdminDashboard, switchAdminTab, closeAdminModal,
@@ -150,5 +176,14 @@ Object.assign(window, {
     filterStockHealthTable, clearStockSearch, navigateToStockHealthWithSearch,
 
     // Analytics & Reports
-    renderAnalyticsTab
+    renderAnalyticsTab,
+
+    // Taxonomy, Badges & Product Behavior History
+    renderTaxonomyTab, runAutoBadgeAssigner,
+    openCategoryModal, handleSaveCategorySubmit, confirmDeleteCategory,
+    openBadgeModal, updateBadgeThresholdsUI, handleSaveBadgeSubmit, confirmDeleteBadge,
+    getCategories, saveCategory, deleteCategory, getCategoryBySlug,
+    getBadges, saveBadge, deleteBadge, getBadgeById, getBadgeThresholdSummary,
+    getProductBehaviorHistory, recordProductBehaviorEvent, getProductHistory, clearProductBehaviorHistory,
+    runAutoBadgeAssignment
 });

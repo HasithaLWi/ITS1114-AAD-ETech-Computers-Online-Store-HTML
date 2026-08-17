@@ -1,6 +1,7 @@
 import { getBranches } from './branch_controller.js';
 import { getStoredProducts, saveProduct, deleteProduct, getProductById } from '../models/data.js';
 import { getCurrentUser } from './login_controller.js';
+import { getCategories, getBadges } from '../models/taxonomy_data.js';
 
 /**
  * ============================================================
@@ -170,8 +171,28 @@ export function openProductFormPage(productId = null) {
   }
 
   document.getElementById('form-p-name').value = product ? product.name : '';
-  document.getElementById('form-p-category').value = product ? product.category : 'laptops';
-  document.getElementById('form-p-badge').value = product && product.badge ? product.badge : 'New Arrival';
+
+  // Populate dynamic category options
+  const categorySelect = document.getElementById('form-p-category');
+  if (categorySelect) {
+    const allCategories = getCategories();
+    categorySelect.innerHTML = allCategories.map(c => `
+      <option value="${c.slug}">${c.icon || '📦'} ${c.name}</option>
+    `).join('');
+    categorySelect.value = product ? product.category : (allCategories[0]?.slug || 'laptops');
+  }
+
+  // Populate dynamic badge options
+  const badgeSelect = document.getElementById('form-p-badge');
+  if (badgeSelect) {
+    const allBadges = getBadges().filter(b => b.isActive);
+    badgeSelect.innerHTML = `
+      ${allBadges.map(b => `<option value="${b.name}">${b.name}</option>`).join('')}
+      <option value="">None (No Badge)</option>
+    `;
+    badgeSelect.value = product && product.badge ? product.badge : (allBadges[0]?.name || '');
+  }
+
   document.getElementById('form-p-sku').value = product ? product.sku : `ETC-LAP-${Math.floor(1000 + Math.random() * 9000)}`;
   document.getElementById('form-p-warranty').value = product ? (product.warranty || '2-Year Official Warranty') : '2-Year Official Warranty';
   document.getElementById('form-p-price').value = product ? product.price : '';

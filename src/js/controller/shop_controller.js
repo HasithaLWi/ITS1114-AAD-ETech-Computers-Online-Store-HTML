@@ -1,60 +1,187 @@
 // ETech Computers - Shop Page Dynamic Logic
-import { products } from '../models/data.js';
+import { products, getStoredProducts } from '../models/data.js';
 import { addToCart } from './cart_controller.js';
 import { viewProductDetails } from './product-details_controller.js';
+import { getCategories } from '../models/taxonomy_data.js';
+
+// Module-level state for multi-selected category filters
+let selectedCategorySlugs = [];
+
+/**
+ * Returns currently selected category slugs
+ */
+export function getSelectedCategories() {
+  return [...selectedCategorySlugs];
+}
+
+/**
+ * Adds a category slug to the active filter set
+ */
+export function addCategoryFilter(slug) {
+  if (!slug) return;
+  const normalizedSlug = slug.toLowerCase().trim();
+  if (!selectedCategorySlugs.includes(normalizedSlug)) {
+    selectedCategorySlugs.push(normalizedSlug);
+  }
+  renderCategoryCombobox();
+  renderSelectedCategoryTags();
+  renderFilteredProducts();
+}
+
+/**
+ * Removes a category slug from the active filter set
+ */
+export function removeCategoryFilter(slug) {
+  if (!slug) return;
+  const normalizedSlug = slug.toLowerCase().trim();
+  selectedCategorySlugs = selectedCategorySlugs.filter(s => s !== normalizedSlug);
+  renderCategoryCombobox();
+  renderSelectedCategoryTags();
+  renderFilteredProducts();
+}
+
+/**
+ * Clears all active category filters
+ */
+export function clearCategoryFilters() {
+  selectedCategorySlugs = [];
+  renderCategoryCombobox();
+  renderSelectedCategoryTags();
+  renderFilteredProducts();
+}
+
+/**
+ * Populates the category combobox dropdown options
+ */
+export function renderCategoryCombobox() {
+  const combobox = document.getElementById('shop-category-combobox');
+  if (!combobox) return;
+
+  const categories = getCategories();
+  
+  let optionsHtml = `<option value="" disabled selected>+ Select category...</option>`;
+  
+  categories.forEach(c => {
+    const isSelected = selectedCategorySlugs.includes(c.slug.toLowerCase());
+    const icon = c.icon ? `${c.icon} ` : '';
+    if (isSelected) {
+      optionsHtml += `<option value="${c.slug}" disabled class="text-[#718096] bg-[#080b12]">${icon}${c.name} ✓ (Selected)</option>`;
+    } else {
+      optionsHtml += `<option value="${c.slug}" class="text-[#f4f7fb] bg-[#080b12]">${icon}${c.name}</option>`;
+    }
+  });
+
+  combobox.innerHTML = optionsHtml;
+  combobox.value = '';
+}
+
+/**
+ * Renders selected category chips/tags with close '✕' icons underneath the combobox
+ */
+export function renderSelectedCategoryTags() {
+  const tagsContainer = document.getElementById('shop-selected-category-tags');
+  const countBadge = document.getElementById('category-selected-badge');
+  if (!tagsContainer) return;
+
+  const categories = getCategories();
+
+  if (selectedCategorySlugs.length === 0) {
+    if (countBadge) {
+      countBadge.classList.add('hidden');
+      countBadge.textContent = '0 selected';
+    }
+    tagsContainer.innerHTML = `<span class="text-[11px] text-[#718096] italic mt-0.5">Showing all categories</span>`;
+    return;
+  }
+
+  if (countBadge) {
+    countBadge.classList.remove('hidden');
+    countBadge.textContent = `${selectedCategorySlugs.length} selected`;
+  }
+
+  tagsContainer.innerHTML = selectedCategorySlugs.map(slug => {
+    const cat = categories.find(c => c.slug.toLowerCase() === slug.toLowerCase());
+    const name = cat ? cat.name : slug;
+    const icon = cat && cat.icon ? `${cat.icon} ` : '🏷️ ';
+
+    return `
+      <span class="inline-flex items-center space-x-1.5 text-xs font-semibold bg-blue-600/20 text-blue-300 border border-blue-500/40 px-2.5 py-1 rounded-md shadow-sm transition-all hover:bg-blue-600/30 group">
+        <span class="truncate max-w-[130px]" title="${name}">${icon}${name}</span>
+        <button type="button" onclick="removeCategoryFilter('${slug}')"
+          class="text-blue-400 hover:text-white hover:bg-blue-500/40 rounded p-0.5 ml-0.5 transition-colors focus:outline-none flex items-center justify-center"
+          title="Remove ${name} filter">
+          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </span>
+    `;
+  }).join('');
+}
 
 /**
  * Called by app.js router whenever #shop fragment is loaded into DOM
  */
 export function initShopLogic(queryPart = '') {
   const searchInput = document.getElementById('search-input');
-  const categoryCheckboxes = document.querySelectorAll('.category-checkbox');
   const priceSlider = document.getElementById('price-slider');
   const priceValueDisplay = document.getElementById('price-value');
   const sortSelect = document.getElementById('sort-select');
   const resetBtn = document.getElementById('reset-filters-btn');
+  const combobox = document.getElementById('shop-category-combobox');
 
-  // Parse query string (e.g. cat=laptops)
+  // Parse query string (e.g. cat=laptops or cat=laptops,peripherals)
   let initialCategory = '';
   if (queryPart) {
     const params = new URLSearchParams(queryPart);
-    initialCategory = params.get('cat');
+    initialCategory = params.get('cat') || '';
   }
 
   if (initialCategory) {
-    categoryCheckboxes.forEach(cb => {
-      if (cb.value === initialCategory) {
-        cb.checked = true;
+    selectedCategorySlugs = initialCategory.split(',')
+      .map(s => s.trim().toLowerCase())
+      .filter(Boolean);
+  }
+
+  // Populate combobox and active tags
+  renderCategoryCombobox();
+  renderSelectedCategoryTags();
+
+  // Event Listeners for Combobox
+  if (combobox) {
+    combobox.onchange = (e) => {
+      const chosenSlug = e.target.value;
+      if (chosenSlug) {
+        addCategoryFilter(chosenSlug);
       }
-    });
+    };
   }
 
   // Event Listeners for Live Filtering
-  if (searchInput) searchInput.addEventListener('input', renderFilteredProducts);
-  if (sortSelect) sortSelect.addEventListener('change', renderFilteredProducts);
-
-  categoryCheckboxes.forEach(cb => {
-    cb.addEventListener('change', renderFilteredProducts);
-  });
+  if (searchInput) {
+    searchInput.oninput = renderFilteredProducts;
+  }
+  if (sortSelect) {
+    sortSelect.onchange = renderFilteredProducts;
+  }
 
   if (priceSlider) {
-    priceSlider.addEventListener('input', (e) => {
+    priceSlider.oninput = (e) => {
       if (priceValueDisplay) priceValueDisplay.textContent = `Rs. ${parseInt(e.target.value).toLocaleString()}`;
       renderFilteredProducts();
-    });
+    };
   }
 
   if (resetBtn) {
-    resetBtn.addEventListener('click', () => {
+    resetBtn.onclick = () => {
       if (searchInput) searchInput.value = '';
       if (priceSlider) {
         priceSlider.value = 3000;
         if (priceValueDisplay) priceValueDisplay.textContent = 'Rs. 3,000';
       }
-      categoryCheckboxes.forEach(cb => cb.checked = false);
       if (sortSelect) sortSelect.value = 'featured';
-      renderFilteredProducts();
-    });
+      clearCategoryFilters();
+    };
   }
 
   // Initial render
@@ -70,45 +197,47 @@ export function renderFilteredProducts() {
   const noProductsMsg = document.getElementById('no-products-msg');
   const activeTagsContainer = document.getElementById('active-filter-tags');
 
-  if (!grid || typeof products === 'undefined') return;
+  if (!grid) return;
+
+  const allProducts = (typeof getStoredProducts === 'function' ? getStoredProducts() : null) || products || [];
 
   // Extract filter values
   const searchInput = document.getElementById('search-input');
-  const categoryCheckboxes = document.querySelectorAll('.category-checkbox:checked');
   const priceSlider = document.getElementById('price-slider');
   const sortSelect = document.getElementById('sort-select');
 
   const searchQuery = searchInput ? searchInput.value.toLowerCase().trim() : '';
-  const selectedCategories = Array.from(categoryCheckboxes).map(cb => cb.value);
   const maxPrice = priceSlider ? parseInt(priceSlider.value) : 3000;
   const sortOption = sortSelect ? sortSelect.value : 'featured';
 
   // Apply filters
-  let filtered = products.filter(product => {
+  let filtered = allProducts.filter(product => {
     // 1. Search Query
     const matchesSearch = searchQuery === '' || 
-      product.name.toLowerCase().includes(searchQuery) ||
-      product.description.toLowerCase().includes(searchQuery) ||
-      product.category.toLowerCase().includes(searchQuery);
+      (product.name && product.name.toLowerCase().includes(searchQuery)) ||
+      (product.description && product.description.toLowerCase().includes(searchQuery)) ||
+      (product.category && product.category.toLowerCase().includes(searchQuery));
 
-    // 2. Category Filter
-    const matchesCategory = selectedCategories.length === 0 || selectedCategories.includes(product.category);
+    // 2. Category Filter (Multi-select)
+    const productCat = (product.category || '').toLowerCase();
+    const matchesCategory = selectedCategorySlugs.length === 0 || 
+      selectedCategorySlugs.includes(productCat);
 
     // 3. Price Filter
-    const matchesPrice = product.price <= maxPrice;
+    const matchesPrice = Number(product.price || 0) <= maxPrice;
 
     return matchesSearch && matchesCategory && matchesPrice;
   });
 
   // Apply sorting
   if (sortOption === 'price-low') {
-    filtered.sort((a, b) => a.price - b.price);
+    filtered.sort((a, b) => (a.price || 0) - (b.price || 0));
   } else if (sortOption === 'price-high') {
-    filtered.sort((a, b) => b.price - a.price);
+    filtered.sort((a, b) => (b.price || 0) - (a.price || 0));
   } else if (sortOption === 'rating') {
-    filtered.sort((a, b) => b.rating - a.rating);
+    filtered.sort((a, b) => (b.rating || 0) - (a.rating || 0));
   } else if (sortOption === 'name') {
-    filtered.sort((a, b) => a.name.localeCompare(b.name));
+    filtered.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
   }
 
   // Update item count UI
@@ -122,14 +251,25 @@ export function renderFilteredProducts() {
     if (noProductsMsg) noProductsMsg.classList.add('hidden');
   }
 
-  // Update active filter tags UI
+  // Update active filter tags UI (Top bar above products)
   if (activeTagsContainer) {
     let tagsHtml = '';
-    if (selectedCategories.length > 0) {
-      tagsHtml += selectedCategories.map(cat => `<span class="inline-flex items-center space-x-1 text-[10px] font-bold bg-[#141c28] text-cyan-400 border border-[#202b3a] px-2 py-0.5 rounded uppercase font-mono">${cat}</span>`).join('');
+    const categories = getCategories();
+
+    if (selectedCategorySlugs.length > 0) {
+      tagsHtml += selectedCategorySlugs.map(slug => {
+        const cat = categories.find(c => c.slug.toLowerCase() === slug.toLowerCase());
+        const name = cat ? cat.name : slug;
+        return `
+          <span class="inline-flex items-center space-x-1.5 text-[10px] font-bold bg-[#141c28] text-cyan-400 border border-[#202b3a] px-2 py-0.5 rounded font-mono">
+            <span>${name}</span>
+            <button type="button" onclick="removeCategoryFilter('${slug}')" class="text-cyan-400 hover:text-white ml-0.5 font-sans" title="Remove filter">✕</button>
+          </span>
+        `;
+      }).join('');
     }
     if (maxPrice < 3000) {
-      tagsHtml += `<span class="inline-flex items-center space-x-1 text-[10px] font-bold bg-[#141c28] text-blue-400 border border-[#202b3a] px-2 py-0.5 rounded font-mono">Under Rs. ${maxPrice}</span>`;
+      tagsHtml += `<span class="inline-flex items-center space-x-1 text-[10px] font-bold bg-[#141c28] text-blue-400 border border-[#202b3a] px-2 py-0.5 rounded font-mono">Under Rs. ${maxPrice.toLocaleString()}</span>`;
     }
     activeTagsContainer.innerHTML = tagsHtml;
   }

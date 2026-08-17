@@ -13,6 +13,9 @@
 4. [Spring Boot REST Endpoints Specification](#4-spring-boot-rest-endpoints-specification)
    - [Auth & User Management (`/api/v1/auth`, `/api/v1/users`)](#auth--user-management)
    - [Product Catalog & Gallery (`/api/v1/products`)](#product-catalog--gallery)
+   - [Categories & Storefront Taxonomy (`/api/v1/categories`)](#categories--storefront-taxonomy)
+   - [Badges & Automated Rules Engine (`/api/v1/badges`)](#badges--automated-rules-engine)
+   - [Product Behavior History & Audit Logs (`/api/v1/product-behavior-history`)](#product-behavior-history--audit-logs)
    - [Branch Warehouses (`/api/v1/branches`)](#branch-warehouses)
    - [Stock Health & Inventory Alerts (`/api/v1/inventory`)](#stock-health--inventory-alerts)
    - [Orders & Fulfillment (`/api/v1/orders`)](#orders--fulfillment)
@@ -52,6 +55,9 @@ flowchart TD
 | Key | Current File | Current Purpose | Target Spring Boot Endpoint | Action Upon Backend Switch |
 |---|---|---|---|---|
 | `etech_products` | `src/js/models/data.js` | Stores all product catalog data, specs, image URLs, total stock, and branch stock maps | `GET /api/v1/products`<br>`POST /api/v1/products`<br>`PUT /api/v1/products/{id}`<br>`DELETE /api/v1/products/{id}` | **Replace completely** with API fetch calls. Remove manual array find/filter/save logic. |
+| `etech_categories_data` | `src/js/models/taxonomy_data.js` | Stores category hierarchy, icons, slugs, descriptions, and storefront featured flags | `GET /api/v1/categories`<br>`POST /api/v1/categories`<br>`PUT /api/v1/categories/{id}`<br>`DELETE /api/v1/categories/{id}` | **Replace completely** with API fetch calls. |
+| `etech_badges_data` | `src/js/models/taxonomy_data.js` | Stores badge tags, color themes, purpose descriptions, and automated reach criteria rules | `GET /api/v1/badges`<br>`POST /api/v1/badges`<br>`PUT /api/v1/badges/{id}`<br>`DELETE /api/v1/badges/{id}`<br>`POST /api/v1/badges/auto-assign` | **Replace completely** with API calls. Spring Boot service runs rule evaluations. |
+| `etech_product_behavior_history` | `src/js/models/taxonomy_data.js` | Stores audit log of product standard reach triggers, automated badge transitions, and overrides | `GET /api/v1/product-behavior-history`<br>`GET /api/v1/products/{id}/behavior-history`<br>`POST /api/v1/product-behavior-history` | **Replace completely** with database-backed audit table. |
 | `etech_branches` | `src/js/controller/branch_controller.js` | Stores regional warehouse hubs (Colombo, Galle, Matara, Kandy) with geo coordinates & base rates | `GET /api/v1/branches`<br>`POST /api/v1/branches`<br>`PUT /api/v1/branches/{id}`<br>`DELETE /api/v1/branches/{id}` | **Replace completely** with API fetch calls. |
 | `etech_orders` | `src/js/controller/order_management_controller.js` | Stores customer orders, delivery distances, fulfillment branch, item arrays, and status | `GET /api/v1/orders`<br>`GET /api/v1/orders/my-orders`<br>`POST /api/v1/orders`<br>`PATCH /api/v1/orders/{id}/status` | **Replace completely** with API fetch calls. Remove client-side order ID generation. |
 | `etech_users` | `src/js/controller/login_controller.js` | Stores user directory with role badges (`ADMIN`, `STAFF`, `CUSTOMER`) and branch assignments | `GET /api/v1/users`<br>`POST /api/v1/auth/register`<br>`PUT /api/v1/users/{id}/role` | **Replace completely** with API calls. Spring Security will manage user entities. |
@@ -170,6 +176,50 @@ CREATE TABLE order_items (
     FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
     FOREIGN KEY (product_id) REFERENCES products(id)
 );
+
+-- 8. Categories Table (Storefront & Catalog Taxonomy)
+CREATE TABLE categories (
+    id VARCHAR(50) PRIMARY KEY, -- e.g. 'cat-laptops'
+    name VARCHAR(100) NOT NULL,
+    slug VARCHAR(100) NOT NULL UNIQUE,
+    icon VARCHAR(50) DEFAULT '📦',
+    description TEXT,
+    featured BOOLEAN DEFAULT FALSE,
+    display_order INT DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- 9. Badges & Automation Rules Table
+CREATE TABLE badges (
+    id VARCHAR(50) PRIMARY KEY, -- e.g. 'bdg-bestseller'
+    name VARCHAR(100) NOT NULL UNIQUE,
+    slug VARCHAR(100) NOT NULL UNIQUE,
+    color ENUM('blue', 'rose', 'emerald', 'amber', 'purple', 'cyan', 'orange') NOT NULL DEFAULT 'blue',
+    purpose TEXT,
+    standard_description TEXT,
+    rule_type ENUM('automatic', 'manual') NOT NULL DEFAULT 'manual',
+    criteria VARCHAR(100) DEFAULT 'custom',
+    priority INT DEFAULT 10,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- 10. Product Behavior History & Audit Log Table
+CREATE TABLE product_behavior_history (
+    id VARCHAR(100) PRIMARY KEY, -- e.g. 'pbe-1723824000-123'
+    product_id BIGINT NOT NULL,
+    product_name VARCHAR(255) NOT NULL,
+    event_type ENUM('BADGE_AUTO_ASSIGNED', 'STANDARD_REACHED', 'BADGE_MANUAL_OVERRIDE', 'CATEGORY_CHANGED', 'PRICE_MARKDOWN', 'RESTOCK_TRIGGER') NOT NULL,
+    previous_value VARCHAR(255),
+    new_value VARCHAR(255),
+    trigger_reason TEXT,
+    metrics_snapshot JSON, -- e.g. {"price": 2499, "discountPct": 12, "stock": 4, "rating": 4.9, "reviews": 128}
+    actor ENUM('SYSTEM_AUTO_RULE', 'ADMIN', 'STAFF') NOT NULL DEFAULT 'SYSTEM_AUTO_RULE',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+);
 ```
 
 ---
@@ -195,6 +245,34 @@ CREATE TABLE order_items (
 | `POST` | `/api/v1/products` | Create new product with 5 images & initial branch stock | Product Form DTO | Created Product DTO |
 | `PUT` | `/api/v1/products/{id}` | Update product details & specifications | Product Form DTO | Updated Product DTO |
 | `DELETE` | `/api/v1/products/{id}` | Remove product from inventory | None | `{ "success": true, "message": "Product deleted" }` |
+
+### Categories & Storefront Taxonomy
+
+| Method | Endpoint | Description | Request Body | Response Body |
+|---|---|---|---|---|
+| `GET` | `/api/v1/categories` | List all catalog categories with metadata & featured status | None | `[ { "id": "cat-laptops", "name": "Laptops & Notebooks", "slug": "laptops", "icon": "💻", "featured": true } ]` |
+| `GET` | `/api/v1/categories/{slug}` | Get category details and assigned product count | None | Category DTO with product statistics |
+| `POST` | `/api/v1/categories` | Create new catalog category (Admin only) | Category DTO | Created Category DTO |
+| `PUT` | `/api/v1/categories/{id}` | Update category details, icon, slug, or featured status | Category DTO | Updated Category DTO |
+| `DELETE` | `/api/v1/categories/{id}` | Remove category (checks for assigned products) | None | `{ "success": true, "message": "Category removed" }` |
+
+### Badges & Automated Rules Engine
+
+| Method | Endpoint | Description | Request Body | Response Body |
+|---|---|---|---|---|
+| `GET` | `/api/v1/badges` | List all product badges, color themes, and automation criteria | None | `[ { "id": "bdg-bestseller", "name": "Bestseller", "color": "blue", "ruleType": "automatic", "isActive": true } ]` |
+| `POST` | `/api/v1/badges` | Create new product badge & automation rule | Badge DTO | Created Badge DTO |
+| `PUT` | `/api/v1/badges/{id}` | Update badge purpose, theme, priority, or reach criteria | Badge DTO | Updated Badge DTO |
+| `DELETE` | `/api/v1/badges/{id}` | Delete badge configuration | None | `{ "success": true, "message": "Badge deleted" }` |
+| `POST` | `/api/v1/badges/auto-assign` | **Trigger Auto-Assign Engine**: Evaluates active rules across catalog, updates product badges & logs events to behavior history | None | `{ "totalEvaluated": 12, "updatedCount": 3, "changes": [...] }` |
+
+### Product Behavior History & Audit Logs
+
+| Method | Endpoint | Description | Request Body | Response Body |
+|---|---|---|---|---|
+| `GET` | `/api/v1/product-behavior-history` | Fetch global product behavior history & automated rule logs (paged) | `?page=0&size=50` | `[ { "id": "pbe-...", "productId": 1, "eventType": "BADGE_AUTO_ASSIGNED", "triggerReason": "...", "timestamp": "..." } ]` |
+| `GET` | `/api/v1/products/{id}/behavior-history` | Fetch complete behavioral timeline for a specific product | None | List of Product Behavior Events |
+| `POST` | `/api/v1/product-behavior-history` | Manually record an audit event (Internal / Admin action) | Behavior Event DTO | Created Audit Record |
 
 ### Branch Warehouses
 
@@ -284,6 +362,33 @@ export const ProductApi = {
     create: (productData) => apiRequest('/products', { method: 'POST', body: JSON.stringify(productData) }),
     update: (id, productData) => apiRequest(`/products/${id}`, { method: 'PUT', body: JSON.stringify(productData) }),
     delete: (id) => apiRequest(`/products/${id}`, { method: 'DELETE' })
+};
+```
+
+### Taxonomy & Badges API Service (`src/js/api/taxonomyApi.js`):
+```javascript
+import { apiRequest } from './apiClient.js';
+
+export const CategoryApi = {
+    getAll: () => apiRequest('/categories'),
+    getBySlug: (slug) => apiRequest(`/categories/${slug}`),
+    create: (catData) => apiRequest('/categories', { method: 'POST', body: JSON.stringify(catData) }),
+    update: (id, catData) => apiRequest(`/categories/${id}`, { method: 'PUT', body: JSON.stringify(catData) }),
+    delete: (id) => apiRequest(`/categories/${id}`, { method: 'DELETE' })
+};
+
+export const BadgeApi = {
+    getAll: () => apiRequest('/badges'),
+    create: (badgeData) => apiRequest('/badges', { method: 'POST', body: JSON.stringify(badgeData) }),
+    update: (id, badgeData) => apiRequest(`/badges/${id}`, { method: 'PUT', body: JSON.stringify(badgeData) }),
+    delete: (id) => apiRequest(`/badges/${id}`, { method: 'DELETE' }),
+    runAutoAssigner: () => apiRequest('/badges/auto-assign', { method: 'POST' })
+};
+
+export const ProductBehaviorHistoryApi = {
+    getAll: (page = 0, size = 50) => apiRequest(`/product-behavior-history?page=${page}&size=${size}`),
+    getByProductId: (productId) => apiRequest(`/products/${productId}/behavior-history`),
+    recordEvent: (eventData) => apiRequest('/product-behavior-history', { method: 'POST', body: JSON.stringify(eventData) })
 };
 ```
 

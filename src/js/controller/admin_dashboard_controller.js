@@ -11,6 +11,7 @@ import { renderBranchesTab } from './branch_management_controller.js';
 import { renderUsersTab } from './user_management_controller.js';
 import { renderAnalyticsTab } from './analytics_and_report_controller.js';
 import { getStockHealthReport, renderStockHealthTab, navigateToStockHealthWithSearch } from './stock_health_controller.js';
+import { renderTaxonomyTab } from './taxonomy_controller.js';
 
 let activeTab = 'overview';
 let activeUser = null;
@@ -149,6 +150,10 @@ export function switchAdminTab(tabName, param = null) {
   else if (tabName === 'products') renderProductsTab();
   else if (tabName === 'orders') renderOrdersTab();
   else if (tabName === 'stock-health') renderStockHealthTab(param);
+<<<<<<< HEAD
+  else if (tabName === 'taxonomy') renderTaxonomyTab();
+=======
+>>>>>>> 35344e69ddaab3ece5bb1ebb6216c6aaef3cf7bd
   else if (tabName === 'branches' && activeUser && activeUser.role === 'ADMIN') renderBranchesTab();
   else if (tabName === 'users' && activeUser && activeUser.role === 'ADMIN') renderUsersTab();
   else if (tabName === 'analytics' && activeUser && activeUser.role === 'ADMIN') renderAnalyticsTab();

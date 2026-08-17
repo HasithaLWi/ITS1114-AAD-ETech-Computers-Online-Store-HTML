@@ -1,4 +1,6 @@
 import { getProductById, products } from '../models/data.js';
+import { getCurrentUser } from '../controller/login_controller.js';
+import { getUserReviewForProduct, getProductReviews } from '../models/rating_data.js';
 
 export default function renderProductDetails(productId) {
     const container = document.getElementById('product-details-container');
@@ -15,6 +17,11 @@ export default function renderProductDetails(productId) {
     `;
         return;
     }
+
+    const currentUser = getCurrentUser();
+    const userReviewObj = currentUser ? getUserReviewForProduct(product.id, currentUser.id) : null;
+    const userRatingValue = userReviewObj ? userReviewObj.rating : 5;
+    const productReviews = getProductReviews(product.id);
 
     // Calculate discount percentage
     const discountPercent = product.originalPrice > product.price
@@ -101,11 +108,11 @@ export default function renderProductDetails(productId) {
                 <span class="px-2.5 py-0.5 rounded bg-blue-600/15 text-cyan-400 border border-blue-500/30 uppercase font-bold font-mono tracking-wider text-[10px]">
                   ${product.category}
                 </span>
-                <div class="flex items-center space-x-1.5 bg-[#080b12] px-2.5 py-0.5 rounded border border-[#202b3a]">
+                <a href="#product-reviews-section" class="flex items-center space-x-1.5 bg-[#080b12] hover:bg-[#141c28] px-2.5 py-0.5 rounded border border-[#202b3a] transition-colors cursor-pointer">
                   <span class="text-amber-400 text-sm">★</span>
                   <span class="font-bold text-white text-xs">${product.rating}</span>
                   <span class="text-[#718096] text-[11px]">(${product.reviews} reviews)</span>
-                </div>
+                </a>
               </div>
 
               <h1 class="text-2xl sm:text-3xl font-extrabold text-white leading-tight tracking-tight">${product.name}</h1>
@@ -195,6 +202,93 @@ export default function renderProductDetails(productId) {
               </div>
             </div>
 
+            <!-- Customer Rating & Text Review Form -->
+            <div id="product-rating-box" class="p-4 rounded-lg bg-[#080b12] border border-[#202b3a] space-y-3.5 shadow-md">
+              <div class="flex items-center justify-between">
+                <span class="text-[10px] font-bold uppercase tracking-widest text-amber-400 flex items-center space-x-1.5">
+                  <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                  <span>Customer Product Review & Rating</span>
+                </span>
+
+                ${currentUser ? (
+                  userReviewObj ? `
+                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30 flex items-center space-x-1">
+                      <span>✓ Your Review: ${userReviewObj.rating} ★</span>
+                    </span>
+                  ` : `
+                    <span class="text-[10px] text-cyan-400 font-semibold font-mono">Write a Review</span>
+                  `
+                ) : `
+                  <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/30">
+                    Sign in required
+                  </span>
+                `}
+              </div>
+
+              ${!currentUser ? `
+                <!-- Guest View: Disabled form with sign-in prompt -->
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#101722] p-3 rounded-md border border-[#202b3a]">
+                  <div class="flex items-center space-x-1 text-[#34445a]">
+                    ${[1, 2, 3, 4, 5].map(() => `<span class="text-xl">★</span>`).join('')}
+                    <span class="text-xs text-[#718096] ml-2">Sign in to rate and write a text review</span>
+                  </div>
+                  <a href="#login" class="inline-flex items-center justify-center space-x-1.5 px-3.5 py-1.5 rounded bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-all shadow-sm">
+                    <span>Sign In to Review</span>
+                    <span>→</span>
+                  </a>
+                </div>
+              ` : `
+                <!-- Logged In View: Interactive 5-star rating + text review comment -->
+                <div class="bg-[#101722] p-3.5 rounded-md border border-[#202b3a] space-y-3">
+                  <div class="flex items-center justify-between flex-wrap gap-2">
+                    <div class="flex items-center space-x-1" id="product-rating-stars-group" onmouseleave="resetProductRatingStars(${product.id}, ${userRatingValue})">
+                      ${[1, 2, 3, 4, 5].map(starNum => {
+                        const isFilled = starNum <= userRatingValue;
+                        return `
+                          <button type="button"
+                            id="rating-star-btn-${starNum}"
+                            data-star="${starNum}"
+                            onclick="selectRatingStar(${product.id}, ${starNum})"
+                            onmouseenter="hoverProductRatingStars(${starNum})"
+                            class="star-rating-btn p-1 text-2xl transition-all duration-150 hover:scale-125 focus:outline-none ${isFilled ? 'text-amber-400 drop-shadow-[0_0_6px_rgba(251,191,36,0.6)]' : 'text-[#34445a] hover:text-amber-300'}"
+                            title="Rate ${starNum} Star${starNum > 1 ? 's' : ''}">
+                            ★
+                          </button>
+                        `;
+                      }).join('')}
+                    </div>
+
+                    <span id="product-rating-text-hint" class="text-xs font-bold text-amber-400 font-mono">
+                      ${userRatingValue > 0 ? `${userRatingValue} / 5 Stars` : 'Click a star to select score'}
+                    </span>
+                  </div>
+
+                  <!-- Text Review Textarea (Only text, no images) -->
+                  <div>
+                    <label class="block text-[10px] font-bold text-[#718096] uppercase tracking-wider mb-1">
+                      Your Text Review (Experience & Performance)
+                    </label>
+                    <textarea id="product-review-comment" rows="3"
+                      placeholder="Share your hands-on experience, gaming benchmark, or build quality feedback with other customers..."
+                      class="w-full px-3 py-2 rounded-md bg-[#080b12] border border-[#202b3a] text-[#f4f7fb] placeholder-[#506075] text-xs focus:border-amber-400 focus:ring-0 transition-colors resize-none">${userReviewObj && userReviewObj.comment ? userReviewObj.comment : ''}</textarea>
+                  </div>
+
+                  <!-- Action Buttons -->
+                  <div class="flex items-center justify-between pt-1">
+                    <span class="text-[11px] text-[#718096]">
+                      ${userReviewObj ? '💡 Submitting will update your existing review.' : '⭐ Only verified text reviews are published.'}
+                    </span>
+
+                    <button type="button" onclick="handleSubmitProductReview(${product.id})"
+                      class="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-black font-extrabold text-xs rounded-md shadow-md transition-all flex items-center space-x-1.5 cursor-pointer">
+                      <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+                      <span>${userReviewObj ? 'Update Review' : 'Submit Review'}</span>
+                    </button>
+                  </div>
+                </div>
+              `}
+            </div>
+
             <!-- Quantity Selector & Action Buttons -->
             <div class="pt-4 border-t border-[#202b3a] space-y-3.5">
               <div class="flex items-center space-x-3">
@@ -261,6 +355,99 @@ export default function renderProductDetails(productId) {
           </div>
         </div>
       ` : ''}
+
+      <!-- Customer Reviews Showcase Section (Bottom of Page - Only this product's reviews) -->
+      <div class="space-y-6 pt-6 border-t border-[#202b3a]" id="product-reviews-section">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#202b3a] pb-4">
+          <div>
+            <h3 class="text-xl font-extrabold text-white tracking-tight flex items-center space-x-2.5">
+              <span>💬 Customer Reviews</span>
+              <span class="px-2 py-0.5 rounded-full text-xs font-mono bg-blue-500/10 text-cyan-400 border border-blue-500/30 font-bold">${productReviews.length} Reviews</span>
+            </h3>
+            <p class="text-xs text-[#718096] mt-1">Verified buyer feedback and performance reports specifically for ${product.name}.</p>
+          </div>
+
+          <!-- Summary Score Pill -->
+          <div class="flex items-center space-x-3 bg-[#101722] p-2.5 px-4 rounded-lg border border-[#202b3a] self-start sm:self-auto">
+            <div class="text-amber-400 text-2xl font-black font-mono">★ ${product.rating}</div>
+            <div class="text-left border-l border-[#202b3a] pl-3">
+              <div class="text-xs font-bold text-white">${product.rating} out of 5.0</div>
+              <div class="text-[10px] text-[#718096] font-mono">${product.reviews} Total Ratings</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Reviews Grid -->
+        ${productReviews.length > 0 ? `
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            ${productReviews.map(rev => {
+              const userInitial = rev.userName ? rev.userName.charAt(0).toUpperCase() : 'C';
+              const formattedDate = rev.createdAt ? new Date(rev.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : 'Feb 2026';
+              const isCurrentUserReview = currentUser && currentUser.id === rev.userId;
+
+              return `
+                <div class="bg-[#101722] border ${isCurrentUserReview ? 'border-amber-500/40 bg-[#101722]/90 shadow-lg shadow-amber-500/5' : 'border-[#202b3a]'} rounded-lg p-4 flex flex-col justify-between space-y-3 transition-all hover:border-[#34445a] shadow-md">
+                  <div class="space-y-2.5">
+                    <div class="flex items-start justify-between">
+                      <div class="flex items-center space-x-2.5">
+                        <div class="w-8 h-8 rounded-full bg-blue-600/20 text-cyan-400 border border-blue-500/30 flex items-center justify-center font-bold text-xs">
+                          ${userInitial}
+                        </div>
+                        <div>
+                          <div class="flex items-center space-x-1.5">
+                            <span class="text-xs font-bold text-white">${rev.userName || 'Customer'}</span>
+                            ${isCurrentUserReview ? `<span class="text-[9px] font-mono bg-amber-500/20 text-amber-300 border border-amber-500/40 px-1.5 py-0.2 rounded font-bold">You</span>` : ''}
+                          </div>
+                          <span class="text-[10px] text-emerald-400 flex items-center space-x-1">
+                            <span>✓ Verified Buyer</span>
+                          </span>
+                        </div>
+                      </div>
+
+                      <!-- Review Star Score & Date -->
+                      <div class="text-right">
+                        <div class="flex items-center text-amber-400 text-xs font-mono">
+                          ${'★'.repeat(rev.rating)}${'☆'.repeat(Math.max(0, 5 - rev.rating))}
+                        </div>
+                        <span class="text-[10px] text-[#718096] font-mono mt-0.5 block">${formattedDate}</span>
+                      </div>
+                    </div>
+
+                    <!-- Review Comment Text (Only text) -->
+                    <p class="text-xs text-[#cbd5e1] leading-relaxed">
+                      ${rev.comment ? rev.comment : '<span class="italic text-[#718096]">Customer submitted star rating without written text.</span>'}
+                    </p>
+                  </div>
+
+                  ${isCurrentUserReview ? `
+                    <div class="pt-2 border-t border-[#202b3a] flex items-center justify-between text-[10px] text-[#718096]">
+                      <span class="text-amber-400 font-semibold">Your active review</span>
+                      <button onclick="document.getElementById('product-rating-box').scrollIntoView({behavior: 'smooth'})" class="text-blue-400 hover:text-blue-300 font-bold hover:underline">
+                        Edit Review Above ↑
+                      </button>
+                    </div>
+                  ` : ''}
+                </div>
+              `;
+            }).join('')}
+          </div>
+        ` : `
+          <div class="text-center py-12 bg-[#080b12] rounded-lg border border-[#202b3a] space-y-2.5">
+            <div class="text-3xl">💬</div>
+            <h4 class="text-sm font-bold text-white">No Reviews Yet for this Product</h4>
+            <p class="text-xs text-[#718096] max-w-sm mx-auto">Be the first customer to share your thoughts and benchmark performance on this hardware!</p>
+            ${currentUser ? `
+              <button onclick="document.getElementById('product-rating-box').scrollIntoView({behavior: 'smooth'})" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-md shadow-sm transition-all mt-2">
+                Write First Review ↑
+              </button>
+            ` : `
+              <a href="#login" class="inline-block px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-md shadow-sm transition-all mt-2">
+                Sign In to Review
+              </a>
+            `}
+          </div>
+        `}
+      </div>
 
     </div>
   `;
