@@ -65,9 +65,9 @@ export function renderCategoryCombobox() {
     const isSelected = selectedCategorySlugs.includes(c.slug.toLowerCase());
     const icon = c.icon ? `${c.icon} ` : '';
     if (isSelected) {
-      optionsHtml += `<option value="${c.slug}" disabled class="text-[#718096] bg-[#080b12]">${icon}${c.name} ✓ (Selected)</option>`;
+      optionsHtml += `<option value="${c.slug}" disabled class="text-[#94a3b8] bg-[#f8fafc]">${icon}${c.name} ✓ (Selected)</option>`;
     } else {
-      optionsHtml += `<option value="${c.slug}" class="text-[#f4f7fb] bg-[#080b12]">${icon}${c.name}</option>`;
+      optionsHtml += `<option value="${c.slug}" class="text-[#0f172a] bg-white">${icon}${c.name}</option>`;
     }
   });
 
@@ -90,7 +90,7 @@ export function renderSelectedCategoryTags() {
       countBadge.classList.add('hidden');
       countBadge.textContent = '0 selected';
     }
-    tagsContainer.innerHTML = `<span class="text-[11px] text-[#718096] italic mt-0.5">Showing all categories</span>`;
+    tagsContainer.innerHTML = `<span class="text-[11px] text-[#94a3b8] italic mt-0.5">Showing all categories</span>`;
     return;
   }
 
@@ -105,10 +105,10 @@ export function renderSelectedCategoryTags() {
     const icon = cat && cat.icon ? `${cat.icon} ` : '🏷️ ';
 
     return `
-      <span class="inline-flex items-center space-x-1.5 text-xs font-semibold bg-blue-600/20 text-blue-300 border border-blue-500/40 px-2.5 py-1 rounded-md shadow-sm transition-all hover:bg-blue-600/30 group">
+      <span class="inline-flex items-center space-x-1.5 text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200 px-2.5 py-1 rounded-md shadow-sm transition-all hover:bg-blue-100 group">
         <span class="truncate max-w-[130px]" title="${name}">${icon}${name}</span>
         <button type="button" onclick="removeCategoryFilter('${slug}')"
-          class="text-blue-400 hover:text-white hover:bg-blue-500/40 rounded p-0.5 ml-0.5 transition-colors focus:outline-none flex items-center justify-center"
+          class="text-blue-600 hover:text-blue-900 hover:bg-blue-200/60 rounded p-0.5 ml-0.5 transition-colors focus:outline-none flex items-center justify-center"
           title="Remove ${name} filter">
           <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
@@ -261,32 +261,32 @@ export function renderFilteredProducts() {
         const cat = categories.find(c => c.slug.toLowerCase() === slug.toLowerCase());
         const name = cat ? cat.name : slug;
         return `
-          <span class="inline-flex items-center space-x-1.5 text-[10px] font-bold bg-[#141c28] text-cyan-400 border border-[#202b3a] px-2 py-0.5 rounded font-mono">
+          <span class="inline-flex items-center space-x-1.5 text-[10px] font-bold bg-[#f1f5f9] text-blue-700 border border-[#e2e8f0] px-2 py-0.5 rounded font-mono shadow-sm">
             <span>${name}</span>
-            <button type="button" onclick="removeCategoryFilter('${slug}')" class="text-cyan-400 hover:text-white ml-0.5 font-sans" title="Remove filter">✕</button>
+            <button type="button" onclick="removeCategoryFilter('${slug}')" class="text-blue-700 hover:text-red-600 ml-0.5 font-sans" title="Remove filter">✕</button>
           </span>
         `;
       }).join('');
     }
     if (maxPrice < 3000) {
-      tagsHtml += `<span class="inline-flex items-center space-x-1 text-[10px] font-bold bg-[#141c28] text-blue-400 border border-[#202b3a] px-2 py-0.5 rounded font-mono">Under Rs. ${maxPrice.toLocaleString()}</span>`;
+      tagsHtml += `<span class="inline-flex items-center space-x-1 text-[10px] font-bold bg-[#f1f5f9] text-blue-700 border border-[#e2e8f0] px-2 py-0.5 rounded font-mono shadow-sm">Under Rs. ${maxPrice.toLocaleString()}</span>`;
     }
     activeTagsContainer.innerHTML = tagsHtml;
   }
 
   // Render cards
   grid.innerHTML = filtered.map(product => `
-    <div class="group rounded-lg bg-[#101722] border border-[#202b3a] hover:border-[#34445a] p-4 flex flex-col justify-between transition-all duration-200 hover:-translate-y-0.5 shadow-md">
+    <div class="group rounded-lg bg-white border border-[#e2e8f0] hover:border-[#cbd5e1] p-4 flex flex-col justify-between transition-all duration-200 hover:-translate-y-0.5 shadow-sm hover:shadow-md">
       <div>
         <!-- Product Image & Badge -->
-        <div onclick="viewProductDetails(${product.id})" class="relative overflow-hidden rounded-md bg-[#080b12] mb-3.5 h-44 flex items-center justify-center cursor-pointer border border-[#202b3a]">
+        <div onclick="viewProductDetails(${product.id})" class="relative overflow-hidden rounded-md bg-[#f8fafc] mb-3.5 h-44 flex items-center justify-center cursor-pointer border border-[#e2e8f0]">
           <img src="${product.image}" alt="${product.name}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
           ${product.badge ? `<span class="absolute top-2.5 left-2.5 bg-blue-600 text-white text-[9px] font-bold uppercase px-2 py-0.5 rounded shadow-sm">${product.badge}</span>` : ''}
-          <span class="absolute top-2.5 right-2.5 bg-[#080b12]/90 text-[#a7b3c4] text-[10px] font-bold px-1.5 py-0.5 rounded border border-[#202b3a] flex items-center space-x-1">
-            <span class="text-amber-400">★</span>
+          <span class="absolute top-2.5 right-2.5 bg-white/95 text-[#475569] text-[10px] font-bold px-1.5 py-0.5 rounded border border-[#e2e8f0] flex items-center space-x-1 shadow-sm">
+            <span class="text-amber-500">★</span>
             <span>${product.rating}</span>
           </span>
-          <div class="absolute inset-0 bg-[#080b12]/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+          <div class="absolute inset-0 bg-[#0f172a]/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
             <span class="px-3 py-1.5 rounded-md bg-blue-600 text-white text-xs font-bold shadow-md flex items-center space-x-1">
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
               <span>View Specs</span>
@@ -295,24 +295,24 @@ export function renderFilteredProducts() {
         </div>
 
         <!-- Meta & Title -->
-        <div class="flex items-center justify-between text-[10px] font-bold uppercase text-[#718096] font-mono tracking-wider">
-          <span class="text-cyan-400">${product.category}</span>
-          <span class="${product.inStock ? 'text-emerald-400' : 'text-amber-400'}">${product.inStock ? 'In Stock' : 'Pre-order'}</span>
+        <div class="flex items-center justify-between text-[10px] font-bold uppercase text-[#64748b] font-mono tracking-wider">
+          <span class="text-blue-600">${product.category}</span>
+          <span class="${product.inStock ? 'text-emerald-600' : 'text-amber-600'}">${product.inStock ? 'In Stock' : 'Pre-order'}</span>
         </div>
         
-        <h3 onclick="viewProductDetails(${product.id})" class="text-sm font-bold text-white mt-1 line-clamp-1 group-hover:text-blue-400 transition-colors cursor-pointer">${product.name}</h3>
-        <p class="text-xs text-[#718096] mt-1 line-clamp-2 leading-relaxed">${product.description}</p>
+        <h3 onclick="viewProductDetails(${product.id})" class="text-sm font-bold text-[#0f172a] mt-1 line-clamp-1 group-hover:text-blue-600 transition-colors cursor-pointer">${product.name}</h3>
+        <p class="text-xs text-[#64748b] mt-1 line-clamp-2 leading-relaxed">${product.description}</p>
       </div>
       
       <!-- Footer Price & Action -->
-      <div class="mt-4 pt-3 border-t border-[#202b3a] flex items-center justify-between">
+      <div class="mt-4 pt-3 border-t border-[#e2e8f0] flex items-center justify-between">
         <div>
-          <span class="text-[10px] text-[#718096] line-through font-mono">Rs. ${product.originalPrice}</span>
-          <p class="text-base font-extrabold text-white font-mono">Rs. ${product.price}</p>
+          <span class="text-[10px] text-[#94a3b8] line-through font-mono">Rs. ${product.originalPrice}</span>
+          <p class="text-base font-extrabold text-[#0f172a] font-mono">Rs. ${product.price}</p>
         </div>
         
         <div class="flex items-center space-x-1.5">
-          <button onclick="viewProductDetails(${product.id})" class="p-2 bg-[#141c28] hover:bg-[#192332] text-[#a7b3c4] hover:text-white rounded-md border border-[#202b3a] transition-all" title="View Product Details">
+          <button onclick="viewProductDetails(${product.id})" class="p-2 bg-[#f8fafc] hover:bg-[#f1f5f9] text-[#475569] hover:text-[#0f172a] rounded-md border border-[#e2e8f0] transition-all shadow-sm" title="View Product Details">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
           </button>
           

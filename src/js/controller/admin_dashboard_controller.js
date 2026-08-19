@@ -87,9 +87,9 @@ function updateUserInfoHeader() {
   if (roleEl) {
     roleEl.textContent = activeUser.role;
     if (activeUser.role === 'ADMIN') {
-      roleEl.className = 'px-2 py-0.5 rounded text-[9px] font-extrabold uppercase bg-blue-500/10 text-blue-300 border border-blue-500/30';
+      roleEl.className = 'px-2 py-0.5 rounded text-[9px] font-extrabold uppercase bg-blue-50 text-blue-700 border border-blue-200';
     } else {
-      roleEl.className = 'px-2 py-0.5 rounded text-[9px] font-extrabold uppercase bg-cyan-500/10 text-cyan-300 border border-cyan-500/30';
+      roleEl.className = 'px-2 py-0.5 rounded text-[9px] font-extrabold uppercase bg-sky-50 text-sky-700 border border-sky-200';
     }
   }
   if (avatarEl) avatarEl.textContent = activeUser.name.charAt(0).toUpperCase();
@@ -129,10 +129,10 @@ export function switchAdminTab(tabName, param = null) {
     const target = btn.getAttribute('data-tab');
     if (target === tabName) {
       btn.classList.add('bg-blue-600', 'text-white', 'shadow-sm', 'font-bold');
-      btn.classList.remove('text-[#a7b3c4]', 'hover:text-white', 'hover:bg-[#141c28]', 'font-medium');
+      btn.classList.remove('text-[#475569]', 'hover:text-[#0f172a]', 'hover:bg-[#f1f5f9]', 'font-medium');
     } else {
       btn.classList.remove('bg-blue-600', 'text-white', 'shadow-sm', 'font-bold');
-      btn.classList.add('text-[#a7b3c4]', 'hover:text-white', 'hover:bg-[#141c28]', 'font-medium');
+      btn.classList.add('text-[#475569]', 'hover:text-[#0f172a]', 'hover:bg-[#f1f5f9]', 'font-medium');
     }
   });
 
@@ -283,23 +283,23 @@ function renderOverviewTab() {
   const recentOrdersFeed = document.getElementById('recent-orders-feed');
   if (recentOrdersFeed) {
     recentOrdersFeed.innerHTML = orders.slice(0, 5).map(o => `
-            <div class="bg-[#080b12] border border-[#202b3a] rounded-md p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+            <div class="bg-[#f8fafc] border border-[#e2e8f0] rounded-md p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 shadow-xs">
               <div>
                 <div class="flex items-center space-x-2">
-                  <span class="text-xs font-mono font-bold text-blue-400">${o.orderId}</span>
-                  <span class="text-[10px] text-[#718096]">${o.date}</span>
+                  <span class="text-xs font-mono font-bold text-blue-600">${o.orderId}</span>
+                  <span class="text-[10px] text-[#64748b]">${o.date}</span>
                 </div>
-                <p class="text-xs font-semibold text-white mt-0.5">${o.customerName} (${o.city})</p>
-                <p class="text-[10px] text-[#718096]">Branch: <span class="text-[#f4f7fb] font-medium">${o.fulfillmentBranch || 'Colombo'}</span> | Dist: ${o.distanceKm || 5} km</p>
+                <p class="text-xs font-semibold text-[#0f172a] mt-0.5">${o.customerName} (${o.city})</p>
+                <p class="text-[10px] text-[#64748b]">Branch: <span class="text-[#0f172a] font-medium">${o.fulfillmentBranch || 'Colombo'}</span> | Dist: ${o.distanceKm || 5} km</p>
               </div>
               <div class="flex items-center justify-between sm:justify-end space-x-3">
                 <span class="px-2 py-0.5 rounded text-[9px] font-bold ${getStatusStyle(o.status)}">
                   ${o.status || 'Pending'}
                 </span>
-                <span class="text-sm font-extrabold text-white font-mono">Rs. ${parseFloat((o.totalAmount || 0).toString().replace(/[^0-9.]/g, '')).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                <span class="text-sm font-extrabold text-[#0f172a] font-mono">Rs. ${parseFloat((o.totalAmount || 0).toString().replace(/[^0-9.]/g, '')).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
               </div>
             </div>
-        `).join('') || '<p class="text-xs text-[#718096] py-3">No recent orders.</p>';
+        `).join('') || '<p class="text-xs text-[#64748b] py-3">No recent orders.</p>';
   }
 
   // Populate Low Stock Alerts Warning Sidebar (Branch-Aware with Click-to-Search-Filter)
@@ -307,9 +307,9 @@ function renderOverviewTab() {
   if (lowStocksAlerts) {
     if (healthReport.alertItems.length === 0) {
       lowStocksAlerts.innerHTML = `
-        <div class="p-4 bg-[#080b12] rounded-md border border-emerald-500/20 text-center space-y-1">
-          <span class="text-emerald-400 font-bold text-xs">✓ Optimal Inventory</span>
-          <p class="text-[10px] text-[#718096]">All regional warehouse stock levels are healthy.</p>
+        <div class="p-4 bg-[#f8fafc] rounded-md border border-emerald-200 text-center space-y-1">
+          <span class="text-emerald-700 font-bold text-xs">✓ Optimal Inventory</span>
+          <p class="text-[10px] text-[#64748b]">All regional warehouse stock levels are healthy.</p>
         </div>
       `;
     } else {
@@ -318,30 +318,30 @@ function renderOverviewTab() {
         const safeSearchQuery = (p.name || '').replace(/'/g, "\\'");
         return `
           <div onclick="navigateToStockHealthWithSearch('${safeSearchQuery}')"
-            class="bg-[#080b12] hover:bg-[#101722] p-3 rounded-md border ${item.worstStage === 'DEPLETED' ? 'border-rose-900/60 hover:border-rose-500/60 bg-rose-950/10' : 'border-amber-900/60 hover:border-amber-500/60 bg-amber-950/10'} space-y-2 cursor-pointer transition-all group"
+            class="bg-[#f8fafc] hover:bg-white p-3 rounded-md border ${item.worstStage === 'DEPLETED' ? 'border-rose-200 hover:border-rose-300 bg-rose-50/50' : 'border-amber-200 hover:border-amber-300 bg-amber-50/50'} space-y-2 cursor-pointer transition-all group shadow-xs"
             title="Click to view & filter ${p.name} in Stock Health Center">
             <div class="flex items-center justify-between">
               <div class="flex items-center space-x-2 min-w-0">
-                <img src="${p.image}" class="w-8 h-8 object-cover rounded bg-[#101722] flex-shrink-0 border border-[#202b3a]">
+                <img src="${p.image}" class="w-8 h-8 object-cover rounded bg-white flex-shrink-0 border border-[#e2e8f0]">
                 <div class="min-w-0 flex-1">
-                  <p class="text-xs font-bold text-white group-hover:text-blue-400 transition-colors truncate max-w-[150px]">${p.name}</p>
-                  <span class="text-[9px] text-[#718096] font-mono">${p.sku}</span>
+                  <p class="text-xs font-bold text-[#0f172a] group-hover:text-blue-600 transition-colors truncate max-w-[150px]">${p.name}</p>
+                  <span class="text-[9px] text-[#64748b] font-mono">${p.sku}</span>
                 </div>
               </div>
               <button onclick="event.stopPropagation(); openQuickRestockModal(${p.id})"
-                class="px-2 py-1 bg-blue-600/20 hover:bg-blue-600 text-blue-300 hover:text-white rounded text-[10px] font-bold border border-blue-500/40 transition-all flex-shrink-0">
+                class="px-2 py-1 bg-blue-50 hover:bg-blue-600 text-blue-700 hover:text-white rounded text-[10px] font-bold border border-blue-200 transition-all flex-shrink-0">
                 Restock
               </button>
             </div>
 
             <!-- Branch Stock Badges -->
-            <div class="flex flex-wrap gap-1 pt-1 border-t border-[#202b3a]/60">
+            <div class="flex flex-wrap gap-1 pt-1 border-t border-[#e2e8f0]">
               ${Object.entries(p.branchStock || {}).map(([bId, qty]) => {
           const isOut = parseInt(qty) === 0;
           const isLow = parseInt(qty) > 0 && parseInt(qty) <= item.margin;
-          let badgeClass = 'bg-[#141c28] text-[#a7b3c4]';
-          if (isOut) badgeClass = 'bg-rose-500/25 text-rose-300 font-bold border border-rose-500/50';
-          else if (isLow) badgeClass = 'bg-amber-500/25 text-amber-300 font-bold border border-amber-500/50';
+          let badgeClass = 'bg-white text-[#475569] border border-[#e2e8f0]';
+          if (isOut) badgeClass = 'bg-rose-50 text-rose-700 font-bold border border-rose-200';
+          else if (isLow) badgeClass = 'bg-amber-50 text-amber-700 font-bold border border-amber-200';
           return `
                   <span class="text-[9px] px-1.5 py-0.5 rounded font-mono ${badgeClass}">
                     ${bId.replace('BR-', '')}: ${qty}
@@ -359,11 +359,11 @@ function renderOverviewTab() {
 // ── Status Pill Styles Helper ──
 function getStatusStyle(status) {
   switch (status) {
-    case 'Processing': return 'bg-blue-500/10 text-blue-400 border border-blue-500/30';
-    case 'Shipped': return 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/30';
-    case 'Delivered': return 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30';
-    case 'Cancelled': return 'bg-rose-500/10 text-rose-400 border border-rose-500/30';
-    default: return 'bg-amber-500/10 text-amber-400 border border-amber-500/30';
+    case 'Processing': return 'bg-blue-50 text-blue-700 border border-blue-200';
+    case 'Shipped': return 'bg-sky-50 text-sky-700 border border-sky-200';
+    case 'Delivered': return 'bg-emerald-50 text-emerald-700 border border-emerald-200';
+    case 'Cancelled': return 'bg-rose-50 text-rose-700 border border-rose-200';
+    default: return 'bg-amber-50 text-amber-700 border border-amber-200';
   }
 }
 

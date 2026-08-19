@@ -1,8 +1,9 @@
 /* ============================================================
    ETech Computers — Design System Variables
    ============================================================
-   Precision Tech Theme: 3-level surface hierarchy, primary blue,
-   technical cyan accents, and professional geometry.
+   Precision Modern Light Theme: Clean white canvas, soft slate
+   surfaces, royal blue CTAs, dark navy category accents,
+   and crisp architectural geometry.
    Import this file before global.css in any HTML page.
    ============================================================ */
 
@@ -19,36 +20,41 @@
   --color-primary-800: #1e40af;
   --color-primary-900: #172554;
 
-  /* ── Premium Accent (Cyan) ─────────────────────────────── */
-  --color-accent-300: #67e8f9;
-  --color-accent-400: #22d3ee;
-  --color-accent-500: #06b6d4;
-  --color-accent-600: #0891b2;
+  /* ── Dark Navy Accents (Category button & High-contrast elements) ── */
+  --color-navy-900: #0f172a;
+  --color-navy-800: #1e293b;
+  --color-navy-700: #334155;
 
-  /* ── 3-Level Surface & Background Hierarchy ─────────────── */
-  --color-bg:          #080b12; /* Level 1: Main page background */
-  --color-bg-soft:     #0c111b; /* Level 1.5: Soft section background */
-  --color-surface:     #101722; /* Level 2: Cards, panels, modals */
-  --color-surface-2:   #141c28; /* Level 3: Elevated cards, dropdowns */
-  --color-surface-3:   #192332; /* Level 3.5: Active pills, item hover */
+  /* ── Technical Accent (Cyan & Sky) ─────────────────────── */
+  --color-accent-300: #7dd3fc;
+  --color-accent-400: #38bdf8;
+  --color-accent-500: #0284c7;
+  --color-accent-600: #0369a1;
 
-  /* ── Precision Borders ─────────────────────────────────── */
-  --color-border:      #202b3a;
-  --color-border-soft: #182231;
-  --color-border-hover:#34445a;
-  --color-border-focus:#3b82f6;
+  /* ── Modern Light Surface & Background Hierarchy ────────── */
+  --color-bg:          #f8fafc; /* Level 1: Main page background (Slate 50) */
+  --color-bg-soft:     #f1f5f9; /* Level 1.5: Soft section background (Slate 100) */
+  --color-surface:     #ffffff; /* Level 2: Pure white cards, panels, modals */
+  --color-surface-2:   #f8fafc; /* Level 3: Elevated sub-panels, dropdowns */
+  --color-surface-3:   #e2e8f0; /* Level 3.5: Active pills, item hover */
 
-  /* ── Text & Typography ─────────────────────────────────── */
-  --color-text-primary:   #f4f7fb;
-  --color-text-secondary: #a7b3c4;
-  --color-text-muted:     #718096;
-  --color-text-disabled:  #4b5565;
+  /* ── Precision Light Borders ───────────────────────────── */
+  --color-border:      #e2e8f0; /* Slate 200 */
+  --color-border-soft: #f1f5f9; /* Slate 100 */
+  --color-border-hover:#cbd5e1; /* Slate 300 */
+  --color-border-focus:#2563eb; /* Primary Blue */
+
+  /* ── Text & Typography (High Contrast Dark Slate) ──────── */
+  --color-text-primary:   #0f172a; /* Slate 900 */
+  --color-text-secondary: #475569; /* Slate 600 */
+  --color-text-muted:     #94a3b8; /* Slate 400 */
+  --color-text-disabled:  #cbd5e1; /* Slate 300 */
 
   /* ── Semantic Colors ───────────────────────────────────── */
-  --color-success: #22c55e;
-  --color-warning: #f59e0b;
-  --color-danger:  #ef4444;
-  --color-info:    #38bdf8;
+  --color-success: #16a34a;
+  --color-warning: #d97706;
+  --color-danger:  #dc2626;
+  --color-info:    #0284c7;
 
   /* ── Typography Families ───────────────────────────────── */
   --font-family-sans: 'Plus Jakarta Sans', Inter, system-ui, -apple-system, sans-serif;
@@ -59,7 +65,7 @@
   --text-sm:   0.875rem;  /* 14px */
   --text-base: 1rem;      /* 16px */
   --text-lg:   1.125rem;  /* 18px */
-  --text-xl:  1.25rem;   /* 20px */
+  --text-xl:   1.25rem;   /* 20px */
   --text-2xl:  1.5rem;    /* 24px */
   --text-3xl:  1.875rem;  /* 30px */
   --text-4xl:  2.25rem;   /* 36px */
@@ -84,15 +90,15 @@
   --radius-2xl: 1rem;     /* 16px */
   --radius-full: 9999px;
 
-  /* ── Professional Shadows (No excessive neon blur) ──────── */
-  --shadow-sm:  0 1px 2px rgba(0, 0, 0, 0.25);
-  --shadow-md:  0 4px 12px rgba(0, 0, 0, 0.28);
-  --shadow-lg:  0 12px 30px rgba(0, 0, 0, 0.35);
-  --shadow-xl:  0 20px 50px rgba(0, 0, 0, 0.45);
+  /* ── Crisp Elevation & Light Drop Shadows ───────────────── */
+  --shadow-sm:  0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md:  0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+  --shadow-lg:  0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
+  --shadow-xl:  0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
 
   /* Subtle technical micro-glows */
-  --shadow-glow-blue: 0 0 24px rgba(37, 99, 235, 0.18);
-  --shadow-glow-cyan: 0 0 24px rgba(6, 182, 212, 0.12);
+  --shadow-glow-blue: 0 0 20px rgba(37, 99, 235, 0.12);
+  --shadow-glow-cyan: 0 0 20px rgba(6, 182, 212, 0.10);
 
   /* ── Transitions & Motion ───────────────────────────────── */
   --ease-default: cubic-bezier(0.4, 0, 0.2, 1);

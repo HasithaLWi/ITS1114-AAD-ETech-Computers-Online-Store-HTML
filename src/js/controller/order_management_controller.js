@@ -99,20 +99,20 @@ export function renderOrdersTab() {
   const orders = getAllOrders();
 
   tbody.innerHTML = orders.map(o => `
-    <tr class="hover:bg-[#141c28] transition-colors">
+    <tr class="hover:bg-[#f8fafc] transition-colors">
       <td class="py-3 px-3.5">
-        <span class="font-mono font-extrabold text-blue-400 text-xs">${o.orderId}</span>
-        <p class="text-[10px] text-[#718096]">${o.date}</p>
+        <span class="font-mono font-extrabold text-blue-600 text-xs">${o.orderId}</span>
+        <p class="text-[10px] text-[#64748b]">${o.date}</p>
       </td>
       <td class="py-3 px-3.5">
-        <p class="font-bold text-white text-xs">${o.customerName}</p>
-        <p class="text-[10px] text-[#718096]">${o.email}</p>
+        <p class="font-bold text-[#0f172a] text-xs">${o.customerName}</p>
+        <p class="text-[10px] text-[#64748b]">${o.email}</p>
       </td>
       <td class="py-3 px-3.5">
-        <p class="font-bold text-[#f4f7fb] text-xs">${o.fulfillmentBranch || 'Colombo Hub'}</p>
-        <p class="text-[10px] text-[#718096]">Dest: <strong class="text-white">${o.city}</strong> (${o.distanceKm || 5} km)</p>
+        <p class="font-bold text-[#0f172a] text-xs">${o.fulfillmentBranch || 'Colombo Hub'}</p>
+        <p class="text-[10px] text-[#64748b]">Dest: <strong class="text-blue-600">${o.city}</strong> (${o.distanceKm || 5} km)</p>
       </td>
-      <td class="py-3 px-3.5 font-bold text-white font-mono text-xs">
+      <td class="py-3 px-3.5 font-bold text-[#0f172a] font-mono text-xs">
         Rs. ${parseFloat((o.totalAmount || 0).toString().replace(/[^0-9.]/g, '')).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
       </td>
       <td class="py-3 px-3.5">
@@ -122,7 +122,7 @@ export function renderOrdersTab() {
       </td>
       <td class="py-3 px-3.5 text-right">
         <div class="flex items-center justify-end space-x-2">
-          <select onchange="changeOrderStatus('${o.orderId}', this.value)" class="bg-[#080b12] border border-[#202b3a] text-white rounded px-2 py-1 text-xs focus:border-blue-500 cursor-pointer">
+          <select onchange="changeOrderStatus('${o.orderId}', this.value)" class="bg-[#f8fafc] border border-[#e2e8f0] text-[#0f172a] rounded px-2 py-1 text-xs focus:border-blue-600 cursor-pointer shadow-sm">
             <option value="Pending" ${o.status === 'Pending' ? 'selected' : ''}>Pending</option>
             <option value="Processing" ${o.status === 'Processing' ? 'selected' : ''}>Processing</option>
             <option value="Shipped" ${o.status === 'Shipped' ? 'selected' : ''}>Shipped</option>
@@ -132,7 +132,7 @@ export function renderOrdersTab() {
         </div>
       </td>
     </tr>
-  `).join('') || '<tr><td colspan="6" class="py-8 text-center text-xs text-[#718096]">No orders recorded yet.</td></tr>';
+  `).join('') || '<tr><td colspan="6" class="py-8 text-center text-xs text-[#64748b]">No orders recorded yet.</td></tr>';
 }
 
 export function changeOrderStatus(orderId, newStatus) {
@@ -150,10 +150,10 @@ export function changeOrderStatus(orderId, newStatus) {
 // ── Status Pill Styles ──
 export function getStatusStyle(status) {
   switch (status) {
-    case 'Processing': return 'bg-blue-500/10 text-blue-400 border border-blue-500/30';
-    case 'Shipped': return 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/30';
-    case 'Delivered': return 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30';
-    case 'Cancelled': return 'bg-rose-500/10 text-rose-400 border border-rose-500/30';
-    default: return 'bg-amber-500/10 text-amber-400 border border-amber-500/30';
+    case 'Processing': return 'bg-blue-50 text-blue-700 border border-blue-200';
+    case 'Shipped': return 'bg-sky-50 text-sky-700 border border-sky-200';
+    case 'Delivered': return 'bg-emerald-50 text-emerald-700 border border-emerald-200';
+    case 'Cancelled': return 'bg-rose-50 text-rose-700 border border-rose-200';
+    default: return 'bg-amber-50 text-amber-700 border border-amber-200';
   }
 }

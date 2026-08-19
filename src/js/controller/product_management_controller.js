@@ -39,41 +39,41 @@ export function renderProductsTab() {
   }
 
   tbody.innerHTML = products.map(p => `
-    <tr class="hover:bg-[#141c28] transition-colors">
+    <tr class="hover:bg-[#f8fafc] transition-colors">
       <td class="py-3 px-3.5">
         <div class="flex items-center space-x-2.5">
-          <img src="${p.image}" class="w-9 h-9 object-cover rounded bg-[#080b12] border border-[#202b3a] flex-shrink-0">
+          <img src="${p.image}" class="w-9 h-9 object-cover rounded bg-[#f8fafc] border border-[#e2e8f0] flex-shrink-0">
           <div>
-            <p class="font-bold text-white text-xs line-clamp-1">${p.name}</p>
-            <p class="text-[10px] text-blue-400 font-mono">${p.sku}</p>
+            <p class="font-bold text-[#0f172a] text-xs line-clamp-1">${p.name}</p>
+            <p class="text-[10px] text-blue-600 font-mono">${p.sku}</p>
           </div>
         </div>
       </td>
-      <td class="py-3 px-3.5 uppercase text-[10px] font-mono font-bold text-cyan-400">${p.category}</td>
-      <td class="py-3 px-3.5 font-bold text-white font-mono text-xs">Rs. ${p.price.toLocaleString()}</td>
+      <td class="py-3 px-3.5 uppercase text-[10px] font-mono font-bold text-blue-600">${p.category}</td>
+      <td class="py-3 px-3.5 font-bold text-[#0f172a] font-mono text-xs">Rs. ${p.price.toLocaleString()}</td>
       <td class="py-3 px-3.5">
         <div class="flex flex-wrap gap-1">
           ${branches.map(b => {
             const qty = (p.branchStock && p.branchStock[b.id]) || 0;
             return `
-              <span class="px-1.5 py-0.5 rounded text-[9px] font-mono border ${qty > 0 ? 'bg-[#080b12] text-[#f4f7fb] border-[#202b3a]' : 'bg-rose-950/40 text-rose-300 border-rose-900/50'}">
-                <strong class="text-blue-400">${b.city}:</strong> ${qty}
+              <span class="px-1.5 py-0.5 rounded text-[9px] font-mono border ${qty > 0 ? 'bg-[#f8fafc] text-[#0f172a] border-[#e2e8f0]' : 'bg-rose-50 text-rose-700 border-rose-200'}">
+                <strong class="text-blue-600">${b.city}:</strong> ${qty}
               </span>
             `;
           }).join('')}
         </div>
       </td>
       <td class="py-3 px-3.5">
-        <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold ${p.totalStock > 0 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30' : 'bg-rose-500/10 text-rose-400 border border-rose-500/30'}">
+        <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold ${p.totalStock > 0 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200'}">
           ${p.totalStock} units
         </span>
       </td>
       <td class="py-3 px-3.5 text-right">
         <div class="flex items-center justify-end space-x-1.5">
-          <button onclick="editProduct(${p.id})" class="p-1.5 bg-[#141c28] hover:bg-[#192332] text-blue-400 rounded border border-[#202b3a] transition-colors" title="Edit Product">
+          <button onclick="editProduct(${p.id})" class="p-1.5 bg-[#f8fafc] hover:bg-[#f1f5f9] text-blue-600 rounded border border-[#e2e8f0] transition-colors shadow-sm" title="Edit Product">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
           </button>
-          <button onclick="confirmDeleteProduct(${p.id})" class="p-1.5 bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 border border-rose-900/40 rounded transition-colors" title="Delete Product">
+          <button onclick="confirmDeleteProduct(${p.id})" class="p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded transition-colors shadow-sm" title="Delete Product">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
           </button>
         </div>
@@ -236,18 +236,18 @@ export function renderGalleryInputs() {
   }
 
   container.innerHTML = images.map((imgUrl, idx) => `
-    <div class="flex items-center space-x-2 bg-[#080b12] p-2.5 rounded-md border border-[#202b3a]">
-      <div class="w-10 h-10 rounded bg-[#101722] border border-[#202b3a] flex items-center justify-center flex-shrink-0 overflow-hidden">
+    <div class="flex items-center space-x-2 bg-[#f8fafc] p-2.5 rounded-md border border-[#e2e8f0]">
+      <div class="w-10 h-10 rounded bg-[#f8fafc] border border-[#e2e8f0] flex items-center justify-center overflow-hidden flex-shrink-0">
         <img src="${imgUrl || 'https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?auto=format&fit=crop&w=100&q=80'}" onerror="this.src='https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?auto=format&fit=crop&w=100&q=80'" class="w-full h-full object-cover">
       </div>
       <div class="flex-1">
-        <div class="flex items-center justify-between text-[10px] text-[#718096] mb-0.5">
+        <div class="flex items-center justify-between text-[10px] text-[#64748b] mb-0.5">
           <span class="font-bold uppercase font-mono">${idx === 0 ? 'Primary Cover Image' : `Gallery Image #${idx + 1}`}</span>
         </div>
-        <input type="url" required value="${imgUrl}" oninput="updateGalleryImage(${idx}, this.value)" placeholder="https://images.unsplash.com/..." class="w-full px-2.5 py-1.5 rounded bg-[#101722] border border-[#202b3a] text-white text-xs focus:border-blue-500">
+        <input type="url" required value="${imgUrl}" oninput="updateGalleryImage(${idx}, this.value)" placeholder="https://images.unsplash.com/..." class="w-full px-2.5 py-1.5 rounded bg-white border border-[#e2e8f0] text-[#0f172a] text-xs focus:border-blue-600">
       </div>
       ${images.length > 1 ? `
-        <button type="button" onclick="removeGalleryImage(${idx})" class="p-1.5 bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 border border-rose-900/40 rounded transition-colors self-end mb-0.5" title="Remove image">
+        <button type="button" onclick="removeGalleryImage(${idx})" class="p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded transition-colors self-end mb-0.5 shadow-sm" title="Remove image">
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
         </button>
       ` : ''}
@@ -287,9 +287,9 @@ export function renderSpecsInputs() {
 
   container.innerHTML = specs.map((s, idx) => `
     <div class="flex items-center space-x-1.5">
-      <input type="text" value="${s.key}" oninput="updateSpecItem(${idx}, 'key', this.value)" placeholder="Spec Name (e.g. CPU)" class="w-1/2 px-2.5 py-1.5 rounded bg-[#080b12] border border-[#202b3a] text-white text-xs focus:border-blue-500">
-      <input type="text" value="${s.value}" oninput="updateSpecItem(${idx}, 'value', this.value)" placeholder="Value (e.g. Core i9)" class="w-1/2 px-2.5 py-1.5 rounded bg-[#080b12] border border-[#202b3a] text-white text-xs focus:border-blue-500">
-      <button type="button" onclick="removeSpecItem(${idx})" class="p-1.5 bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 border border-rose-900/40 rounded transition-colors" title="Delete Spec">
+      <input type="text" value="${s.key}" oninput="updateSpecItem(${idx}, 'key', this.value)" placeholder="Spec Name (e.g. CPU)" class="w-1/2 px-2.5 py-1.5 rounded bg-[#f8fafc] border border-[#e2e8f0] text-[#0f172a] text-xs focus:border-blue-600">
+      <input type="text" value="${s.value}" oninput="updateSpecItem(${idx}, 'value', this.value)" placeholder="Value (e.g. Core i9)" class="w-1/2 px-2.5 py-1.5 rounded bg-[#f8fafc] border border-[#e2e8f0] text-[#0f172a] text-xs focus:border-blue-600">
+      <button type="button" onclick="removeSpecItem(${idx})" class="p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded transition-colors shadow-sm" title="Delete Spec">
         &times;
       </button>
     </div>
@@ -323,8 +323,8 @@ export function renderFeaturesInputs() {
 
   container.innerHTML = features.map((f, idx) => `
     <div class="flex items-center space-x-1.5">
-      <input type="text" value="${f}" oninput="updateFeatureItem(${idx}, this.value)" placeholder="Highlight feature bullet..." class="flex-1 px-2.5 py-1.5 rounded bg-[#080b12] border border-[#202b3a] text-white text-xs focus:border-blue-500">
-      <button type="button" onclick="removeFeatureItem(${idx})" class="p-1.5 bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 border border-rose-900/40 rounded transition-colors" title="Delete Feature">
+      <input type="text" value="${f}" oninput="updateFeatureItem(${idx}, this.value)" placeholder="Highlight feature bullet..." class="flex-1 px-2.5 py-1.5 rounded bg-[#f8fafc] border border-[#e2e8f0] text-[#0f172a] text-xs focus:border-blue-600">
+      <button type="button" onclick="removeFeatureItem(${idx})" class="p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded transition-colors shadow-sm" title="Delete Feature">
         &times;
       </button>
     </div>
@@ -360,13 +360,13 @@ export function renderBranchStockInputs(product, branches, isStaff, staffBranchI
     const isLocked = isStaff && b.id !== staffBranchId;
 
     return `
-      <div class="bg-[#080b12] p-3 rounded-md border ${isLocked ? 'border-[#202b3a] opacity-50' : 'border-[#202b3a]'} space-y-1">
+      <div class="bg-[#f8fafc] p-3 rounded-md border ${isLocked ? 'border-[#e2e8f0] opacity-50' : 'border-[#e2e8f0]'} space-y-1">
         <div class="flex items-center justify-between">
-          <span class="font-bold text-white text-xs">${b.city}</span>
-          <span class="text-[9px] font-mono text-blue-400 font-bold">${b.id}</span>
+          <span class="font-bold text-[#0f172a] text-xs">${b.city}</span>
+          <span class="text-[9px] font-mono text-blue-600 font-bold">${b.id}</span>
         </div>
-        <input type="number" min="0" id="form-stock-${b.id}" value="${qty}" ${isLocked ? 'readonly disabled' : ''} oninput="updateLivePreview()" class="w-full px-2.5 py-1.5 rounded bg-[#101722] border border-[#202b3a] text-white font-mono font-bold text-xs focus:border-blue-500">
-        ${isLocked ? '<span class="text-[9px] text-[#718096] block">Locked for Staff</span>' : ''}
+        <input type="number" min="0" id="form-stock-${b.id}" value="${qty}" ${isLocked ? 'readonly disabled' : ''} oninput="updateLivePreview()" class="w-full px-2.5 py-1.5 rounded bg-white border border-[#e2e8f0] text-[#0f172a] font-mono font-bold text-xs focus:border-blue-600">
+        ${isLocked ? '<span class="text-[9px] text-[#64748b] block">Locked for Staff</span>' : ''}
       </div>
     `;
   }).join('');
@@ -391,17 +391,17 @@ export function updateLivePreview() {
     : ['https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?auto=format&fit=crop&w=600&q=80'];
 
   previewContainer.innerHTML = `
-    <div class="rounded-md bg-[#080b12] border border-[#202b3a] p-3 space-y-3 shadow-inner">
+    <div class="rounded-md bg-white border border-[#e2e8f0] p-3 space-y-3 shadow-sm">
       <!-- Main Preview Cover Image -->
-      <div class="relative w-full h-40 rounded bg-[#101722] overflow-hidden border border-[#202b3a] flex items-center justify-center">
+      <div class="relative w-full h-40 rounded bg-[#f8fafc] overflow-hidden border border-[#e2e8f0] flex items-center justify-center">
         <img id="preview-main-img" src="${images[0]}" class="w-full h-full object-cover">
         ${badge ? `
-          <div class="absolute top-2 left-2 px-2 py-0.5 rounded bg-blue-600 text-white text-[9px] font-bold uppercase">
+          <div class="absolute top-2 left-2 px-2 py-0.5 rounded bg-blue-600 text-white text-[9px] font-bold uppercase shadow-sm">
             ${badge}
           </div>
         ` : ''}
 
-        <div class="absolute bottom-2 right-2 px-1.5 py-0.5 rounded bg-[#101722]/90 text-blue-300 text-[9px] font-bold border border-[#202b3a]">
+        <div class="absolute bottom-2 right-2 px-1.5 py-0.5 rounded bg-white/90 text-blue-600 text-[9px] font-bold border border-[#e2e8f0] shadow-sm">
           ${images.length} Image${images.length > 1 ? 's' : ''}
         </div>
       </div>
@@ -410,27 +410,27 @@ export function updateLivePreview() {
       ${images.length > 1 ? `
         <div class="flex items-center space-x-1.5 overflow-x-auto pb-1">
           ${images.map((img) => `
-            <img src="${img}" onclick="document.getElementById('preview-main-img').src='${img}'" class="w-8 h-8 rounded object-cover bg-[#101722] border border-[#202b3a] cursor-pointer hover:border-blue-500 transition-colors flex-shrink-0">
+            <img src="${img}" onclick="document.getElementById('preview-main-img').src='${img}'" class="w-8 h-8 rounded object-cover bg-[#f8fafc] border border-[#e2e8f0] cursor-pointer hover:border-blue-600 transition-colors flex-shrink-0">
           `).join('')}
         </div>
       ` : ''}
 
       <div class="space-y-1 text-xs">
         <div class="flex items-center justify-between">
-          <span class="text-[9px] font-bold text-cyan-400 uppercase font-mono tracking-wider">${category}</span>
-          <span class="text-[9px] text-[#718096] font-mono">${sku}</span>
+          <span class="text-[9px] font-bold text-blue-600 uppercase font-mono tracking-wider">${category}</span>
+          <span class="text-[9px] text-[#64748b] font-mono">${sku}</span>
         </div>
 
-        <h4 class="font-bold text-white text-xs line-clamp-1">${name}</h4>
-        <p class="text-[10px] text-[#718096] line-clamp-2 leading-relaxed">${desc}</p>
+        <h4 class="font-bold text-[#0f172a] text-xs line-clamp-1">${name}</h4>
+        <p class="text-[10px] text-[#64748b] line-clamp-2 leading-relaxed">${desc}</p>
       </div>
 
-      <div class="flex items-center justify-between pt-2 border-t border-[#202b3a]">
+      <div class="flex items-center justify-between pt-2 border-t border-[#e2e8f0]">
         <div>
-          ${origPrice > price ? `<span class="text-[9px] text-[#718096] line-through mr-1 font-mono">Rs. ${origPrice.toLocaleString()}</span>` : ''}
-          <span class="text-sm font-extrabold text-white font-mono">Rs. ${price.toLocaleString()}</span>
+          ${origPrice > price ? `<span class="text-[9px] text-[#94a3b8] line-through mr-1 font-mono">Rs. ${origPrice.toLocaleString()}</span>` : ''}
+          <span class="text-sm font-extrabold text-[#0f172a] font-mono">Rs. ${price.toLocaleString()}</span>
         </div>
-        <span class="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 text-[9px] font-bold border border-emerald-500/30">
+        <span class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 text-[9px] font-bold border border-emerald-200">
           ${warranty}
         </span>
       </div>

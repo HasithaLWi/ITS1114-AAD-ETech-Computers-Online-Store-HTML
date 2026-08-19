@@ -56,6 +56,11 @@ root/
 
 3. **Open in browser** — Navigate to `http://localhost:3000` (or your server's port).
 
+## Design System & Theme Documentation
+
+> 🎨 **Theme, Color Palette & Styling Guide:**
+> Check out **[THEME_AND_STYLING_GUIDE.md](file:///f:/IJSE/SECOND%20SEM/SECOND%20SEM%20-%20ITS%201114%20-%20AAD/ITS1114-AAD-ETech-Computers-Online-Store-HTML/THEME_AND_STYLING_GUIDE.md)** for complete specifications on the Precision Tech Dark Theme, color palettes, typography hierarchy, elevation levels, 3D carousel mechanics, component styling, and UI snippets.
+
 ## Backend Migration & REST API Integration
 
 > 📌 **Looking to integrate a Spring Boot & MySQL backend?**

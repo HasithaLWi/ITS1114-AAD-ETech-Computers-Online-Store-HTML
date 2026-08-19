@@ -203,15 +203,15 @@ export function updateHeaderAuthUI() {
       authContainer.innerHTML = `
           <div class="flex items-center space-x-2 hidden md:flex">
             ${isAdminOrStaff ? `
-              <a href="#admin" class="flex items-center space-x-2 bg-[#101722] hover:bg-[#141c28] border border-[#202b3a] hover:border-[#34445a] px-3.5 py-2 rounded-md transition-all group">
-                <span class="text-xs font-semibold text-[#a7b3c4] group-hover:text-white max-w-[100px] truncate">Admin Console</span>
+              <a href="#admin" class="flex items-center space-x-2 bg-[#f1f5f9] hover:bg-[#e2e8f0] border border-[#e2e8f0] hover:border-[#cbd5e1] px-3.5 py-2 rounded-md transition-all group shadow-sm">
+                <span class="text-xs font-semibold text-[#475569] group-hover:text-[#0f172a] max-w-[100px] truncate">Admin Console</span>
               </a>
             ` : ''}
-            <a href="#account" class="flex items-center space-x-2 bg-[#101722] hover:bg-[#141c28] border border-[#202b3a] hover:border-[#34445a] px-3 py-1.5 rounded-md transition-all group">
+            <a href="#account" class="flex items-center space-x-2 bg-[#f1f5f9] hover:bg-[#e2e8f0] border border-[#e2e8f0] hover:border-[#cbd5e1] px-3 py-1.5 rounded-md transition-all group shadow-sm">
               <div class="w-6 h-6 rounded bg-blue-600 text-white font-extrabold text-[11px] flex items-center justify-center">
                 ${user.name.charAt(0).toUpperCase()}
               </div>
-              <span class="text-xs font-semibold text-[#f4f7fb] max-w-[100px] truncate">${user.name.split(' ')[0]}</span>
+              <span class="text-xs font-semibold text-[#0f172a] max-w-[100px] truncate">${user.name.split(' ')[0]}</span>
             </a>
           </div>
         `;
@@ -231,23 +231,23 @@ export function updateHeaderAuthUI() {
     if (user) {
       const isAdminOrStaff = user.role === 'ADMIN' || user.role === 'STAFF';
       mobileDrawer.innerHTML = `
-        <div class="p-3 bg-[#101722] border border-[#202b3a] rounded-md space-y-2 text-xs">
+        <div class="p-3 bg-[#f8fafc] border border-[#e2e8f0] rounded-md space-y-2 text-xs">
           <div class="flex items-center space-x-2">
             <div class="w-7 h-7 rounded bg-blue-600 text-white font-bold flex items-center justify-center">${user.name.charAt(0).toUpperCase()}</div>
             <div>
-              <p class="font-bold text-white">${user.name}</p>
-              <p class="text-[10px] text-[#718096]">${user.email}</p>
+              <p class="font-bold text-[#0f172a]">${user.name}</p>
+              <p class="text-[10px] text-[#64748b]">${user.email}</p>
             </div>
           </div>
           ${isAdminOrStaff ? `
-            <a href="#admin" class="block w-full text-center py-2 bg-[#141c28] border border-[#202b3a] text-white rounded-md text-xs font-bold">Open Admin Console</a>
+            <a href="#admin" class="block w-full text-center py-2 bg-white border border-[#e2e8f0] text-[#0f172a] rounded-md text-xs font-bold shadow-sm">Open Admin Console</a>
           ` : ''}
-          <button onclick="handleLogout()" class="w-full py-2 bg-rose-950/40 border border-rose-900/40 text-rose-300 rounded-md text-xs font-bold">Sign Out</button>
+          <button onclick="handleLogout()" class="w-full py-2 bg-rose-50 border border-rose-200 text-rose-700 rounded-md text-xs font-bold shadow-sm">Sign Out</button>
         </div>
       `;
     } else {
       mobileDrawer.innerHTML = `
-        <a href="#login" class="block w-full text-center py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-md font-bold text-xs">Sign In / Create Account</a>
+        <a href="#login" class="block w-full text-center py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-md font-bold text-xs shadow-sm">Sign In / Create Account</a>
       `;
     }
   }
@@ -275,9 +275,9 @@ function updateActiveNavLinks(pageName) {
     const isActive = href && (href === `#${pageName}` || href.startsWith(`#${pageName}?`));
 
     if (isActive) {
-      link.className = 'nav-link block px-4 py-2.5 rounded-md text-sm font-bold text-white bg-[#141c28] border-l-2 border-blue-600 transition-all duration-150';
+      link.className = 'nav-link block px-4 py-2.5 rounded-md text-sm font-bold text-blue-600 bg-blue-50 border-l-2 border-blue-600 transition-all duration-150';
     } else {
-      link.className = 'nav-link block px-4 py-2.5 rounded-md text-sm font-medium text-[#94a3b8] hover:bg-[#101722] hover:text-white transition-all duration-150';
+      link.className = 'nav-link block px-4 py-2.5 rounded-md text-sm font-medium text-[#475569] hover:bg-[#f8fafc] hover:text-blue-600 transition-all duration-150';
     }
   });
 }
@@ -325,7 +325,7 @@ function renderUserOrderHistory(userOrEmail) {
   if (!container) return;
 
   if (typeof getUserOrders !== 'function') {
-    container.innerHTML = `<p class="text-xs text-[#718096]">Order management system unavailable.</p>`;
+    container.innerHTML = `<p class="text-xs text-[#64748b]">Order management system unavailable.</p>`;
     return;
   }
 
@@ -335,59 +335,59 @@ function renderUserOrderHistory(userOrEmail) {
 
   if (orders.length === 0) {
     container.innerHTML = `
-      <div class="text-center py-12 bg-[#080b12] rounded-lg border border-[#202b3a] space-y-3">
-        <div class="w-12 h-12 rounded-full bg-[#101722] text-[#718096] flex items-center justify-center mx-auto">
+      <div class="text-center py-12 bg-[#f8fafc] rounded-lg border border-[#e2e8f0] space-y-3">
+        <div class="w-12 h-12 rounded-full bg-white text-[#64748b] flex items-center justify-center mx-auto border border-[#e2e8f0]">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
         </div>
-        <h4 class="text-sm font-bold text-white">No Orders Placed Yet</h4>
-        <p class="text-xs text-[#718096] max-w-sm mx-auto">Your order history will appear here after you place an order.</p>
-        <a href="#shop" class="inline-block px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-md transition-colors">Explore Hardware Catalog</a>
+        <h4 class="text-sm font-bold text-[#0f172a]">No Orders Placed Yet</h4>
+        <p class="text-xs text-[#64748b] max-w-sm mx-auto">Your order history will appear here after you place an order.</p>
+        <a href="#shop" class="inline-block px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-md transition-colors shadow-sm">Explore Hardware Catalog</a>
       </div>
     `;
     return;
   }
 
   container.innerHTML = orders.map(order => `
-    <div class="bg-[#080b12] border border-[#202b3a] rounded-lg p-4 space-y-3.5 hover:border-[#34445a] transition-colors">
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[#202b3a] pb-2.5 gap-2">
+    <div class="bg-[#f8fafc] border border-[#e2e8f0] rounded-lg p-4 space-y-3.5 hover:border-[#cbd5e1] transition-colors shadow-sm">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[#e2e8f0] pb-2.5 gap-2">
         <div>
-          <span class="text-[10px] font-bold uppercase tracking-wider text-[#718096]">Order ID</span>
-          <h4 class="text-sm font-extrabold text-blue-400 font-mono">${order.orderId}</h4>
-          <p class="text-[10px] text-[#718096]">${order.date}</p>
+          <span class="text-[10px] font-bold uppercase tracking-wider text-[#64748b]">Order ID</span>
+          <h4 class="text-sm font-extrabold text-blue-600 font-mono">${order.orderId}</h4>
+          <p class="text-[10px] text-[#64748b]">${order.date}</p>
         </div>
         <div class="flex items-center space-x-3">
-          <span class="px-2.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[10px] font-bold">
+          <span class="px-2.5 py-0.5 rounded bg-emerald-50 border border-emerald-200 text-emerald-700 text-[10px] font-bold">
             ✓ ${order.status || 'Pending'}
           </span>
-          <span class="text-base font-extrabold text-white font-mono">Rs. ${parseFloat((order.totalAmount || 0).toString().replace(/[^0-9.]/g, '')).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+          <span class="text-base font-extrabold text-[#0f172a] font-mono">Rs. ${parseFloat((order.totalAmount || 0).toString().replace(/[^0-9.]/g, '')).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
         </div>
       </div>
 
       <!-- Dispatch Hub & Destination -->
-      <div class="flex items-center justify-between text-xs bg-[#101722] p-2.5 rounded-md border border-[#202b3a]">
-        <span class="text-[#718096]">Dispatch Hub: <strong class="text-white">${order.fulfillmentBranch || 'Colombo Hub'}</strong></span>
-        <span class="text-[#718096]">Destination: <strong class="text-blue-400">${order.city || 'Colombo'}</strong> (${order.distanceKm || 5} km)</span>
+      <div class="flex items-center justify-between text-xs bg-white p-2.5 rounded-md border border-[#e2e8f0]">
+        <span class="text-[#64748b]">Dispatch Hub: <strong class="text-[#0f172a]">${order.fulfillmentBranch || 'Colombo Hub'}</strong></span>
+        <span class="text-[#64748b]">Destination: <strong class="text-blue-600">${order.city || 'Colombo'}</strong> (${order.distanceKm || 5} km)</span>
       </div>
 
       <!-- Items Grid -->
       <div class="space-y-2">
-        <p class="text-[10px] font-bold text-[#718096] uppercase tracking-wider">Purchased Items</p>
+        <p class="text-[10px] font-bold text-[#64748b] uppercase tracking-wider">Purchased Items</p>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
           ${order.items.map(item => `
-            <div class="flex items-center space-x-2.5 bg-[#101722] p-2 rounded-md border border-[#202b3a]">
-              <img src="${item.image}" alt="${item.name}" class="w-9 h-9 object-cover rounded flex-shrink-0 bg-[#080b12]">
+            <div class="flex items-center space-x-2.5 bg-white p-2 rounded-md border border-[#e2e8f0]">
+              <img src="${item.image}" alt="${item.name}" class="w-9 h-9 object-cover rounded flex-shrink-0 bg-[#f8fafc]">
               <div class="min-w-0 flex-1">
-                <p class="text-xs font-bold text-white truncate">${item.name}</p>
-                <p class="text-[10px] text-[#718096] font-mono">Qty: ${item.quantity} × Rs. ${item.price}</p>
+                <p class="text-xs font-bold text-[#0f172a] truncate">${item.name}</p>
+                <p class="text-[10px] text-[#64748b] font-mono">Qty: ${item.quantity} × Rs. ${item.price}</p>
               </div>
             </div>
           `).join('')}
         </div>
       </div>
 
-      <div class="pt-2 border-t border-[#202b3a] flex items-center justify-between text-[11px] text-[#718096]">
-        <span>Payment: <strong class="text-[#f4f7fb]">${order.paymentMethod}</strong></span>
-        <span class="text-emerald-400 font-medium flex items-center space-x-1">
+      <div class="pt-2 border-t border-[#e2e8f0] flex items-center justify-between text-[11px] text-[#64748b]">
+        <span>Payment: <strong class="text-[#0f172a]">${order.paymentMethod}</strong></span>
+        <span class="text-emerald-600 font-medium flex items-center space-x-1">
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
           <span>Verified Purchase</span>
         </span>
@@ -419,30 +419,30 @@ function renderHomeFeaturedProducts() {
 
   const featured = getFeaturedProducts().slice(0, 4);
   grid.innerHTML = featured.map(product => `
-    <div class="group rounded-lg bg-[#101722] border border-[#202b3a] hover:border-[#34445a] p-4 flex flex-col justify-between transition-all duration-200 hover:-translate-y-0.5 shadow-md">
+    <div class="group rounded-lg bg-white border border-[#e2e8f0] hover:border-[#cbd5e1] p-4 flex flex-col justify-between transition-all duration-200 hover:-translate-y-0.5 shadow-sm hover:shadow-md">
       <div>
-        <div onclick="viewProductDetails(${product.id})" class="relative overflow-hidden rounded-md bg-[#080b12] mb-3.5 h-44 flex items-center justify-center cursor-pointer border border-[#202b3a]">
+        <div onclick="viewProductDetails(${product.id})" class="relative overflow-hidden rounded-md bg-[#f8fafc] mb-3.5 h-44 flex items-center justify-center cursor-pointer border border-[#e2e8f0]">
           <img src="${product.image}" alt="${product.name}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
           ${product.badge ? `<span class="absolute top-2.5 left-2.5 bg-blue-600 text-white text-[9px] font-bold uppercase px-2 py-0.5 rounded shadow-sm">${product.badge}</span>` : ''}
-          <div class="absolute inset-0 bg-[#080b12]/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+          <div class="absolute inset-0 bg-[#0f172a]/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
             <span class="px-3 py-1.5 rounded-md bg-blue-600 text-white text-xs font-bold shadow-md flex items-center space-x-1">
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
               <span>View Specs</span>
             </span>
           </div>
         </div>
-        <span class="text-[10px] font-bold uppercase text-cyan-400 font-mono tracking-wider">${product.category}</span>
-        <h3 onclick="viewProductDetails(${product.id})" class="text-sm font-bold text-white mt-1 line-clamp-1 group-hover:text-blue-400 transition-colors cursor-pointer">${product.name}</h3>
-        <p class="text-xs text-[#718096] mt-1 line-clamp-2 leading-relaxed">${product.description}</p>
+        <span class="text-[10px] font-bold uppercase text-blue-600 font-mono tracking-wider">${product.category}</span>
+        <h3 onclick="viewProductDetails(${product.id})" class="text-sm font-bold text-[#0f172a] mt-1 line-clamp-1 group-hover:text-blue-600 transition-colors cursor-pointer">${product.name}</h3>
+        <p class="text-xs text-[#64748b] mt-1 line-clamp-2 leading-relaxed">${product.description}</p>
       </div>
       
-      <div class="mt-4 pt-3 border-t border-[#202b3a] flex items-center justify-between">
+      <div class="mt-4 pt-3 border-t border-[#e2e8f0] flex items-center justify-between">
         <div>
-          <span class="text-[10px] text-[#718096] line-through font-mono">Rs. ${product.originalPrice}</span>
-          <p class="text-base font-extrabold text-white font-mono">Rs. ${product.price}</p>
+          <span class="text-[10px] text-[#94a3b8] line-through font-mono">Rs. ${product.originalPrice}</span>
+          <p class="text-base font-extrabold text-[#0f172a] font-mono">Rs. ${product.price}</p>
         </div>
         <div class="flex items-center space-x-1.5">
-          <button onclick="viewProductDetails(${product.id})" class="p-2 bg-[#141c28] hover:bg-[#192332] text-[#a7b3c4] hover:text-white rounded-md border border-[#202b3a] transition-all" title="View Product Details">
+          <button onclick="viewProductDetails(${product.id})" class="p-2 bg-[#f8fafc] hover:bg-[#f1f5f9] text-[#475569] hover:text-[#0f172a] rounded-md border border-[#e2e8f0] transition-all shadow-sm" title="View Product Details">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
           </button>
           <button onclick="addToCart(${product.id})" class="px-3 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-md shadow-sm transition-all flex items-center space-x-1">
@@ -470,7 +470,7 @@ export function renderHomeNewArrivalsCarousel() {
   const arrivals = getNewArrivalProducts();
   if (!arrivals || arrivals.length === 0) {
     container.innerHTML = `
-      <div class="relative rounded-xl overflow-hidden border border-[#202b3a] bg-[#101722] shadow-2xl">
+      <div class="relative rounded-xl overflow-hidden border border-[#e2e8f0] bg-white shadow-xl">
         <img src="public/images/hero_setup.jpg" alt="ETech PC Workstation Setup" class="w-full h-auto object-cover rounded-xl">
       </div>`;
     return;
@@ -491,13 +491,13 @@ export function renderHomeNewArrivalsCarousel() {
 
   // Helper renderer for individual clean product card
   const renderCard = (p, labelTag = '') => `
-    <div class="relative group/card h-full flex flex-col justify-between p-3.5 rounded-lg bg-[#101722] border border-[#202b3a] cursor-pointer overflow-hidden shadow-lg transition-all" onclick="viewProductDetails(${p.id})">
+    <div class="relative group/card h-full flex flex-col justify-between p-3.5 rounded-lg bg-white border border-[#e2e8f0] cursor-pointer overflow-hidden shadow-md transition-all" onclick="viewProductDetails(${p.id})">
       <!-- Product Image & Badge -->
-      <div class="relative w-full h-36 sm:h-44 lg:h-48 rounded-md overflow-hidden mb-2 bg-[#080b12] border border-[#202b3a]">
+      <div class="relative w-full h-36 sm:h-44 lg:h-48 rounded-md overflow-hidden mb-2 bg-[#f8fafc] border border-[#e2e8f0]">
         <img src="${p.image}" alt="${p.name}" class="w-full h-full object-cover group-hover/card:scale-105 transition-transform duration-300">
         
         <!-- Hover View Specs Overlay Button -->
-        <div class="absolute inset-0 bg-[#080b12]/50 opacity-0 group-hover/card:opacity-100 transition-opacity duration-200 flex items-center justify-center pointer-events-none">
+        <div class="absolute inset-0 bg-[#0f172a]/20 opacity-0 group-hover/card:opacity-100 transition-opacity duration-200 flex items-center justify-center pointer-events-none">
           <span class="px-3 py-1.5 rounded-md bg-blue-600 text-white text-xs font-bold shadow-md flex items-center space-x-1.5">
             <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
             <span>View Specs</span>
@@ -505,7 +505,7 @@ export function renderHomeNewArrivalsCarousel() {
         </div>
 
         <div class="absolute top-2 left-2 flex items-center space-x-1 z-10">
-          <span class="px-2 py-0.5 rounded bg-blue-600 text-white text-[9px] font-extrabold uppercase tracking-wider">
+          <span class="px-2 py-0.5 rounded bg-blue-600 text-white text-[9px] font-extrabold uppercase tracking-wider shadow-sm">
             ${p.badge || 'New Arrival'}
           </span>
         </div>
@@ -514,14 +514,14 @@ export function renderHomeNewArrivalsCarousel() {
       <!-- Card Details -->
       <div class="space-y-1">
         <div class="flex items-center justify-between">
-          <span class="text-[10px] font-bold text-cyan-400 uppercase font-mono tracking-wider">${p.category}</span>
+          <span class="text-[10px] font-bold text-blue-600 uppercase font-mono tracking-wider">${p.category}</span>
           <div class="text-right">
-            ${p.originalPrice ? `<span class="text-[10px] text-[#718096] line-through mr-1 font-mono">Rs. ${p.originalPrice.toLocaleString()}</span>` : ''}
-            <span class="text-sm font-extrabold text-white font-mono">Rs. ${p.price.toLocaleString()}</span>
+            ${p.originalPrice ? `<span class="text-[10px] text-[#94a3b8] line-through mr-1 font-mono">Rs. ${p.originalPrice.toLocaleString()}</span>` : ''}
+            <span class="text-sm font-extrabold text-[#0f172a] font-mono">Rs. ${p.price.toLocaleString()}</span>
           </div>
         </div>
-        <h3 class="text-xs sm:text-sm font-bold text-white line-clamp-1 group-hover/card:text-blue-400 transition-colors">${p.name}</h3>
-        <p class="text-[11px] text-[#718096] line-clamp-2 leading-relaxed">${p.description}</p>
+        <h3 class="text-xs sm:text-sm font-bold text-[#0f172a] line-clamp-1 group-hover/card:text-blue-600 transition-colors">${p.name}</h3>
+        <p class="text-[11px] text-[#64748b] line-clamp-2 leading-relaxed">${p.description}</p>
       </div>
     </div>
   `;
@@ -533,7 +533,7 @@ export function renderHomeNewArrivalsCarousel() {
       
       <!-- Top Slide Count Indicator -->
       <div class="flex items-center justify-end mb-2 px-1">
-        <span class="text-[10px] font-mono font-bold text-[#718096] bg-[#101722] px-2.5 py-0.5 rounded border border-[#202b3a]">
+        <span class="text-[10px] font-mono font-bold text-[#64748b] bg-white px-2.5 py-0.5 rounded border border-[#e2e8f0] shadow-sm">
           ${currentCarouselIndex + 1} / ${arrivals.length}
         </span>
       </div>
@@ -558,13 +558,13 @@ export function renderHomeNewArrivalsCarousel() {
 
         <!-- Navigation Arrow Controls -->
         <button onclick="prevHeroCarouselSlide()" 
-                class="absolute left-0 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-[#101722]/95 hover:bg-blue-600 text-white border border-[#202b3a] flex items-center justify-center shadow-lg transition-all z-40" 
+                class="absolute left-0 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white hover:bg-blue-600 hover:text-white text-[#0f172a] border border-[#e2e8f0] flex items-center justify-center shadow-md transition-all z-40" 
                 title="Previous Slide">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
         </button>
         
         <button onclick="nextHeroCarouselSlide()" 
-                class="absolute right-0 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-[#101722]/95 hover:bg-blue-600 text-white border border-[#202b3a] flex items-center justify-center shadow-lg transition-all z-40" 
+                class="absolute right-0 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white hover:bg-blue-600 hover:text-white text-[#0f172a] border border-[#e2e8f0] flex items-center justify-center shadow-md transition-all z-40" 
                 title="Next Slide">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
         </button>
@@ -574,7 +574,7 @@ export function renderHomeNewArrivalsCarousel() {
       <div class="flex items-center justify-center space-x-1.5 mt-3">
         ${arrivals.map((_, idx) => `
           <button onclick="goToHeroCarouselSlide(${idx})" 
-                  class="hero-carousel-indicator h-1 rounded-full transition-all duration-200 ${idx === currentCarouselIndex ? 'active w-6 bg-blue-600' : 'w-3 bg-[#202b3a] hover:bg-[#34445a]'}"
+                  class="hero-carousel-indicator h-1 rounded-full transition-all duration-200 ${idx === currentCarouselIndex ? 'active w-6 bg-blue-600' : 'w-3 bg-[#cbd5e1] hover:bg-[#94a3b8]'}"
                   title="Go to slide ${idx + 1}"></button>
         `).join('')}
       </div>
@@ -689,9 +689,9 @@ function renderPolicyPage(policyKey = 'privacy') {
       const p = policies[k];
       const isActive = k === key;
       return `
-        <a href="#${k}" class="flex items-center space-x-2 px-4 py-2 rounded-md font-bold text-xs transition-all ${isActive
-          ? 'bg-blue-600 text-white shadow-sm'
-          : 'bg-[#141c28] text-[#a7b3c4] hover:text-white hover:bg-[#192332] border border-[#202b3a]'
+        <a href="#${k}" class="flex items-center space-x-2 px-4 py-2 rounded-md font-bold text-xs transition-all shadow-sm ${isActive
+          ? 'bg-blue-600 text-white'
+          : 'bg-[#f8fafc] text-[#475569] hover:text-[#0f172a] hover:bg-[#f1f5f9] border border-[#e2e8f0]'
         }">
           ${p.icon || '📄'}
           <span>${p.title}</span>
@@ -702,24 +702,24 @@ function renderPolicyPage(policyKey = 'privacy') {
 
   // Render Main Policy Content Body
   container.innerHTML = `
-    <div class="bg-[#101722] border border-[#202b3a] rounded-lg p-6 sm:p-8 shadow-xl space-y-6">
+    <div class="bg-white border border-[#e2e8f0] rounded-lg p-6 sm:p-8 shadow-sm space-y-6">
       
       <!-- Policy Header Banner -->
-      <div class="border-b border-[#202b3a] pb-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div class="border-b border-[#e2e8f0] pb-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div class="flex items-center space-x-2 mb-1.5">
-            <span class="text-xs font-mono font-bold uppercase tracking-wider text-blue-400">Official Legal Policy</span>
+            <span class="text-xs font-mono font-bold uppercase tracking-wider text-blue-600">Official Legal Policy</span>
           </div>
-          <h1 class="text-2xl font-extrabold text-white tracking-tight">${policy.title}</h1>
-          <p class="text-xs text-[#718096] mt-1">${policy.subtitle}</p>
+          <h1 class="text-2xl font-extrabold text-[#0f172a] tracking-tight">${policy.title}</h1>
+          <p class="text-xs text-[#64748b] mt-1">${policy.subtitle}</p>
         </div>
 
         <div class="flex items-center gap-2">
-          <span class="inline-flex items-center space-x-1.5 px-3 py-1 rounded bg-[#080b12] border border-[#202b3a] text-[#a7b3c4] text-xs">
-            <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <span class="inline-flex items-center space-x-1.5 px-3 py-1 rounded bg-[#f8fafc] border border-[#e2e8f0] text-[#475569] text-xs">
+            <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             <span>Updated: ${policy.lastUpdated}</span>
           </span>
-          <button onclick="window.print()" class="px-3 py-1 bg-[#141c28] hover:bg-[#192332] text-[#f4f7fb] rounded text-xs font-bold border border-[#202b3a] transition-all">
+          <button onclick="window.print()" class="px-3 py-1 bg-[#f8fafc] hover:bg-[#f1f5f9] text-[#0f172a] rounded text-xs font-bold border border-[#e2e8f0] transition-all shadow-sm">
             Print
           </button>
         </div>
@@ -728,17 +728,17 @@ function renderPolicyPage(policyKey = 'privacy') {
       <!-- Policy Sections List -->
       <div class="space-y-4">
         ${policy.sections.map(sec => `
-          <div class="space-y-2 bg-[#080b12] p-4 rounded-md border border-[#202b3a]">
-            <h3 class="text-sm font-bold text-white flex items-center space-x-2">
-              <span class="w-1.5 h-1.5 rounded-full bg-blue-500 inline-block"></span>
+          <div class="space-y-2 bg-[#f8fafc] p-4 rounded-md border border-[#e2e8f0]">
+            <h3 class="text-sm font-bold text-[#0f172a] flex items-center space-x-2">
+              <span class="w-1.5 h-1.5 rounded-full bg-blue-600 inline-block"></span>
               <span>${sec.heading}</span>
             </h3>
-            <p class="text-xs text-[#a7b3c4] leading-relaxed font-normal">${sec.content}</p>
+            <p class="text-xs text-[#475569] leading-relaxed font-normal">${sec.content}</p>
             ${sec.bullets ? `
-              <ul class="mt-2 space-y-1 pl-3 border-l border-blue-500/30">
+              <ul class="mt-2 space-y-1 pl-3 border-l border-blue-200">
                 ${sec.bullets.map(bullet => `
-                  <li class="text-xs text-[#718096] flex items-start space-x-2">
-                    <span class="text-blue-400 font-bold">▪</span>
+                  <li class="text-xs text-[#64748b] flex items-start space-x-2">
+                    <span class="text-blue-600 font-bold">▪</span>
                     <span>${bullet}</span>
                   </li>
                 `).join('')}
@@ -749,10 +749,10 @@ function renderPolicyPage(policyKey = 'privacy') {
       </div>
 
       <!-- Policy Footer Assistance Callout -->
-      <div class="pt-4 border-t border-[#202b3a] flex flex-col sm:flex-row items-center justify-between gap-4 bg-[#141c28] p-4 rounded-md border border-[#202b3a]">
+      <div class="pt-4 border-t border-[#e2e8f0] flex flex-col sm:flex-row items-center justify-between gap-4 bg-[#f8fafc] p-4 rounded-md border border-[#e2e8f0]">
         <div>
-          <h4 class="text-xs font-bold text-white">Have questions regarding our ${policy.title}?</h4>
-          <p class="text-[11px] text-[#718096] mt-0.5">Our support team is ready to assist you anytime.</p>
+          <h4 class="text-xs font-bold text-[#0f172a]">Have questions regarding our ${policy.title}?</h4>
+          <p class="text-[11px] text-[#64748b] mt-0.5">Our support team is ready to assist you anytime.</p>
         </div>
         <a href="mailto:support@etechcomputers.com" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-md text-xs font-bold shadow-sm transition-all flex items-center space-x-1.5 flex-shrink-0">
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>

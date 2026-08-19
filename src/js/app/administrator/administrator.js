@@ -15,7 +15,7 @@ export function renderAdminPage(queryPart) {
   if (!container) return;
 
   container.innerHTML = `
-    <div class="flex h-screen overflow-hidden bg-[#080b12] text-[#f4f7fb] font-sans antialiased selection:bg-blue-600 selection:text-white relative">
+    <div class="flex h-screen overflow-hidden bg-[#f8fafc] text-[#0f172a] font-sans antialiased selection:bg-blue-600 selection:text-white relative">
 
       <!-- ============================================================ -->
       <!-- BACKDROP OVERLAY FOR EXPANDED SIDEBAR ON MOBILE/TABLET       -->
@@ -23,7 +23,7 @@ export function renderAdminPage(queryPart) {
       <div
         id="admin-sidebar-backdrop"
         onclick="closeAdminSidebar()"
-        class="fixed inset-0 bg-[#080b12]/80 backdrop-blur-xs z-40 hidden opacity-0 transition-opacity duration-300">
+        class="fixed inset-0 bg-[#0f172a]/60 backdrop-blur-xs z-40 hidden opacity-0 transition-opacity duration-300">
       </div>
 
       <!-- ============================================================ -->
@@ -31,23 +31,23 @@ export function renderAdminPage(queryPart) {
       <!-- ============================================================ -->
       <aside
         id="admin-sidebar"
-        class="admin-sidebar w-16 lg:w-64 bg-[#0c111b] border-r border-[#202b3a] flex flex-col justify-between flex-shrink-0 z-30 shadow-xl transition-all duration-300 ease-in-out">
+        class="admin-sidebar w-16 lg:w-64 bg-white border-r border-[#e2e8f0] flex flex-col justify-between flex-shrink-0 z-30 shadow-sm transition-all duration-300 ease-in-out">
 
         <!-- Top Brand & Header -->
         <div class="p-3 lg:p-5 space-y-5">
           <!-- Brand Logo with ET Monogram & Close Button -->
           <div class="flex items-center justify-between w-full py-1">
             <a href="#home" onclick="closeAdminSidebar()" title="ETech Computers" class="flex items-center justify-center lg:justify-start space-x-0 lg:space-x-3 group flex-1 min-w-0">
-              <!-- ET Monogram Logo Emblem (E-Blue, T-White) -->
-              <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600/25 to-blue-950/40 border border-blue-500/30 flex items-center justify-center font-extrabold text-base tracking-tight flex-shrink-0 shadow-md group-hover:border-blue-400 group-hover:shadow-[0_0_12px_rgba(59,130,246,0.3)] transition-all flex lg:hidden">
-                <span class="text-blue-500">E</span><span class="text-white">T</span>
+              <!-- ET Monogram Logo Emblem -->
+              <div class="w-10 h-10 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center font-extrabold text-base tracking-tight flex-shrink-0 shadow-sm group-hover:border-blue-400 transition-all flex lg:hidden">
+                <span class="text-blue-600">E</span><span class="text-[#0f172a]">T</span>
               </div>
               <!-- Expanded Brand Text -->
               <div class="sidebar-text-label hidden lg:flex flex-col min-w-0">
-                <span class="text-base font-extrabold tracking-tight text-[#f4f7fb] truncate">
-                  ETech<span class="text-blue-500">Console</span>
+                <span class="text-base font-extrabold tracking-tight text-[#0f172a] truncate">
+                  ETech<span class="text-blue-600">Console</span>
                 </span>
-                <span class="text-[9px] tracking-[0.2em] uppercase text-[#718096] font-semibold truncate">Worker Workspace</span>
+                <span class="text-[9px] tracking-[0.2em] uppercase text-[#64748b] font-semibold truncate">Worker Workspace</span>
               </div>
             </a>
 
@@ -56,7 +56,7 @@ export function renderAdminPage(queryPart) {
               id="admin-sidebar-close-btn"
               onclick="closeAdminSidebar()"
               title="Close Sidebar"
-              class="sidebar-close-btn hidden p-1.5 rounded-lg text-[#a7b3c4] hover:text-white bg-[#101722] hover:bg-[#141c28] border border-[#202b3a] transition-all flex-shrink-0 focus:outline-none ml-2">
+              class="sidebar-close-btn hidden p-1.5 rounded-lg text-[#475569] hover:text-[#0f172a] bg-[#f8fafc] hover:bg-[#f1f5f9] border border-[#e2e8f0] transition-all flex-shrink-0 focus:outline-none ml-2">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
               </svg>
@@ -76,7 +76,7 @@ export function renderAdminPage(queryPart) {
             </button>
 
             <button data-tab="products" onclick="switchAdminTab('products')" title="Product Catalog"
-              class="sidebar-nav-btn w-full flex items-center justify-center lg:justify-start space-x-0 lg:space-x-3 px-2 lg:px-3.5 py-2.5 rounded-lg font-medium text-xs text-[#a7b3c4] hover:text-white hover:bg-[#141c28] transition-all relative group">
+              class="sidebar-nav-btn w-full flex items-center justify-center lg:justify-start space-x-0 lg:space-x-3 px-2 lg:px-3.5 py-2.5 rounded-lg font-medium text-xs text-[#475569] hover:text-[#0f172a] hover:bg-[#f1f5f9] transition-all relative group">
               <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
@@ -86,7 +86,7 @@ export function renderAdminPage(queryPart) {
             </button>
 
             <button data-tab="orders" onclick="switchAdminTab('orders')" title="Orders Processing"
-              class="sidebar-nav-btn w-full flex items-center justify-center lg:justify-start space-x-0 lg:space-x-3 px-2 lg:px-3.5 py-2.5 rounded-lg font-medium text-xs text-[#a7b3c4] hover:text-white hover:bg-[#141c28] transition-all relative group">
+              class="sidebar-nav-btn w-full flex items-center justify-center lg:justify-start space-x-0 lg:space-x-3 px-2 lg:px-3.5 py-2.5 rounded-lg font-medium text-xs text-[#475569] hover:text-[#0f172a] hover:bg-[#f1f5f9] transition-all relative group">
               <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
@@ -96,7 +96,7 @@ export function renderAdminPage(queryPart) {
             </button>
 
             <button data-tab="stock-health" onclick="switchAdminTab('stock-health')" title="Stock Health & Alerts"
-              class="sidebar-nav-btn w-full flex items-center justify-center lg:justify-start space-x-0 lg:space-x-3 px-2 lg:px-3.5 py-2.5 rounded-lg font-medium text-xs text-[#a7b3c4] hover:text-white hover:bg-[#141c28] transition-all relative group">
+              class="sidebar-nav-btn w-full flex items-center justify-center lg:justify-start space-x-0 lg:space-x-3 px-2 lg:px-3.5 py-2.5 rounded-lg font-medium text-xs text-[#475569] hover:text-[#0f172a] hover:bg-[#f1f5f9] transition-all relative group">
               <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -105,7 +105,7 @@ export function renderAdminPage(queryPart) {
               <div class="sidebar-tooltip">Stock Health & Alerts</div>
             </button>
             <button data-tab="taxonomy" onclick="switchAdminTab('taxonomy')" title="Categories & Badges"
-              class="sidebar-nav-btn w-full flex items-center justify-center lg:justify-start space-x-0 lg:space-x-3 px-2 lg:px-3.5 py-2.5 rounded-lg font-medium text-xs text-[#a7b3c4] hover:text-white hover:bg-[#141c28] transition-all relative group">
+              class="sidebar-nav-btn w-full flex items-center justify-center lg:justify-start space-x-0 lg:space-x-3 px-2 lg:px-3.5 py-2.5 rounded-lg font-medium text-xs text-[#475569] hover:text-[#0f172a] hover:bg-[#f1f5f9] transition-all relative group">
               <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
@@ -114,7 +114,7 @@ export function renderAdminPage(queryPart) {
               <div class="sidebar-tooltip">Categories & Badges</div>
             </button>
             <button data-tab="branches" onclick="switchAdminTab('branches')" title="Store Branches"
-              class="admin-only-nav sidebar-nav-btn w-full flex items-center justify-center lg:justify-start space-x-0 lg:space-x-3 px-2 lg:px-3.5 py-2.5 rounded-lg font-medium text-xs text-[#a7b3c4] hover:text-white hover:bg-[#141c28] transition-all relative group">
+              class="admin-only-nav sidebar-nav-btn w-full flex items-center justify-center lg:justify-start space-x-0 lg:space-x-3 px-2 lg:px-3.5 py-2.5 rounded-lg font-medium text-xs text-[#475569] hover:text-[#0f172a] hover:bg-[#f1f5f9] transition-all relative group">
               <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
@@ -124,7 +124,7 @@ export function renderAdminPage(queryPart) {
             </button>
 
             <button data-tab="users" onclick="switchAdminTab('users')" title="User Directory"
-              class="admin-only-nav sidebar-nav-btn w-full flex items-center justify-center lg:justify-start space-x-0 lg:space-x-3 px-2 lg:px-3.5 py-2.5 rounded-lg font-medium text-xs text-[#a7b3c4] hover:text-white hover:bg-[#141c28] transition-all relative group">
+              class="admin-only-nav sidebar-nav-btn w-full flex items-center justify-center lg:justify-start space-x-0 lg:space-x-3 px-2 lg:px-3.5 py-2.5 rounded-lg font-medium text-xs text-[#475569] hover:text-[#0f172a] hover:bg-[#f1f5f9] transition-all relative group">
               <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
@@ -134,7 +134,7 @@ export function renderAdminPage(queryPart) {
             </button>
 
             <button data-tab="analytics" onclick="switchAdminTab('analytics')" title="Financial Reports"
-              class="admin-only-nav sidebar-nav-btn w-full flex items-center justify-center lg:justify-start space-x-0 lg:space-x-3 px-2 lg:px-3.5 py-2.5 rounded-lg font-medium text-xs text-[#a7b3c4] hover:text-white hover:bg-[#141c28] transition-all relative group">
+              class="admin-only-nav sidebar-nav-btn w-full flex items-center justify-center lg:justify-start space-x-0 lg:space-x-3 px-2 lg:px-3.5 py-2.5 rounded-lg font-medium text-xs text-[#475569] hover:text-[#0f172a] hover:bg-[#f1f5f9] transition-all relative group">
               <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
@@ -144,7 +144,7 @@ export function renderAdminPage(queryPart) {
             </button>
 
             <button data-tab="policies" onclick="switchAdminTab('policies')" title="Store Profile & Legal Policies"
-              class="admin-only-nav sidebar-nav-btn w-full flex items-center justify-center lg:justify-start space-x-0 lg:space-x-3 px-2 lg:px-3.5 py-2.5 rounded-lg font-medium text-xs text-[#a7b3c4] hover:text-white hover:bg-[#141c28] transition-all relative group">
+              class="admin-only-nav sidebar-nav-btn w-full flex items-center justify-center lg:justify-start space-x-0 lg:space-x-3 px-2 lg:px-3.5 py-2.5 rounded-lg font-medium text-xs text-[#475569] hover:text-[#0f172a] hover:bg-[#f1f5f9] transition-all relative group">
               <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -156,10 +156,10 @@ export function renderAdminPage(queryPart) {
         </div>
 
         <!-- Bottom Quick Links & Store Switch -->
-        <div class="p-2 lg:p-4 border-t border-[#202b3a] space-y-2">
+        <div class="p-2 lg:p-4 border-t border-[#e2e8f0] space-y-2">
           <a href="#home" onclick="closeAdminSidebar()" title="Return to Store Front"
-            class="flex items-center justify-center lg:justify-start space-x-0 lg:space-x-2 text-xs font-semibold text-[#a7b3c4] hover:text-white px-2 lg:px-3 py-2.5 rounded-lg bg-[#101722] hover:bg-[#141c28] border border-[#202b3a] transition-all relative group">
-            <svg class="w-4 h-4 text-blue-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            class="flex items-center justify-center lg:justify-start space-x-0 lg:space-x-2 text-xs font-semibold text-[#475569] hover:text-[#0f172a] px-2 lg:px-3 py-2.5 rounded-lg bg-[#f8fafc] hover:bg-[#f1f5f9] border border-[#e2e8f0] transition-all relative group shadow-sm">
+            <svg class="w-4 h-4 text-blue-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
             <span class="sidebar-text-label hidden lg:inline whitespace-nowrap">Return to Store</span>
@@ -167,7 +167,7 @@ export function renderAdminPage(queryPart) {
           </a>
 
           <button onclick="handleAdminLogout(); closeAdminSidebar();" title="Sign Out Session"
-            class="w-full text-left flex items-center justify-center lg:justify-start space-x-0 lg:space-x-2 text-xs font-semibold text-rose-400 hover:text-rose-300 px-2 lg:px-3 py-2.5 rounded-lg bg-rose-950/30 hover:bg-rose-950/60 border border-rose-900/40 transition-all relative group">
+            class="w-full text-left flex items-center justify-center lg:justify-start space-x-0 lg:space-x-2 text-xs font-semibold text-rose-700 hover:text-rose-800 px-2 lg:px-3 py-2.5 rounded-lg bg-rose-50 hover:bg-rose-100 border border-rose-200 transition-all relative group shadow-sm">
             <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -182,35 +182,35 @@ export function renderAdminPage(queryPart) {
       <!-- ============================================================ -->
       <!-- 2. MAIN WORKSPACE CONTAINER                                 -->
       <!-- ============================================================ -->
-      <div class="flex-1 flex flex-col min-w-0 h-screen overflow-hidden bg-[#080b12]">
+      <div class="flex-1 flex flex-col min-w-0 h-screen overflow-hidden bg-[#f8fafc]">
 
         <!-- Top Workspace Utility Bar -->
-        <header class="h-16 bg-[#0c111b] border-b border-[#202b3a] px-4 sm:px-6 flex items-center justify-between flex-shrink-0">
+        <header class="h-16 bg-white border-b border-[#e2e8f0] px-4 sm:px-6 flex items-center justify-between flex-shrink-0 shadow-sm">
           <div class="flex items-center space-x-3">
             <!-- Sidebar Collapse / Expand Toggle Button -->
             <button id="admin-sidebar-toggle" onclick="toggleAdminSidebar()" title="Toggle Sidebar"
-              class="p-2 rounded-lg text-[#a7b3c4] hover:text-white bg-[#101722] hover:bg-[#141c28] border border-[#202b3a] transition-all flex items-center justify-center focus:outline-none focus:border-blue-500 flex lg:hidden">
+              class="p-2 rounded-lg text-[#475569] hover:text-[#0f172a] bg-[#f8fafc] hover:bg-[#f1f5f9] border border-[#e2e8f0] transition-all flex items-center justify-center focus:outline-none focus:border-blue-600 flex lg:hidden">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
               </svg>
             </button>
             <div>
-              <h2 class="text-sm font-extrabold text-white">Management Console</h2>
-              <p class="text-[10px] text-[#718096]">ETech Operations & Branch Warehouse Control</p>
+              <h2 class="text-sm font-extrabold text-[#0f172a]">Management Console</h2>
+              <p class="text-[10px] text-[#64748b]">ETech Operations & Branch Warehouse Control</p>
             </div>
           </div>
 
           <!-- Active Worker Profile Badge -->
           <div class="flex items-center space-x-3">
             <div
-              class="w-8 h-8 rounded-md bg-blue-600 text-white font-extrabold text-xs flex items-center justify-center"
+              class="w-8 h-8 rounded-md bg-blue-600 text-white font-extrabold text-xs flex items-center justify-center shadow-sm"
               id="admin-user-avatar">
               A
             </div>
             <div class="flex flex-col text-right">
-              <span class="text-xs font-bold text-white" id="admin-user-name">Administrator</span>
+              <span class="text-xs font-bold text-[#0f172a]" id="admin-user-name">Administrator</span>
               <span id="admin-user-role"
-                class="px-2 py-0.5 rounded text-[9px] font-extrabold uppercase bg-blue-500/10 text-blue-300 border border-blue-500/30">ADMIN</span>
+                class="px-2 py-0.5 rounded text-[9px] font-extrabold uppercase bg-blue-50 text-blue-700 border border-blue-200">ADMIN</span>
             </div>
           </div>
         </header>
@@ -223,11 +223,11 @@ export function renderAdminPage(queryPart) {
             <div id="overview-content-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
 
               <div
-                class="bg-[#101722] border border-[#202b3a] rounded-lg p-4 shadow-md flex items-center justify-between">
+                class="bg-white border border-[#e2e8f0] rounded-lg p-4 shadow-sm flex items-center justify-between">
                 <div>
-                  <span class="text-xs font-semibold text-[#718096] uppercase tracking-wider">Total Sales Revenue</span>
-                  <h3 id="overview-total-revenue" class="text-xl font-extrabold text-white mt-1 font-mono">Rs. 0.00</h3>
-                  <p class="text-[10px] text-emerald-400 font-bold mt-1 flex items-center">
+                  <span class="text-xs font-semibold text-[#64748b] uppercase tracking-wider">Total Sales Revenue</span>
+                  <h3 id="overview-total-revenue" class="text-xl font-extrabold text-[#0f172a] mt-1 font-mono">Rs. 0.00</h3>
+                  <p class="text-[10px] text-emerald-600 font-bold mt-1 flex items-center">
                     <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
@@ -236,7 +236,7 @@ export function renderAdminPage(queryPart) {
                   </p>
                 </div>
                 <div
-                  class="w-10 h-10 rounded-md bg-blue-600/15 text-blue-400 border border-blue-500/30 flex items-center justify-center">
+                  class="w-10 h-10 rounded-md bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center">
                   <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                       d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -245,14 +245,14 @@ export function renderAdminPage(queryPart) {
               </div>
 
               <div
-                class="bg-[#101722] border border-[#202b3a] rounded-lg p-4 shadow-md flex items-center justify-between">
+                class="bg-white border border-[#e2e8f0] rounded-lg p-4 shadow-sm flex items-center justify-between">
                 <div>
-                  <span class="text-xs font-semibold text-[#718096] uppercase tracking-wider">Orders To Process</span>
-                  <h3 id="overview-pending-orders" class="text-xl font-extrabold text-amber-400 mt-1 font-mono">0</h3>
-                  <p id="overview-total-orders" class="text-[10px] text-[#718096] mt-1">0 Total Orders Recorded</p>
+                  <span class="text-xs font-semibold text-[#64748b] uppercase tracking-wider">Orders To Process</span>
+                  <h3 id="overview-pending-orders" class="text-xl font-extrabold text-amber-600 mt-1 font-mono">0</h3>
+                  <p id="overview-total-orders" class="text-[10px] text-[#64748b] mt-1">0 Total Orders Recorded</p>
                 </div>
                 <div
-                  class="w-10 h-10 rounded-md bg-amber-500/15 text-amber-400 border border-amber-500/30 flex items-center justify-center">
+                  class="w-10 h-10 rounded-md bg-amber-50 text-amber-600 border border-amber-200 flex items-center justify-center">
                   <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                       d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
@@ -262,14 +262,14 @@ export function renderAdminPage(queryPart) {
 
               <!-- Branch Stock Alerts Metric Card -->
               <div onclick="switchAdminTab('stock-health')"
-                class="bg-[#101722] hover:bg-[#141c28] border border-[#202b3a] hover:border-rose-500/40 rounded-lg p-4 shadow-md flex items-center justify-between cursor-pointer transition-all group">
+                class="bg-white hover:bg-rose-50/30 border border-[#e2e8f0] hover:border-rose-300 rounded-lg p-4 shadow-sm flex items-center justify-between cursor-pointer transition-all group">
                 <div>
-                  <span class="text-xs font-semibold text-[#718096] group-hover:text-rose-300 uppercase tracking-wider transition-colors">Branch Stock Alerts</span>
-                  <h3 id="overview-low-stock-count" class="text-xl font-extrabold text-rose-400 mt-1 font-mono">0</h3>
-                  <p id="overview-low-stock-subtitle" class="text-[10px] text-[#718096] mt-1">0 Depleted, 0 Low Stock</p>
+                  <span class="text-xs font-semibold text-[#64748b] group-hover:text-rose-700 uppercase tracking-wider transition-colors">Branch Stock Alerts</span>
+                  <h3 id="overview-low-stock-count" class="text-xl font-extrabold text-rose-600 mt-1 font-mono">0</h3>
+                  <p id="overview-low-stock-subtitle" class="text-[10px] text-[#64748b] mt-1">0 Depleted, 0 Low Stock</p>
                 </div>
                 <div
-                  class="w-10 h-10 rounded-md bg-rose-500/15 group-hover:bg-rose-500/25 text-rose-400 border border-rose-500/30 flex items-center justify-center transition-colors" title="Open Stock Health Center">
+                  class="w-10 h-10 rounded-md bg-rose-50 group-hover:bg-rose-100 text-rose-600 border border-rose-200 flex items-center justify-center transition-colors" title="Open Stock Health Center">
                   <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                       d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -278,14 +278,14 @@ export function renderAdminPage(queryPart) {
               </div>
 
               <div
-                class="bg-[#101722] border border-[#202b3a] rounded-lg p-4 shadow-md flex items-center justify-between">
+                class="bg-white border border-[#e2e8f0] rounded-lg p-4 shadow-sm flex items-center justify-between">
                 <div>
-                  <span class="text-xs font-semibold text-[#718096] uppercase tracking-wider">Registered Accounts</span>
-                  <h3 id="overview-registered-users" class="text-xl font-extrabold text-blue-400 mt-1 font-mono">0</h3>
-                  <p id="overview-active-branches" class="text-[10px] text-[#718096] mt-1">0 Active Store Branches</p>
+                  <span class="text-xs font-semibold text-[#64748b] uppercase tracking-wider">Registered Accounts</span>
+                  <h3 id="overview-registered-users" class="text-xl font-extrabold text-blue-600 mt-1 font-mono">0</h3>
+                  <p id="overview-active-branches" class="text-[10px] text-[#64748b] mt-1">0 Active Store Branches</p>
                 </div>
                 <div
-                  class="w-10 h-10 rounded-md bg-blue-500/15 text-blue-400 border border-blue-500/30 flex items-center justify-center">
+                  class="w-10 h-10 rounded-md bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center">
                   <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                       d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -299,16 +299,16 @@ export function renderAdminPage(queryPart) {
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
               <!-- Recent Orders Feed (2 cols) -->
-              <div class="lg:col-span-2 bg-[#101722] border border-[#202b3a] rounded-lg p-5 shadow-lg">
+              <div class="lg:col-span-2 bg-white border border-[#e2e8f0] rounded-lg p-5 shadow-sm">
                 <div class="flex items-center justify-between mb-4">
-                  <h3 class="text-sm font-bold text-white flex items-center space-x-2">
-                    <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <h3 class="text-sm font-bold text-[#0f172a] flex items-center space-x-2">
+                    <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                     </svg>
                     <span>Recent Incoming Orders</span>
                   </h3>
-                  <button onclick="switchAdminTab('orders')" class="text-xs font-bold text-blue-400 hover:underline">View
+                  <button onclick="switchAdminTab('orders')" class="text-xs font-bold text-blue-600 hover:underline">View
                     All Orders &rarr;</button>
                 </div>
 
@@ -317,20 +317,20 @@ export function renderAdminPage(queryPart) {
               </div>
 
               <!-- Low Stock Alerts Sidebar (1 col) -->
-              <div class="bg-[#101722] border border-[#202b3a] rounded-lg p-5 shadow-lg space-y-3">
+              <div class="bg-white border border-[#e2e8f0] rounded-lg p-5 shadow-sm space-y-3">
                 <div class="flex items-center justify-between">
-                  <h3 class="text-sm font-bold text-white flex items-center space-x-2">
-                    <svg class="w-4 h-4 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <h3 class="text-sm font-bold text-[#0f172a] flex items-center space-x-2">
+                    <svg class="w-4 h-4 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     <span>Branch Stock Warnings</span>
                   </h3>
-                  <button onclick="switchAdminTab('stock-health')" class="text-xs font-bold text-rose-400 hover:underline">
+                  <button onclick="switchAdminTab('stock-health')" class="text-xs font-bold text-rose-600 hover:underline">
                     View Health Center &rarr;
                   </button>
                 </div>
-                <p class="text-[11px] text-[#718096]">Products requiring replenishment at warehouses:</p>
+                <p class="text-[11px] text-[#64748b]">Products requiring replenishment at warehouses:</p>
 
                 <!-- low stock alerts -->
                 <div id="low-stocks-alerts" class="space-y-2.5 max-h-[360px] overflow-y-auto pr-1"></div>
@@ -340,30 +340,30 @@ export function renderAdminPage(queryPart) {
 
           <!-- Tab Panel 2: Products -->
           <div id="tab-panel-products" class="dashboard-tab-panel hidden">
-            <div class="bg-[#101722] border border-[#202b3a] rounded-lg p-5 shadow-lg space-y-5">
+            <div class="bg-white border border-[#e2e8f0] rounded-lg p-5 shadow-sm space-y-5">
               
               <!-- Staff Info Banner -->
               <div id="products-staff-banner"
-                class="hidden p-3 bg-blue-950/40 border border-blue-500/30 rounded-md text-xs text-blue-300 flex items-center justify-between">
+                class="hidden p-3 bg-blue-50 border border-blue-200 rounded-md text-xs text-blue-800 flex items-center justify-between">
                 <div class="flex items-center space-x-2">
-                  <span class="text-blue-400 font-bold">📍</span>
+                  <span class="text-blue-600 font-bold">📍</span>
                   <span id="products-staff-banner-text">Logged in as Staff.</span>
                 </div>
                 <span id="products-staff-branch-badge"
-                  class="px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 font-mono text-[10px] font-bold uppercase">Hub</span>
+                  class="px-2 py-0.5 rounded bg-blue-100 text-blue-800 font-mono text-[10px] font-bold uppercase">Hub</span>
               </div>
 
               <!-- Top Action Bar -->
               <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div>
-                  <h3 class="text-lg font-bold text-white">Product Inventory Catalog</h3>
-                  <p class="text-xs text-[#718096] mt-0.5">Manage products and branch stock quantities across Colombo, Galle, Matara, and Kandy hubs.</p>
+                  <h3 class="text-lg font-bold text-[#0f172a]">Product Inventory Catalog</h3>
+                  <p class="text-xs text-[#64748b] mt-0.5">Manage products and branch stock quantities across Colombo, Galle, Matara, and Kandy hubs.</p>
                 </div>
 
                 <div class="flex items-center space-x-2.5 w-full sm:w-auto">
                   <input type="text" id="product-search-input" onkeyup="filterProductsTable()"
                     placeholder="Search SKU or Product..."
-                    class="px-3.5 py-2 rounded-md bg-[#080b12] border border-[#202b3a] text-white text-xs placeholder-[#718096] focus:border-blue-500 w-full sm:w-60">
+                    class="px-3.5 py-2 rounded-md bg-[#f8fafc] border border-[#e2e8f0] text-[#0f172a] text-xs placeholder-[#94a3b8] focus:border-blue-600 w-full sm:w-60">
                   <button onclick="openProductFormPage()"
                     class="px-3.5 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-md shadow-sm transition-all flex items-center space-x-1.5 flex-shrink-0">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -375,10 +375,10 @@ export function renderAdminPage(queryPart) {
               </div>
 
               <!-- Products Table -->
-              <div class="overflow-x-auto rounded-md border border-[#202b3a]">
-                <table class="w-full text-left text-xs text-[#a7b3c4]">
+              <div class="overflow-x-auto rounded-md border border-[#e2e8f0]">
+                <table class="w-full text-left text-xs text-[#475569]">
                   <thead
-                    class="bg-[#080b12] uppercase font-bold text-[10px] tracking-wider text-[#718096] border-b border-[#202b3a]">
+                    class="bg-[#f8fafc] uppercase font-bold text-[10px] tracking-wider text-[#64748b] border-b border-[#e2e8f0]">
                     <tr>
                       <th class="py-3 px-3.5">Item</th>
                       <th class="py-3 px-3.5">Category</th>
@@ -388,7 +388,7 @@ export function renderAdminPage(queryPart) {
                       <th class="py-3 px-3.5 text-right">Actions</th>
                     </tr>
                   </thead>
-                  <tbody id="products-tbody" class="divide-y divide-[#202b3a]">
+                  <tbody id="products-tbody" class="divide-y divide-[#e2e8f0]">
                     <!-- Dynamic rows -->
                   </tbody>
                 </table>
@@ -398,16 +398,16 @@ export function renderAdminPage(queryPart) {
 
           <!-- Tab Panel 3: Orders -->
           <div id="tab-panel-orders" class="dashboard-tab-panel hidden">
-            <div class="bg-[#101722] border border-[#202b3a] rounded-lg p-5 shadow-lg space-y-5">
+            <div class="bg-white border border-[#e2e8f0] rounded-lg p-5 shadow-sm space-y-5">
               <div>
-                <h3 class="text-lg font-bold text-white">Customer Order Fulfillment</h3>
-                <p class="text-xs text-[#718096] mt-0.5">Process customer purchases, review delivery branch distances, and update shipping progress.</p>
+                <h3 class="text-lg font-bold text-[#0f172a]">Customer Order Fulfillment</h3>
+                <p class="text-xs text-[#64748b] mt-0.5">Process customer purchases, review delivery branch distances, and update shipping progress.</p>
               </div>
 
-              <div class="overflow-x-auto rounded-md border border-[#202b3a]">
-                <table class="w-full text-left text-xs text-[#a7b3c4]">
+              <div class="overflow-x-auto rounded-md border border-[#e2e8f0]">
+                <table class="w-full text-left text-xs text-[#475569]">
                   <thead
-                    class="bg-[#080b12] uppercase font-bold text-[10px] tracking-wider text-[#718096] border-b border-[#202b3a]">
+                    class="bg-[#f8fafc] uppercase font-bold text-[10px] tracking-wider text-[#64748b] border-b border-[#e2e8f0]">
                     <tr>
                       <th class="py-3 px-3.5">Order ID & Date</th>
                       <th class="py-3 px-3.5">Customer</th>
@@ -417,7 +417,7 @@ export function renderAdminPage(queryPart) {
                       <th class="py-3 px-3.5 text-right">Update Action</th>
                     </tr>
                   </thead>
-                  <tbody id="orders-tbody" class="divide-y divide-[#202b3a]">
+                  <tbody id="orders-tbody" class="divide-y divide-[#e2e8f0]">
                     <!-- Dynamic rows -->
                   </tbody>
                 </table>
@@ -433,11 +433,11 @@ export function renderAdminPage(queryPart) {
 
           <!-- Tab Panel 4: Branches -->
           <div id="tab-panel-branches" class="dashboard-tab-panel hidden">
-            <div class="bg-[#101722] border border-[#202b3a] rounded-lg p-5 shadow-lg space-y-5">
+            <div class="bg-white border border-[#e2e8f0] rounded-lg p-5 shadow-sm space-y-5">
               <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div>
-                  <h3 class="text-lg font-bold text-white">Store Branch Management</h3>
-                  <p class="text-xs text-[#718096] mt-0.5">Manage regional warehouses, base shipping rates, and distance parameters.</p>
+                  <h3 class="text-lg font-bold text-[#0f172a]">Store Branch Management</h3>
+                  <p class="text-xs text-[#64748b] mt-0.5">Manage regional warehouses, base shipping rates, and distance parameters.</p>
                 </div>
                 <button onclick="openBranchModal()"
                   class="px-3.5 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-md shadow-sm transition-all flex items-center space-x-1.5">
@@ -456,11 +456,11 @@ export function renderAdminPage(queryPart) {
 
           <!-- Tab Panel 5: Users -->
           <div id="tab-panel-users" class="dashboard-tab-panel hidden">
-            <div class="bg-[#101722] border border-[#202b3a] rounded-lg p-5 shadow-lg space-y-5">
+            <div class="bg-white border border-[#e2e8f0] rounded-lg p-5 shadow-sm space-y-5">
               <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div>
-                  <h3 class="text-lg font-bold text-white">System User Directory & Roles</h3>
-                  <p class="text-xs text-[#718096] mt-0.5">Assign worker roles (STAFF / ADMIN), create staff accounts, and manage system access.</p>
+                  <h3 class="text-lg font-bold text-[#0f172a]">System User Directory & Roles</h3>
+                  <p class="text-xs text-[#64748b] mt-0.5">Assign worker roles (STAFF / ADMIN), create staff accounts, and manage system access.</p>
                 </div>
                 <button onclick="openUserModal()"
                   class="px-3.5 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-md shadow-sm transition-all flex items-center space-x-1.5">
@@ -472,10 +472,10 @@ export function renderAdminPage(queryPart) {
                 </button>
               </div>
 
-              <div class="overflow-x-auto rounded-md border border-[#202b3a]">
-                <table class="w-full text-left text-xs text-[#a7b3c4]">
+              <div class="overflow-x-auto rounded-md border border-[#e2e8f0]">
+                <table class="w-full text-left text-xs text-[#475569]">
                   <thead
-                    class="bg-[#080b12] uppercase font-bold text-[10px] tracking-wider text-[#718096] border-b border-[#202b3a]">
+                    class="bg-[#f8fafc] uppercase font-bold text-[10px] tracking-wider text-[#64748b] border-b border-[#e2e8f0]">
                     <tr>
                       <th class="py-3 px-3.5">User & Username</th>
                       <th class="py-3 px-3.5">Email</th>
@@ -485,7 +485,7 @@ export function renderAdminPage(queryPart) {
                       <th class="py-3 px-3.5 text-right">Actions</th>
                     </tr>
                   </thead>
-                  <tbody id="users-tbody" class="divide-y divide-[#202b3a]">
+                  <tbody id="users-tbody" class="divide-y divide-[#e2e8f0]">
                     <!-- Dynamic rows -->
                   </tbody>
                 </table>
@@ -495,15 +495,15 @@ export function renderAdminPage(queryPart) {
 
           <!-- Tab Panel 6: Analytics -->
           <div id="tab-panel-analytics" class="dashboard-tab-panel hidden">
-            <div class="bg-[#101722] border border-[#202b3a] rounded-lg p-5 shadow-lg space-y-5">
+            <div class="bg-white border border-[#e2e8f0] rounded-lg p-5 shadow-sm space-y-5">
               <div>
-                <h3 class="text-lg font-bold text-white">Regional Sales & Performance Analytics</h3>
-                <p class="text-xs text-[#718096] mt-0.5">Comprehensive revenue metrics and branch sales comparison.</p>
+                <h3 class="text-lg font-bold text-[#0f172a]">Regional Sales & Performance Analytics</h3>
+                <p class="text-xs text-[#64748b] mt-0.5">Comprehensive revenue metrics and branch sales comparison.</p>
               </div>
 
               <!-- Branch Sales Performance Meters -->
               <div class="space-y-3 pt-2">
-                <h4 class="text-xs font-bold text-[#718096] uppercase tracking-wider">Branch Sales Breakdown</h4>
+                <h4 class="text-xs font-bold text-[#64748b] uppercase tracking-wider">Branch Sales Breakdown</h4>
                 <div id="analytics-branches-list" class="space-y-3">
                   <!-- Dynamic meters -->
                 </div>
@@ -522,10 +522,10 @@ export function renderAdminPage(queryPart) {
               
               <!-- Top Action Navigation Header -->
               <div
-                class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#101722] border border-[#202b3a] rounded-lg p-5 shadow-lg">
+                class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white border border-[#e2e8f0] rounded-lg p-5 shadow-sm">
                 <div class="flex items-center space-x-3.5">
                   <button onclick="switchAdminTab('products')"
-                    class="p-2 rounded-md bg-[#141c28] hover:bg-[#192332] text-[#a7b3c4] hover:text-white transition-colors border border-[#202b3a] flex items-center space-x-1.5 text-xs font-bold">
+                    class="p-2 rounded-md bg-[#f8fafc] hover:bg-[#f1f5f9] text-[#475569] hover:text-[#0f172a] transition-colors border border-[#e2e8f0] flex items-center space-x-1.5 text-xs font-bold shadow-sm">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -533,14 +533,14 @@ export function renderAdminPage(queryPart) {
                     <span>Back to Catalog</span>
                   </button>
                   <div>
-                    <h2 class="text-lg font-extrabold text-white" id="product-form-title">Add New Hardware Product</h2>
-                    <p class="text-xs text-[#718096] mt-0.5" id="product-form-subtitle">Fill in specifications, multi-image gallery (max 5), pricing, and branch stock.</p>
+                    <h2 class="text-lg font-extrabold text-[#0f172a]" id="product-form-title">Add New Hardware Product</h2>
+                    <p class="text-xs text-[#64748b] mt-0.5" id="product-form-subtitle">Fill in specifications, multi-image gallery (max 5), pricing, and branch stock.</p>
                   </div>
                 </div>
 
                 <div class="flex items-center space-x-2.5">
                   <button type="button" onclick="switchAdminTab('products')"
-                    class="px-4 py-2 rounded-md bg-[#141c28] hover:bg-[#192332] text-[#a7b3c4] font-bold text-xs border border-[#202b3a]">Cancel</button>
+                    class="px-4 py-2 rounded-md bg-[#f8fafc] hover:bg-[#f1f5f9] text-[#475569] font-bold text-xs border border-[#e2e8f0]">Cancel</button>
                   <button type="button" onclick="triggerProductFormSubmit()"
                     class="px-5 py-2 rounded-md bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-xs shadow-sm flex items-center space-x-1.5">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -552,8 +552,8 @@ export function renderAdminPage(queryPart) {
               </div>
 
               <div id="form-staff-banner"
-                class="hidden p-3 bg-blue-950/40 border border-blue-500/30 rounded-md text-xs text-blue-300 flex items-center space-x-2.5 shadow-sm">
-                <span class="text-blue-400 font-bold">ℹ️</span>
+                class="hidden p-3 bg-blue-50 border border-blue-200 rounded-md text-xs text-blue-800 flex items-center space-x-2.5 shadow-sm">
+                <span class="text-blue-600 font-bold">ℹ️</span>
                 <span id="form-staff-banner-text">Staff Scope Active</span>
               </div>
 
@@ -564,26 +564,26 @@ export function renderAdminPage(queryPart) {
                   <form id="full-product-form" class="space-y-5">
                     
                     <!-- Section 1: Basic Information -->
-                    <div class="bg-[#101722] border border-[#202b3a] rounded-lg p-5 shadow-lg space-y-4">
+                    <div class="bg-white border border-[#e2e8f0] rounded-lg p-5 shadow-sm space-y-4">
                       <h3
-                        class="text-xs font-bold text-[#a7b3c4] uppercase tracking-wider border-b border-[#202b3a] pb-2.5 flex items-center space-x-2">
-                        <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+                        class="text-xs font-bold text-[#475569] uppercase tracking-wider border-b border-[#e2e8f0] pb-2.5 flex items-center space-x-2">
+                        <span class="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
                         <span>1. Basic Product Information</span>
                       </h3>
 
                       <div class="space-y-3.5 text-xs">
                         <div>
-                          <label class="block text-[#a7b3c4] font-bold mb-1">Product Title *</label>
+                          <label class="block text-[#475569] font-bold mb-1">Product Title *</label>
                           <input type="text" id="form-p-name" required oninput="updateLivePreview()"
                             placeholder="e.g. Zenith Studio Ultra Laptop 16"
-                            class="w-full px-3.5 py-2.5 rounded-md bg-[#080b12] border border-[#202b3a] text-white focus:border-blue-500 text-sm font-medium">
+                            class="w-full px-3.5 py-2.5 rounded-md bg-[#f8fafc] border border-[#e2e8f0] text-[#0f172a] focus:border-blue-600 text-sm font-medium">
                         </div>
 
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div>
-                            <label class="block text-[#a7b3c4] font-bold mb-1">Category *</label>
+                            <label class="block text-[#475569] font-bold mb-1">Category *</label>
                             <select id="form-p-category" required onchange="updateLivePreview()"
-                              class="w-full px-3.5 py-2 rounded-md bg-[#080b12] border border-[#202b3a] text-white focus:border-blue-500 text-xs">
+                              class="w-full px-3.5 py-2 rounded-md bg-[#f8fafc] border border-[#e2e8f0] text-[#0f172a] focus:border-blue-600 text-xs">
                               <option value="laptops">Laptops & Notebooks</option>
                               <option value="peripherals">Gaming Peripherals</option>
                               <option value="monitors">Displays & Monitors</option>
@@ -593,9 +593,9 @@ export function renderAdminPage(queryPart) {
                           </div>
 
                           <div>
-                            <label class="block text-[#a7b3c4] font-bold mb-1">Badge Tag</label>
+                            <label class="block text-[#475569] font-bold mb-1">Badge Tag</label>
                             <select id="form-p-badge" onchange="updateLivePreview()"
-                              class="w-full px-3.5 py-2 rounded-md bg-[#080b12] border border-[#202b3a] text-white focus:border-blue-500 text-xs">
+                              class="w-full px-3.5 py-2 rounded-md bg-[#f8fafc] border border-[#e2e8f0] text-[#0f172a] focus:border-blue-600 text-xs">
                               <option value="New Arrival">New Arrival</option>
                               <option value="Bestseller">Bestseller</option>
                               <option value="Hot Deal">Hot Deal</option>
@@ -608,107 +608,107 @@ export function renderAdminPage(queryPart) {
 
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div>
-                            <label class="block text-[#a7b3c4] font-bold mb-1">SKU Code</label>
+                            <label class="block text-[#475569] font-bold mb-1">SKU Code</label>
                             <input type="text" id="form-p-sku" oninput="updateLivePreview()" placeholder="ETC-LAP-4090"
-                              class="w-full px-3.5 py-2 rounded-md bg-[#080b12] border border-[#202b3a] text-white focus:border-blue-500 font-mono text-xs">
+                              class="w-full px-3.5 py-2 rounded-md bg-[#f8fafc] border border-[#e2e8f0] text-[#0f172a] focus:border-blue-600 font-mono text-xs">
                           </div>
                           <div>
-                            <label class="block text-[#a7b3c4] font-bold mb-1">Warranty Period</label>
+                            <label class="block text-[#475569] font-bold mb-1">Warranty Period</label>
                             <input type="text" id="form-p-warranty" oninput="updateLivePreview()"
                               placeholder="2-Year Official Warranty"
-                              class="w-full px-3.5 py-2 rounded-md bg-[#080b12] border border-[#202b3a] text-white focus:border-blue-500 text-xs">
+                              class="w-full px-3.5 py-2 rounded-md bg-[#f8fafc] border border-[#e2e8f0] text-[#0f172a] focus:border-blue-600 text-xs">
                           </div>
                         </div>
                       </div>
                     </div>
 
                     <!-- Section 2: Pricing & Discount -->
-                    <div class="bg-[#101722] border border-[#202b3a] rounded-lg p-5 shadow-lg space-y-4">
+                    <div class="bg-white border border-[#e2e8f0] rounded-lg p-5 shadow-sm space-y-4">
                       <h3
-                        class="text-xs font-bold text-[#a7b3c4] uppercase tracking-wider border-b border-[#202b3a] pb-2.5 flex items-center space-x-2">
-                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                        class="text-xs font-bold text-[#475569] uppercase tracking-wider border-b border-[#e2e8f0] pb-2.5 flex items-center space-x-2">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
                         <span>2. Pricing & Discounts</span>
                       </h3>
 
                       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                         <div>
-                          <label class="block text-[#a7b3c4] font-bold mb-1">Selling Price (Rs.) *</label>
+                          <label class="block text-[#475569] font-bold mb-1">Selling Price (Rs.) *</label>
                           <input type="number" step="0.01" id="form-p-price" required oninput="updateLivePreview()"
                             placeholder="2499.00"
-                            class="w-full px-3.5 py-2.5 rounded-md bg-[#080b12] border border-[#202b3a] text-white font-bold text-sm focus:border-blue-500 font-mono">
+                            class="w-full px-3.5 py-2.5 rounded-md bg-[#f8fafc] border border-[#e2e8f0] text-[#0f172a] font-bold text-sm focus:border-blue-600 font-mono">
                         </div>
                         <div>
-                          <label class="block text-[#a7b3c4] font-bold mb-1">Original List Price (Rs.)</label>
+                          <label class="block text-[#475569] font-bold mb-1">Original List Price (Rs.)</label>
                           <input type="number" step="0.01" id="form-p-original-price" oninput="updateLivePreview()"
                             placeholder="2799.00"
-                            class="w-full px-3.5 py-2.5 rounded-md bg-[#080b12] border border-[#202b3a] text-[#718096] font-semibold text-sm focus:border-blue-500 font-mono">
+                            class="w-full px-3.5 py-2.5 rounded-md bg-[#f8fafc] border border-[#e2e8f0] text-[#94a3b8] font-semibold text-sm focus:border-blue-600 font-mono">
                         </div>
                       </div>
                     </div>
 
                     <!-- Section 3: Multi-Image Gallery Manager -->
-                    <div class="bg-[#101722] border border-[#202b3a] rounded-lg p-5 shadow-lg space-y-4">
-                      <div class="flex items-center justify-between border-b border-[#202b3a] pb-2.5">
-                        <h3 class="text-xs font-bold text-[#a7b3c4] uppercase tracking-wider flex items-center space-x-2">
-                          <span class="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>
+                    <div class="bg-white border border-[#e2e8f0] rounded-lg p-5 shadow-sm space-y-4">
+                      <div class="flex items-center justify-between border-b border-[#e2e8f0] pb-2.5">
+                        <h3 class="text-xs font-bold text-[#475569] uppercase tracking-wider flex items-center space-x-2">
+                          <span class="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
                           <span>3. Multi-Image Gallery Manager (Max 5 Images)</span>
                         </h3>
                         <span id="gallery-count-badge"
-                          class="px-2 py-0.5 rounded bg-[#080b12] text-blue-400 text-[10px] font-mono font-bold border border-[#202b3a]">0 / 5 Images</span>
+                          class="px-2 py-0.5 rounded bg-[#f8fafc] text-blue-600 text-[10px] font-mono font-bold border border-[#e2e8f0]">0 / 5 Images</span>
                       </div>
-                      <p class="text-xs text-[#718096]">Add up to 5 image web URLs. The first image serves as the primary card cover thumbnail.</p>
+                      <p class="text-xs text-[#64748b]">Add up to 5 image web URLs. The first image serves as the primary card cover thumbnail.</p>
                       <div id="image-inputs-container" class="space-y-2.5">
                         <!-- Dynamic rows -->
                       </div>
                       <div class="pt-1 flex items-center justify-between">
                         <button type="button" id="add-img-btn" onclick="addGalleryImageInput()"
-                          class="px-3.5 py-1.5 rounded-md bg-blue-600/15 hover:bg-blue-600/25 text-blue-400 font-bold text-xs border border-blue-500/30 transition-colors flex items-center space-x-1">
+                          class="px-3.5 py-1.5 rounded-md bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs border border-blue-200 transition-colors flex items-center space-x-1">
                           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                           </svg>
                           <span>+ Add Image URL</span>
                         </button>
-                        <span class="text-[10px] text-[#718096]">Supports web image links & assets.</span>
+                        <span class="text-[10px] text-[#64748b]">Supports web image links & assets.</span>
                       </div>
                     </div>
 
                     <!-- Section 4: Descriptions -->
-                    <div class="bg-[#101722] border border-[#202b3a] rounded-lg p-5 shadow-lg space-y-4">
+                    <div class="bg-white border border-[#e2e8f0] rounded-lg p-5 shadow-sm space-y-4">
                       <h3
-                        class="text-xs font-bold text-[#a7b3c4] uppercase tracking-wider border-b border-[#202b3a] pb-2.5 flex items-center space-x-2">
-                        <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                        class="text-xs font-bold text-[#475569] uppercase tracking-wider border-b border-[#e2e8f0] pb-2.5 flex items-center space-x-2">
+                        <span class="w-1.5 h-1.5 rounded-full bg-amber-600"></span>
                         <span>4. Product Descriptions & Overview</span>
                       </h3>
                       <div class="space-y-3.5 text-xs">
                         <div>
-                          <label class="block text-[#a7b3c4] font-bold mb-1">Short Description Snippet</label>
+                          <label class="block text-[#475569] font-bold mb-1">Short Description Snippet</label>
                           <input type="text" id="form-p-description" oninput="updateLivePreview()"
                             placeholder="Lightweight CNC aluminum chassis with Liquid Retina XDR display..."
-                            class="w-full px-3.5 py-2 rounded-md bg-[#080b12] border border-[#202b3a] text-white focus:border-blue-500">
+                            class="w-full px-3.5 py-2 rounded-md bg-[#f8fafc] border border-[#e2e8f0] text-[#0f172a] focus:border-blue-600">
                         </div>
                         <div>
-                          <label class="block text-[#a7b3c4] font-bold mb-1">Full Detailed Overview Paragraph</label>
+                          <label class="block text-[#475569] font-bold mb-1">Full Detailed Overview Paragraph</label>
                           <textarea id="form-p-full-description" rows="3" oninput="updateLivePreview()"
                             placeholder="Full comprehensive summary paragraph shown on the Product Specification page..."
-                            class="w-full px-3.5 py-2.5 rounded-md bg-[#080b12] border border-[#202b3a] text-white focus:border-blue-500"></textarea>
+                            class="w-full px-3.5 py-2.5 rounded-md bg-[#f8fafc] border border-[#e2e8f0] text-[#0f172a] focus:border-blue-600"></textarea>
                         </div>
                       </div>
                     </div>
 
                     <!-- Section 5: Tech Specs & Features -->
-                    <div class="bg-[#101722] border border-[#202b3a] rounded-lg p-5 shadow-lg space-y-4">
+                    <div class="bg-white border border-[#e2e8f0] rounded-lg p-5 shadow-sm space-y-4">
                       <h3
-                        class="text-xs font-bold text-[#a7b3c4] uppercase tracking-wider border-b border-[#202b3a] pb-2.5 flex items-center space-x-2">
-                        <span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
+                        class="text-xs font-bold text-[#475569] uppercase tracking-wider border-b border-[#e2e8f0] pb-2.5 flex items-center space-x-2">
+                        <span class="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
                         <span>5. Specifications & Highlights</span>
                       </h3>
                       <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 text-xs">
                         <div class="space-y-2.5">
                           <div class="flex items-center justify-between">
-                            <label class="block text-[#a7b3c4] font-bold">Technical Specs (Key-Value)</label>
+                            <label class="block text-[#475569] font-bold">Technical Specs (Key-Value)</label>
                             <button type="button" onclick="addFormSpecInput()"
-                              class="px-2.5 py-1 rounded bg-blue-600/15 text-blue-400 font-bold text-xs border border-blue-500/30 transition-colors flex items-center space-x-1">
-                              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              class="px-2.5 py-1 rounded bg-blue-50 text-blue-700 font-bold text-xs border border-blue-200 transition-colors flex items-center space-x-1">
+                              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                               </svg>
                               <span>+ Add Spec</span>
@@ -718,10 +718,10 @@ export function renderAdminPage(queryPart) {
                         </div>
                         <div class="space-y-2.5">
                           <div class="flex items-center justify-between">
-                            <label class="block text-[#a7b3c4] font-bold">Highlight Features (Bullets)</label>
+                            <label class="block text-[#475569] font-bold">Highlight Features (Bullets)</label>
                             <button type="button" onclick="addFormFeatureInput()"
-                              class="px-2.5 py-1 rounded bg-blue-600/15 text-blue-400 font-bold text-xs border border-blue-500/30 transition-colors flex items-center space-x-1">
-                              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              class="px-2.5 py-1 rounded bg-blue-50 text-blue-700 font-bold text-xs border border-blue-200 transition-colors flex items-center space-x-1">
+                              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                               </svg>
                               <span>+ Add Feature</span>
@@ -733,10 +733,10 @@ export function renderAdminPage(queryPart) {
                     </div>
 
                     <!-- Section 6: Branch Stock Allocations -->
-                    <div class="bg-[#101722] border border-[#202b3a] rounded-lg p-5 shadow-lg space-y-4">
+                    <div class="bg-white border border-[#e2e8f0] rounded-lg p-5 shadow-sm space-y-4">
                       <h3
-                        class="text-xs font-bold text-[#a7b3c4] uppercase tracking-wider border-b border-[#202b3a] pb-2.5 flex items-center space-x-2">
-                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                        class="text-xs font-bold text-[#475569] uppercase tracking-wider border-b border-[#e2e8f0] pb-2.5 flex items-center space-x-2">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
                         <span>6. Branch Warehouse Inventory Allocation</span>
                       </h3>
                       <div id="form-branch-stocks-container" class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
@@ -747,7 +747,7 @@ export function renderAdminPage(queryPart) {
                     <!-- Bottom Action Footer -->
                     <div class="flex items-center justify-end space-x-3 pt-3">
                       <button type="button" onclick="switchAdminTab('products')"
-                        class="px-5 py-2.5 rounded-md bg-[#141c28] hover:bg-[#192332] text-[#a7b3c4] font-bold text-xs border border-[#202b3a]">Cancel</button>
+                        class="px-5 py-2.5 rounded-md bg-[#f8fafc] hover:bg-[#f1f5f9] text-[#475569] font-bold text-xs border border-[#e2e8f0]">Cancel</button>
                       <button type="submit" id="form-submit-btn-secondary"
                         class="px-6 py-2.5 rounded-md bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow-sm">
                         Publish Product
@@ -758,13 +758,13 @@ export function renderAdminPage(queryPart) {
 
                 <!-- Right 4 Columns: Live Product Card Preview -->
                 <div class="lg:col-span-4">
-                  <div class="sticky top-6 bg-[#101722] border border-[#202b3a] rounded-lg p-4 shadow-xl space-y-3">
-                    <div class="flex items-center justify-between border-b border-[#202b3a] pb-2.5">
-                      <span class="text-xs font-bold text-blue-400 uppercase tracking-wider flex items-center space-x-1.5">
+                  <div class="sticky top-6 bg-white border border-[#e2e8f0] rounded-lg p-4 shadow-sm space-y-3">
+                    <div class="flex items-center justify-between border-b border-[#e2e8f0] pb-2.5">
+                      <span class="text-xs font-bold text-blue-600 uppercase tracking-wider flex items-center space-x-1.5">
                         <span>👁️</span>
                         <span>Live Catalog Preview</span>
                       </span>
-                      <span class="px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 text-[9px] font-mono font-bold">REAL-TIME</span>
+                      <span class="px-2 py-0.5 rounded bg-blue-50 text-blue-700 text-[9px] font-mono font-bold border border-blue-200">REAL-TIME</span>
                     </div>
                     <div id="live-product-preview-card"></div>
                   </div>
@@ -777,9 +777,9 @@ export function renderAdminPage(queryPart) {
 
         <!-- Simple Worker Footer -->
         <footer
-          class="h-10 border-t border-[#202b3a] px-6 flex items-center justify-between text-[11px] text-[#718096] flex-shrink-0 bg-[#0c111b]">
+          class="h-10 border-t border-[#e2e8f0] px-6 flex items-center justify-between text-[11px] text-[#64748b] flex-shrink-0 bg-white shadow-sm">
           <span>&copy; 2026 ETech Computers Management Console v1.0</span>
-          <span class="font-mono text-[10px]">System Status: <strong class="text-emerald-400">ONLINE</strong></span>
+          <span class="font-mono text-[10px]">System Status: <strong class="text-emerald-600">ONLINE</strong></span>
         </footer>
 
       </div>

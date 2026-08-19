@@ -66,9 +66,9 @@ export function showToast(message) {
   }
 
   const toast = document.createElement('div');
-  toast.className = 'pointer-events-auto flex items-center space-x-2.5 bg-[#101722] text-[#f4f7fb] px-4 py-3 rounded-md shadow-2xl border border-blue-500/40 transform translate-y-3 opacity-0 transition-all duration-200';
+  toast.className = 'pointer-events-auto flex items-center space-x-2.5 bg-white text-[#0f172a] px-4 py-3 rounded-md shadow-lg border border-[#e2e8f0] transform translate-y-3 opacity-0 transition-all duration-200';
   toast.innerHTML = `
-    <div class="w-6 h-6 rounded-full bg-blue-600/20 text-blue-400 flex items-center justify-center flex-shrink-0">
+    <div class="w-6 h-6 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0 border border-blue-200">
       <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
       </svg>
@@ -137,29 +137,29 @@ function renderCart() {
     subtotal += itemTotal;
 
     return `
-      <div class="bg-[#101722] border border-[#202b3a] rounded-lg p-4 flex flex-col sm:flex-row items-center justify-between gap-4 transition-all hover:border-[#34445a]">
+      <div class="bg-white border border-[#e2e8f0] rounded-lg p-4 flex flex-col sm:flex-row items-center justify-between gap-4 transition-all hover:border-[#cbd5e1] shadow-sm">
         
         <!-- Product Image & Details -->
         <div class="flex items-center space-x-3.5 w-full sm:w-auto">
-          <div class="w-16 h-16 rounded-md bg-[#080b12] flex-shrink-0 overflow-hidden border border-[#202b3a] flex items-center justify-center">
+          <div class="w-16 h-16 rounded-md bg-[#f8fafc] flex-shrink-0 overflow-hidden border border-[#e2e8f0] flex items-center justify-center">
             <img src="${item.image}" alt="${item.name}" class="w-full h-full object-cover">
           </div>
           <div>
-            <span class="text-[9px] font-bold uppercase text-cyan-400 font-mono tracking-wider">${item.category || 'Tech'}</span>
-            <h3 class="text-sm font-bold text-white line-clamp-1">${item.name}</h3>
-            <p class="text-xs text-[#718096] mt-0.5">Unit Price: <span class="text-white font-mono font-semibold">Rs. ${item.price}</span></p>
+            <span class="text-[9px] font-bold uppercase text-blue-600 font-mono tracking-wider">${item.category || 'Tech'}</span>
+            <h3 class="text-sm font-bold text-[#0f172a] line-clamp-1">${item.name}</h3>
+            <p class="text-xs text-[#64748b] mt-0.5">Unit Price: <span class="text-[#0f172a] font-mono font-semibold">Rs. ${item.price}</span></p>
           </div>
         </div>
 
         <!-- Quantity Controls & Actions -->
-        <div class="flex items-center justify-between sm:justify-end w-full sm:w-auto space-x-5 border-t sm:border-t-0 border-[#202b3a] pt-3 sm:pt-0">
-          <div class="flex items-center space-x-1.5 bg-[#080b12] px-2.5 py-1 rounded-md border border-[#202b3a]">
-            <button onclick="updateItemQuantity(${item.id}, -1)" class="text-[#a7b3c4] hover:text-white font-bold px-1 text-xs">-</button>
-            <span class="text-xs font-bold text-white w-5 text-center font-mono">${item.quantity}</span>
-            <button onclick="updateItemQuantity(${item.id}, 1)" class="text-[#a7b3c4] hover:text-white font-bold px-1 text-xs">+</button>
+        <div class="flex items-center justify-between sm:justify-end w-full sm:w-auto space-x-5 border-t sm:border-t-0 border-[#e2e8f0] pt-3 sm:pt-0">
+          <div class="flex items-center space-x-1.5 bg-[#f8fafc] px-2.5 py-1 rounded-md border border-[#e2e8f0]">
+            <button onclick="updateItemQuantity(${item.id}, -1)" class="text-[#475569] hover:text-[#0f172a] font-bold px-1 text-xs">-</button>
+            <span class="text-xs font-bold text-[#0f172a] w-5 text-center font-mono">${item.quantity}</span>
+            <button onclick="updateItemQuantity(${item.id}, 1)" class="text-[#475569] hover:text-[#0f172a] font-bold px-1 text-xs">+</button>
           </div>
-          <span class="text-sm font-extrabold text-white font-mono">Rs. ${itemTotal.toLocaleString()}</span>
-          <button onclick="removeItemFromCart(${item.id})" class="text-[#718096] hover:text-rose-400 transition-colors p-1" title="Remove Item">
+          <span class="text-sm font-extrabold text-[#0f172a] font-mono">Rs. ${itemTotal.toLocaleString()}</span>
+          <button onclick="removeItemFromCart(${item.id})" class="text-[#64748b] hover:text-rose-600 transition-colors p-1" title="Remove Item">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
           </button>
         </div>
@@ -218,13 +218,13 @@ export function updateSummaryTotals(subtotal) {
   if (shippingEl) {
     if (subtotal === 0) {
       shippingEl.textContent = 'Rs. 0.00';
-      shippingEl.className = 'font-bold text-white font-mono';
+      shippingEl.className = 'font-bold text-[#0f172a] font-mono';
     } else if (shipping === 0) {
       shippingEl.textContent = 'FREE';
-      shippingEl.className = 'font-bold text-emerald-400 font-mono';
+      shippingEl.className = 'font-bold text-emerald-600 font-mono';
     } else {
       shippingEl.textContent = `Rs. ${shipping.toFixed(2)}`;
-      shippingEl.className = 'font-bold text-white font-mono';
+      shippingEl.className = 'font-bold text-[#0f172a] font-mono';
     }
   }
 
@@ -288,17 +288,17 @@ export function renderCheckoutSummary(cart, customerCity = 'Colombo') {
     subtotal += itemTotal;
 
     return `
-      <div class="flex items-center justify-between text-xs py-2 border-b border-[#202b3a] last:border-0">
+      <div class="flex items-center justify-between text-xs py-2 border-b border-[#e2e8f0] last:border-0">
         <div class="flex items-center space-x-2.5">
-          <div class="w-9 h-9 rounded bg-[#080b12] flex-shrink-0 overflow-hidden border border-[#202b3a] flex items-center justify-center">
+          <div class="w-9 h-9 rounded bg-[#f8fafc] flex-shrink-0 overflow-hidden border border-[#e2e8f0] flex items-center justify-center">
             <img src="${item.image}" alt="${item.name}" class="w-full h-full object-cover">
           </div>
           <div>
-            <p class="font-bold text-white line-clamp-1">${item.name}</p>
-            <p class="text-[#718096] font-mono text-[10px]">Qty: ${item.quantity} × Rs. ${item.price}</p>
+            <p class="font-bold text-[#0f172a] line-clamp-1">${item.name}</p>
+            <p class="text-[#64748b] font-mono text-[10px]">Qty: ${item.quantity} × Rs. ${item.price}</p>
           </div>
         </div>
-        <span class="font-bold text-white font-mono">Rs. ${itemTotal.toLocaleString()}</span>
+        <span class="font-bold text-[#0f172a] font-mono">Rs. ${itemTotal.toLocaleString()}</span>
       </div>
     `;
   }).join('');
@@ -318,12 +318,12 @@ export function renderCheckoutSummary(cart, customerCity = 'Colombo') {
 
   if (branchInfoEl && fulfillment) {
     branchInfoEl.innerHTML = `
-      <div class="p-2.5 bg-blue-950/30 border border-blue-500/30 rounded-md text-xs space-y-1">
-        <div class="flex items-center justify-between font-bold text-blue-300">
+      <div class="p-2.5 bg-blue-50 border border-blue-200 rounded-md text-xs space-y-1">
+        <div class="flex items-center justify-between font-bold text-blue-700">
           <span>Dispatch Hub: ${fulfillment.branch.name}</span>
-          <span class="text-[10px] font-mono bg-blue-500/20 px-2 py-0.5 rounded text-blue-400">${fulfillment.distanceKm} km</span>
+          <span class="text-[10px] font-mono bg-blue-100 px-2 py-0.5 rounded text-blue-800">${fulfillment.distanceKm} km</span>
         </div>
-        <p class="text-[10px] text-[#718096]">Auto-selected closest warehouse with stock for your destination.</p>
+        <p class="text-[10px] text-[#64748b]">Auto-selected closest warehouse with stock for your destination.</p>
       </div>
     `;
   }

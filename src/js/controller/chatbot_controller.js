@@ -48,9 +48,9 @@
   /** Simple markdown → HTML (bold, italic, bullets, line breaks) */
   function renderMarkdown(text) {
     let html = escapeHtml(text);
-    html = html.replace(/\*\*(.+?)\*\*/g, '<strong class="text-white">$1</strong>');
+    html = html.replace(/\*\*(.+?)\*\*/g, '<strong class="text-[#0f172a] font-bold">$1</strong>');
     html = html.replace(/\*(.+?)\*/g, "<em>$1</em>");
-    html = html.replace(/^[\-•]\s+(.+)$/gm, '<div class="flex items-start space-x-2 my-0.5"><span class="text-blue-400 mt-0.5 flex-shrink-0">•</span><span>$1</span></div>');
+    html = html.replace(/^[\-•]\s+(.+)$/gm, '<div class="flex items-start space-x-2 my-0.5"><span class="text-blue-600 mt-0.5 flex-shrink-0">•</span><span>$1</span></div>');
     html = html.replace(/\n{2,}/g, '<div class="h-2"></div>');
     html = html.replace(/\n/g, "<br>");
     return html;
@@ -113,7 +113,7 @@ User is currently viewing: ${currentPage}
       console.log(`%c🤖 [E-T AI] Calling Gemini Live API...`, 'color: #3b82f6; font-weight: bold; font-size: 12px;');
 
       try {
-        console.log(`%c⏳ Sending request to Model: [${targetModels}]...`, 'color: #94a3b8;');
+        console.log(`%c⏳ Sending request to Model: [${targetModels}]...`, 'color: #64748b;');
 
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${targetModels}:generateContent?key=${encodeURIComponent(key)}`;
         const response = await fetch(url, {
@@ -251,21 +251,21 @@ User is currently viewing: ${currentPage}
     const discount = p.originalPrice ? Math.round((1 - p.price / p.originalPrice) * 100) : 0;
 
     return `
-      <div class="flex items-center gap-2.5 p-2 bg-slate-950/80 border border-slate-700/50 rounded-xl transition-colors hover:border-blue-500/40">
-        <img src="${p.image}" alt="${escapeHtml(p.name)}" class="w-12 h-12 rounded-[10px] object-cover flex-shrink-0 bg-slate-950" onerror="this.style.display='none'">
+      <div class="flex items-center gap-2.5 p-2 bg-white border border-[#e2e8f0] rounded-xl transition-all hover:border-[#cbd5e1] shadow-sm">
+        <img src="${p.image}" alt="${escapeHtml(p.name)}" class="w-12 h-12 rounded-[10px] object-cover flex-shrink-0 bg-[#f8fafc] border border-[#e2e8f0]" onerror="this.style.display='none'">
         <div class="flex-1 min-w-0">
           <div class="flex items-center gap-1.5 flex-wrap">
-            <span class="text-[9px] font-bold uppercase tracking-wider text-blue-400">${escapeHtml(p.category)}</span>
-            ${p.badge ? `<span class="text-[8px] font-bold px-1.5 rounded bg-blue-500/20 text-blue-300">${escapeHtml(p.badge)}</span>` : ""}
+            <span class="text-[9px] font-bold uppercase tracking-wider text-blue-600 font-mono">${escapeHtml(p.category)}</span>
+            ${p.badge ? `<span class="text-[8px] font-bold px-1.5 rounded bg-blue-50 text-blue-700 border border-blue-200">${escapeHtml(p.badge)}</span>` : ""}
           </div>
-          <h4 class="text-xs font-bold text-white truncate my-0.5">${escapeHtml(p.name)}</h4>
+          <h4 class="text-xs font-bold text-[#0f172a] truncate my-0.5">${escapeHtml(p.name)}</h4>
           <div class="flex items-center gap-2">
-            <span class="text-[13px] font-extrabold text-emerald-400">Rs. ${p.price}</span>
-            ${p.originalPrice ? `<span class="text-[11px] text-slate-500 line-through">Rs. ${p.originalPrice}</span>` : ""}
-            ${discount > 0 ? `<span class="text-[10px] font-bold text-red-400">-${discount}%</span>` : ""}
+            <span class="text-[13px] font-extrabold text-[#0f172a] font-mono">Rs. ${p.price}</span>
+            ${p.originalPrice ? `<span class="text-[11px] text-[#94a3b8] line-through font-mono">Rs. ${p.originalPrice}</span>` : ""}
+            ${discount > 0 ? `<span class="text-[10px] font-bold text-emerald-600">-${discount}%</span>` : ""}
           </div>
         </div>
-        <button onclick="if(typeof addToCart==='function'){addToCart(${p.id});this.innerHTML='✓ Added';this.classList.add('!bg-green-500','pointer-events-none')}" class="px-2.5 py-1.5 rounded-[10px] bg-blue-500 border-none text-white text-[11px] font-bold cursor-pointer flex items-center gap-1 flex-shrink-0 transition-all hover:bg-blue-600 active:scale-95" style="font-family: inherit;">
+        <button onclick="if(typeof addToCart==='function'){addToCart(${p.id});this.innerHTML='✓ Added';this.classList.add('!bg-emerald-600','pointer-events-none')}" class="px-2.5 py-1.5 rounded-[10px] bg-blue-600 border-none text-white text-[11px] font-bold cursor-pointer flex items-center gap-1 flex-shrink-0 transition-all hover:bg-blue-500 active:scale-95 shadow-sm" style="font-family: inherit;">
           <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
           Add
         </button>
@@ -281,9 +281,9 @@ User is currently viewing: ${currentPage}
     const div = document.createElement("div");
     div.className = "flex gap-2 justify-end";
     div.innerHTML = `
-      <div class="max-w-[80%] px-3.5 py-2.5 rounded-2xl rounded-br-sm bg-gradient-to-br from-blue-500 to-indigo-500 text-white text-[13px] leading-relaxed break-words">
+      <div class="max-w-[80%] px-3.5 py-2.5 rounded-2xl rounded-br-sm bg-blue-600 text-white text-[13px] leading-relaxed break-words shadow-sm">
         <p>${escapeHtml(text)}</p>
-        <span class="block text-[9px] text-blue-200/60 mt-1 text-right">${timeStr()}</span>
+        <span class="block text-[9px] text-blue-100 mt-1 text-right font-mono">${timeStr()}</span>
       </div>
     `;
     list.appendChild(div);
@@ -310,12 +310,12 @@ User is currently viewing: ${currentPage}
     const div = document.createElement("div");
     div.className = "flex gap-2 justify-start items-start";
     div.innerHTML = `
-      <div class="w-[30px] h-[30px] rounded-[10px] bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center flex-shrink-0 text-white mt-0.5">
+      <div class="w-[30px] h-[30px] rounded-[10px] bg-blue-600 flex items-center justify-center flex-shrink-0 text-white mt-0.5 shadow-sm">
         ${BOT_SVG}
       </div>
-      <div class="max-w-[85%] px-3.5 py-2.5 rounded-2xl rounded-bl-sm bg-slate-800 border border-slate-700/50 text-slate-300 text-[13px] leading-relaxed break-words">
+      <div class="max-w-[85%] px-3.5 py-2.5 rounded-2xl rounded-bl-sm bg-white border border-[#e2e8f0] text-[#0f172a] text-[13px] leading-relaxed break-words shadow-sm">
         <div>${html}</div>
-        <span class="block text-[9px] text-slate-400/60 mt-1 text-right">${timeStr()}</span>
+        <span class="block text-[9px] text-[#64748b] mt-1 text-right font-mono">${timeStr()}</span>
       </div>
     `;
     list.appendChild(div);
@@ -330,14 +330,14 @@ User is currently viewing: ${currentPage}
     div.id = "et-typing";
     div.className = "flex gap-2 justify-start items-start";
     div.innerHTML = `
-      <div class="w-[30px] h-[30px] rounded-[10px] bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center flex-shrink-0 text-white mt-0.5">
+      <div class="w-[30px] h-[30px] rounded-[10px] bg-blue-600 flex items-center justify-center flex-shrink-0 text-white mt-0.5 shadow-sm">
         ${BOT_SVG}
       </div>
-      <div class="px-3.5 py-2.5 rounded-2xl rounded-bl-sm bg-slate-800 border border-slate-700/50">
+      <div class="px-3.5 py-2.5 rounded-2xl rounded-bl-sm bg-white border border-[#e2e8f0] shadow-sm">
         <div class="flex gap-1 py-1">
-          <span class="w-[7px] h-[7px] bg-slate-500 rounded-full" style="animation: et-dot 1.4s infinite ease-in-out"></span>
-          <span class="w-[7px] h-[7px] bg-slate-500 rounded-full" style="animation: et-dot 1.4s infinite ease-in-out 0.2s"></span>
-          <span class="w-[7px] h-[7px] bg-slate-500 rounded-full" style="animation: et-dot 1.4s infinite ease-in-out 0.4s"></span>
+          <span class="w-[7px] h-[7px] bg-blue-600 rounded-full" style="animation: et-dot 1.4s infinite ease-in-out"></span>
+          <span class="w-[7px] h-[7px] bg-blue-600 rounded-full" style="animation: et-dot 1.4s infinite ease-in-out 0.2s"></span>
+          <span class="w-[7px] h-[7px] bg-blue-600 rounded-full" style="animation: et-dot 1.4s infinite ease-in-out 0.4s"></span>
         </div>
       </div>
     `;
@@ -453,7 +453,7 @@ User is currently viewing: ${currentPage}
     const suggestionsEl = document.getElementById("et-suggestions");
     if (suggestionsEl && cfg.QUICK_SUGGESTIONS) {
       suggestionsEl.innerHTML = cfg.QUICK_SUGGESTIONS.map(s =>
-        `<button class="px-2.5 py-1 rounded-full bg-slate-700/40 border border-slate-600/50 text-slate-400 text-[11px] font-medium cursor-pointer transition-all whitespace-nowrap hover:bg-blue-500/15 hover:text-blue-400 hover:border-blue-500/40" onclick="document.getElementById('et-chatbot').__send('${s.replace(/'/g, "\\'")}')">${s}</button>`
+        `<button class="px-2.5 py-1 rounded-full bg-[#f8fafc] border border-[#e2e8f0] text-[#475569] text-[11px] font-medium cursor-pointer transition-all whitespace-nowrap hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 shadow-sm" onclick="document.getElementById('et-chatbot').__send('${s.replace(/'/g, "\\'")}')">${s}</button>`
       ).join("");
     }
 

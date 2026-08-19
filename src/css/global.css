@@ -1,7 +1,7 @@
 @import './variables.css';
 
 /* ============================================================
-   ETech Computers — Global Precision Stylesheet
+   ETech Computers — Global Precision Light Stylesheet
    ============================================================ */
 
 /* ── Base Reset & Scroll Behavior ───────────────────────────── */
@@ -13,7 +13,7 @@ html {
     background-color: var(--color-bg);
     color: var(--color-text-primary);
     font-family: var(--font-family-sans);
-    color-scheme: dark;
+    color-scheme: light;
 }
 
 body {
@@ -23,23 +23,23 @@ body {
     overflow-x: hidden;
 }
 
-/* ── Custom Precision Scrollbar ─────────────────────────────── */
+/* ── Custom Precision Scrollbar (Light Theme) ───────────────── */
 ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-    background: #080b12;
+    background: #f1f5f9;
 }
 
 ::-webkit-scrollbar-thumb {
-    background: #202b3a;
+    background: #cbd5e1;
     border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: #34445a;
+    background: #94a3b8;
 }
 
 /* ── Precision Input Focus Rings ────────────────────────────── */
@@ -61,7 +61,7 @@ textarea:focus {
     }
 }
 
-/* ── Navigation Tab / Link Button Styles (Exact Match) ─────── */
+/* ── Navigation Tab / Link Button Styles (Exact Mockup Match) ─────── */
 .nav-tab-btn {
     position: relative;
     display: inline-flex;
@@ -71,7 +71,7 @@ textarea:focus {
     padding: 0 14px;
     font-size: 0.9375rem; /* 15px */
     font-weight: 500;
-    color: #94a3b8;
+    color: #475569;
     text-decoration: none;
     background: transparent;
     border: none;
@@ -80,7 +80,7 @@ textarea:focus {
 }
 
 .nav-tab-btn:hover {
-    color: #ffffff;
+    color: #0f172a;
 }
 
 /* Active indicator underline */
@@ -99,13 +99,13 @@ textarea:focus {
 }
 
 .nav-tab-btn:hover::after {
-    opacity: 0.4;
+    opacity: 0.5;
     transform: scaleX(1);
     background-color: #3b82f6;
 }
 
 .nav-tab-btn.active {
-    color: #ffffff !important;
+    color: #0f172a !important;
     font-weight: 700 !important;
 }
 
@@ -114,7 +114,6 @@ textarea:focus {
     transform: scaleX(1) !important;
     background-color: #2563eb !important;
 }
-
 
 @keyframes et-dot {
     0%, 80%, 100% {
@@ -166,7 +165,7 @@ textarea:focus {
 
 #et-messages {
     scrollbar-width: thin;
-    scrollbar-color: #202b3a transparent;
+    scrollbar-color: #cbd5e1 transparent;
 }
 
 #et-messages::-webkit-scrollbar {
@@ -174,7 +173,7 @@ textarea:focus {
 }
 
 #et-messages::-webkit-scrollbar-thumb {
-    background: #202b3a;
+    background: #cbd5e1;
     border-radius: 4px;
 }
 
@@ -194,7 +193,7 @@ textarea:focus {
     }
 }
 
-/* ── Hero 3-Card Layered Carousel (Precision Look) ──────────── */
+/* ── Hero 3-Card Layered Carousel (Clean Light Look) ──────────── */
 .hero-carousel-container-3d {
     position: relative;
     -webkit-font-smoothing: antialiased;
@@ -210,12 +209,12 @@ textarea:focus {
 
 .card-3d-left {
     transform: translate3d(-20%, 0, 0) scale(0.88);
-    opacity: 0.45;
+    opacity: 0.65;
     z-index: 10;
 }
 
 .card-3d-left:hover {
-    opacity: 0.75;
+    opacity: 0.85;
     transform: translate3d(-20%, 0, 0) scale(0.90);
 }
 
@@ -223,33 +222,33 @@ textarea:focus {
     transform: translate3d(0, 0, 0) scale(1);
     opacity: 1;
     z-index: 30;
-    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.08);
 }
 
 .card-3d-center:hover {
     transform: translate3d(0, -3px, 0) scale(1.01);
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.55), 0 0 20px rgba(37, 99, 235, 0.15);
+    box-shadow: 0 20px 45px rgba(0, 0, 0, 0.12), 0 0 20px rgba(37, 99, 235, 0.12);
 }
 
 .card-3d-right {
     transform: translate3d(20%, 0, 0) scale(0.88);
-    opacity: 0.45;
+    opacity: 0.65;
     z-index: 10;
 }
 
 .card-3d-right:hover {
-    opacity: 0.75;
+    opacity: 0.85;
     transform: translate3d(20%, 0, 0) scale(0.90);
 }
 
 @media (max-width: 640px) {
     .card-3d-left {
         transform: translate3d(-14%, 0, 0) scale(0.88);
-        opacity: 0.3;
+        opacity: 0.4;
     }
     .card-3d-right {
         transform: translate3d(14%, 0, 0) scale(0.88);
-        opacity: 0.3;
+        opacity: 0.4;
     }
 }
 
@@ -283,21 +282,21 @@ textarea:focus {
     transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1), padding 0.25s ease;
 }
 
-/* Sleek Tooltips for collapsed/icon-only sidebar */
+/* Sleek Tooltips for collapsed/icon-only sidebar (Light Theme) */
 .sidebar-tooltip {
     position: absolute;
     left: calc(100% + 12px);
     top: 50%;
     transform: translateY(-50%) translateX(-6px);
-    background-color: #101722;
-    color: #f4f7fb;
+    background-color: #ffffff;
+    color: #0f172a;
     font-size: 11px;
     font-weight: 600;
     white-space: nowrap;
     padding: 6px 12px;
     border-radius: 8px;
-    border: 1px solid #202b3a;
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.6), 0 0 12px rgba(37, 99, 235, 0.15);
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 0 12px rgba(37, 99, 235, 0.08);
     opacity: 0;
     pointer-events: none;
     visibility: hidden;
@@ -313,12 +312,12 @@ textarea:focus {
     transform: translateY(-50%) rotate(45deg);
     width: 8px;
     height: 8px;
-    background-color: #101722;
-    border-left: 1px solid #202b3a;
-    border-bottom: 1px solid #202b3a;
+    background-color: #ffffff;
+    border-left: 1px solid #e2e8f0;
+    border-bottom: 1px solid #e2e8f0;
 }
 
-/* Show tooltip on hover in icon-only mode (on small screens or when forced collapsed) */
+/* Show tooltip on hover in icon-only mode */
 @media (max-width: 1023px) {
     .admin-sidebar:not(.sidebar-force-expanded) .sidebar-nav-btn:hover .sidebar-tooltip,
     .admin-sidebar:not(.sidebar-force-expanded) a:hover .sidebar-tooltip,
@@ -372,7 +371,7 @@ textarea:focus {
     bottom: 0;
     left: 0;
     z-index: 50;
-    box-shadow: 10px 0 35px rgba(0, 0, 0, 0.85);
+    box-shadow: 10px 0 35px rgba(0, 0, 0, 0.15);
 }
 
 .admin-sidebar.sidebar-force-expanded .sidebar-close-btn {
