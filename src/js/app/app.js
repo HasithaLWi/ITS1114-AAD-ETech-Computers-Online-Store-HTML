@@ -6,6 +6,7 @@ import { getUserOrders } from '../controller/order_management_controller.js';
 import { initCartLogic, initCheckoutLogic, updateCartBadge, addToCart, getCart, saveCart, showToast } from '../controller/cart_controller.js';
 import { renderProductDetailsPage, viewProductDetails } from '../controller/product-details_controller.js';
 import { initShopLogic } from '../controller/shop_controller.js';
+import { initHotDealsLogic } from '../controller/hot_deal_controller.js';
 import { renderLoginPage } from './login/login.js';
 import { renderAdminPage } from './administrator/administrator.js';
 import { renderAboutPage } from './about/about.js';
@@ -177,6 +178,8 @@ function triggerPageHooks(pageName, queryPart) {
     renderHomeNewArrivalsGrid();
   } else if (pageName === 'shop') {
     initShopLogic(queryPart);
+  } else if (pageName === 'deals' || pageName === 'hot-deals') {
+    initHotDealsLogic(queryPart);
   } else if (pageName === 'cart') {
     initCartLogic();
   } else if (pageName === 'checkout') {

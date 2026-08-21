@@ -34,7 +34,7 @@ export function renderAboutPage() {
             </span>
           </div>
 
-          <h1 class="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-[#0f172a] tracking-tight leading-tight">
+          <h1 class="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-[#0f172a] tracking-tight leading-[1.25] sm:leading-[1.25] lg:leading-[1.2]">
             Built for Extreme Performance.<br>
             Engineered for <span class="text-blue-600">Enthusiasts.</span>
           </h1>

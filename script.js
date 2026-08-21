@@ -43,6 +43,11 @@ import {
     initShopLogic, renderFilteredProducts, 
     addCategoryFilter, removeCategoryFilter, clearCategoryFilters, getSelectedCategories 
 } from './src/js/controller/shop_controller.js';
+import {
+    initHotDealsLogic, renderDealCategoryTabs, filterDealsByCategory,
+    renderFlashDealsGrid, toggleDealWishlist, buyFeaturedDeal,
+    handleDealsNewsletter, HOT_DEALS_DATA
+} from './src/js/controller/hot_deal_controller.js';
 import { handleLogout, updateHeaderAuthUI, renderHomeNewArrivalsGrid } from './src/js/app/app.js';
 import { renderLoginPage, initLoginPage } from './src/js/app/login/login.js';
 import { renderAdminPage, initAdminPage } from './src/js/app/administrator/administrator.js';
@@ -161,6 +166,11 @@ Object.assign(window, {
     // Shop Catalog
     initShopLogic, renderFilteredProducts,
     addCategoryFilter, removeCategoryFilter, clearCategoryFilters, getSelectedCategories,
+
+    // Hot Deals & Flash Sales
+    initHotDealsLogic, renderDealCategoryTabs, filterDealsByCategory,
+    renderFlashDealsGrid, toggleDealWishlist, buyFeaturedDeal,
+    handleDealsNewsletter, HOT_DEALS_DATA,
 
     // Admin Dashboard Shell
     initAdminDashboard, switchAdminTab, closeAdminModal,
