@@ -1,0 +1,752 @@
+================================================================================
+                    ETECH COMPUTERS ONLINE STORE & ADMIN CONSOLE
+                   FULL PROJECT ARCHITECTURE & DESIGN DOCUMENTATION
+================================================================================
+Document Type: Technical & Design Specification (.txt)
+Application Name: ETech Computers Online Store (Front-End & Admin Console)
+Architecture: Single Page Application (SPA) - Vanilla ES Modules + HTML5 + Tailwind CSS
+Primary Target: High-Performance Computer Hardware Retail & Enterprise Procurement
+Version: 3.0 (Modern Light Precision Theme)
+Date: August 2026
+
+--------------------------------------------------------------------------------
+TABLE OF CONTENTS
+--------------------------------------------------------------------------------
+1. SYSTEM OVERVIEW & ARCHITECTURE
+   1.1 High-Level Architecture & Principles
+   1.2 Single Page Application (SPA) Routing & Hash Navigation
+   1.3 Module Binding & Global Window Bridge System (script.js)
+   1.4 Client-Side State Engine & Persistence Strategy (LocalStorage)
+
+2. DESIGN SYSTEM & VISUAL SPECIFICATION
+   2.1 Aesthetic Archetype & Design Philosophy
+   2.2 CSS Variables & Design Tokens (src/css/variables.css)
+   2.3 Comprehensive Color Palette & Tokens Reference
+       - 2.3.1 Primary Brand Scale (Engineering Royal Blue)
+       - 2.3.2 Dark Navy Accents & High-Contrast Elements
+       - 2.3.3 Technical Accent Scale (Cyan & Sky Blue)
+       - 2.3.4 Light Surface & Background Depth Hierarchy (Levels 1 to 3.5)
+       - 2.3.5 Precision Border System & Focus Ring Styling
+       - 2.3.6 Text & Typography Contrast Scale (WCAG AAA/AA)
+       - 2.3.7 Semantic Status Colors (Success, Warning, Danger, Info)
+   2.4 Typography System & Scale (Sans-serif & Monospace Font Families)
+   2.5 Spacing Scale, Layout Rhythm & Border Radius Guidelines
+   2.6 Elevation, Shadow Hierarchy & Micro-Glow Effects
+   2.7 Motion, Transitions & Micro-Animations
+       - 2.7.1 Transition Timing Curves & Durations
+       - 2.7.2 Keyframe Animations (et-pulse, et-dot typing, tab underline indicator)
+       - 2.7.3 Hero Section 3D Layered Carousel Mechanics
+
+3. COMPONENT & STOREFRONT LOGIC
+   3.1 Dynamic Header Navigation & Mobile Drawer (Auth UI Sync)
+   3.2 Hero Section & 3D Layered New Arrivals Product Carousel Engine
+   3.3 Catalog Shop Logic & Multi-Parametric Filter System (shop_controller.js)
+   3.4 Product Details View, Image Gallery & Rating System (product-details_controller.js)
+   3.5 Cart Logic & Checkout Engine (cart_controller.js)
+   3.6 Branch Selection & Shipping Fee Calculation Algorithm (branch_controller.js)
+   3.7 User Authentication, Access Control & Roles (login_controller.js)
+   3.8 Customer Account Portal & Order History Tracking
+
+4. ADMIN & MANAGEMENT CONSOLE LOGIC
+   4.1 Admin Console Architecture & Responsive Collapsible Sidebar
+   4.2 Product Management Module (CRUD, Gallery Builder, Specs Matrix, Live Preview)
+   4.3 Order Management Module & Order Lifecycle Tracking
+   4.4 Stock Health & Inventory Alert Monitor (stock_health_controller.js)
+       - 4.4.1 Multi-branch Inventory Metrics (Colombo, Kandy, Galle, Matara)
+       - 4.4.2 Auto Reorder & Low-Stock Alerts
+       - 4.4.3 Quick Restock & Branch-to-Branch Transfer Modal Algorithms
+   4.5 Branch Management Module (branch_management_controller.js)
+   4.6 User Account Management Module (user_management_controller.js)
+   4.7 Taxonomy, Automated Badge System & Product Behavior Analytics (taxonomy_controller.js)
+   4.8 Corporate Profile & Legal Policy Management Engine (policy_management_controller.js)
+   4.9 E-T AI Technical Advisor Chatbot Engine (chatbot_controller.js & et-training.js)
+
+5. DATA MODELS & LOCAL STORAGE SCHEMAS
+   5.1 Product Schema (`etech_products`)
+   5.2 User Schema (`etech_users`, `etech_current_user`)
+   5.3 Cart Schema (`etech_cart`)
+   5.4 Order Schema (`etech_orders`)
+   5.5 Branch Schema (`etech_branches`)
+   5.6 Taxonomy & Badge Schema (`etech_categories`, `etech_badges`, `etech_behavior_history`)
+   5.7 Legal Policy & Corporate Schema (`etech_legal_policies`, `etech_business_info`)
+
+6. BACKEND API MIGRATION ROADMAP (SPRING BOOT + MYSQL)
+   6.1 Target Database Relational Schema Overview (DDL)
+   6.2 Spring Boot REST API Endpoint Specifications
+   6.3 Client Migration Checklist & Logic Separation
+
+7. COMPLETE FILE & DIRECTORY MAP
+
+================================================================================
+1. SYSTEM OVERVIEW & ARCHITECTURE
+================================================================================
+
+1.1 High-Level Architecture & Principles
+--------------------------------------------------------------------------------
+The ETech Computers Front-End Application is engineered as a zero-dependency,
+high-performance Single Page Application (SPA) built using standard HTML5,
+Tailwind CSS (v3 CDN configuration), Vanilla JavaScript (ES Modules), and CSS
+Custom Properties.
+
+The architecture emphasizes modularity, separation of concerns, strict state
+persistence, and zero client build overhead. Business logic is organized into
+Controllers, Data Models, Services, and Dynamic Page Renderers, interconnected
+via an ES Module Window Bridge (`script.js`).
+
+Primary Architectural Pillars:
+- Modular Controller Layer: Discrete controllers manage storefront and administrative features.
+- Single Source of Truth CSS System: Global variables in `src/css/variables.css` enforce branding, colors, spacing, and typography.
+- Client-Side Mock Data Engine: Implements fully functional CRUD operations using browser `localStorage`.
+- Backend Readiness: Formatted for direct drop-in integration with a Java Spring Boot REST API and MySQL database.
+
+1.2 Single Page Application (SPA) Routing & Hash Navigation
+--------------------------------------------------------------------------------
+Routing is driven by URL hash fragments (`window.location.hash`) handled centrally
+in `src/js/app/app.js`. When a hash change event fires, `handleRoute()` inspects
+the URL, enforces route guards, toggles visibility on section elements
+(`.page-section`), and executes page-specific lifecycle hooks.
+
+Supported Routes & Viewports:
+- `#home`: Main landing storefront, featuring hero 3D carousel, brand value props, and top featured products.
+- `#shop`: Full product catalog with real-time multi-criteria filtering, search, pagination, and category chips.
+- `#product?id=X` / `#product-details?id=X`: Dynamic hardware product specs, 5-image gallery, rating breakdown, and customer review submitting form.
+- `#cart`: Interactive shopping cart drawer/table with real-time subtotal, tax calculation, and item quantity adjusters.
+- `#checkout`: Multi-step checkout with distance-based shipping fee calculation, branch fulfillment selection, and order placement.
+- `#login` / `#signup`: Authentication portal for login, registration, password visibility toggles, and role redirection.
+- `#account`: Customer dashboard displaying profile metrics, editable user details, and order history with live status tags.
+- `#admin` / `#administrator`: Full-screen staff management console (hidden storefront header/footer/chatbot during active session).
+- `#about`: Corporate profile page displaying company history, branch network, and executive mission.
+- `#privacy` / `#terms` / `#warranty` / `#policies`: Interactive legal policy portal with print action and section accordions.
+
+Route Protection & Security Guards:
+1. Protected Customer Routes (`#checkout`, `#account`):
+   - Checked via `isLoggedIn()`.
+   - Unauthenticated access redirects automatically to `#login?redirect=<target_route>`.
+2. Protected Admin Console Routes (`#admin`, `#administrator`):
+   - Checked via `isLoggedIn()` and role check (`user.role === 'ADMIN' || user.role === 'STAFF'`).
+   - Unauthorized customers receive an "Access Denied" alert and are returned to `#home`.
+3. Dynamic Shell Visibility:
+   - When transitioning to `#admin`, the global header, store footer, and chatbot FAB are hidden (`classList.add('hidden')`) to provide a dedicated desktop workspace.
+
+1.3 Module Binding & Global Window Bridge System (script.js)
+--------------------------------------------------------------------------------
+Because ES Modules maintain isolated module scope, inline HTML event attributes
+(e.g., `onclick="addToCart(4)"` or `oninput="filterProductsTable()"`) cannot
+access un-exported ES Module functions directly.
+
+To bridge ES Modules with standard DOM event handlers without abandoning modular code:
+- `script.js` imports every controller method, model accessor, and helper function.
+- It executes `Object.assign(window, { ... })` upon load.
+- This binds all necessary functions globally to the `window` object while keeping code modularly organized in separate `.js` files.
+
+1.4 Client-Side State Engine & Persistence Strategy (LocalStorage)
+--------------------------------------------------------------------------------
+All data—including products, user accounts, active cart items, placed orders, branch details, stock health rules, taxonomy categories, and legal policies—is stored in browser `localStorage`.
+
+Data Initialization Pattern:
+1. When a model file loads (e.g., `src/js/models/data.js`), it checks if its corresponding key exists in `localStorage`.
+2. If absent, it populates `localStorage` with initial default datasets (seeded hardware inventory, admin accounts, default branches).
+3. Any mutation (e.g., updating stock, creating a product, placing an order) commits changes back to `localStorage` and triggers window events (`productsUpdated`, `cartUpdated`, `storage`) to sync UI state instantly across tabs.
+
+
+================================================================================
+2. DESIGN SYSTEM & VISUAL SPECIFICATION
+================================================================================
+
+2.1 Aesthetic Archetype & Design Philosophy
+--------------------------------------------------------------------------------
+Archetype: Modern Light Precision Hardware Storefront
+The visual language is tailored for high-performance PC hardware retail and
+enterprise procurement. It replaces noisy neon gaming gradients with a clean,
+structured layout consisting of pure white card surfaces, soft slate-50 canvas backgrounds,
+crisp 1px slate-200 borders, royal engineering blue action triggers, and high-contrast typography.
+
+Core Pillars:
+- Pure White Canvas & Soft Slate Hierarchy: Pristine white (`#ffffff`) surfaces paired with soft slate (`#f8fafc`) page backgrounds.
+- Structural Geometry: Hardware-inspired border radius (`4px` to `8px`) without soft bubble corners.
+- Engineering Blue Focus: Royal blue (`#2563eb`) guides primary calls to action, badges, and focal elements.
+- Technical Typography: Dual-font system separating body copy from technical SKUs and pricing data.
+
+2.2 CSS Variables & Design Tokens (src/css/variables.css)
+--------------------------------------------------------------------------------
+All design tokens are defined under `:root` in `src/css/variables.css` as the single source of truth.
+
+2.3 Comprehensive Color Palette & Tokens Reference
+--------------------------------------------------------------------------------
+
+2.3.1 Primary Brand Scale (Engineering Royal Blue)
+- `--color-primary-50`:  #eff6ff (rgb(239, 246, 255)) - Soft pill backgrounds, lightest blue tint
+- `--color-primary-100`: #dbeafe (rgb(219, 234, 254)) - Ultra-soft highlight borders
+- `--color-primary-200`: #bfdbfe (rgb(191, 219, 254)) - Light accent badges
+- `--color-primary-300`: #93c5fd (rgb(147, 197, 253)) - Secondary links, link hover state
+- `--color-primary-400`: #60a5fa (rgb(96, 165, 250))  - Subheaders, icons, focused tags
+- `--color-primary-500`: #3b82f6 (rgb(59, 130, 246))  - Primary button hover states, active tabs
+- `--color-primary-600`: #2563eb (rgb(37, 99, 235))  - [CORE BRAND PRIMARY] Primary CTA buttons, main badges
+- `--color-primary-700`: #1d4ed8 (rgb(29, 78, 216))  - Active/pressed button states
+- `--color-primary-800`: #1e40af (rgb(30, 64, 175))  - Deep container accents
+- `--color-primary-900`: #172554 (rgb(23, 37, 84))   - Dark contrast elements
+
+2.3.2 Dark Navy Accents (High-Contrast Category Elements)
+- `--color-navy-900`: #0f172a (rgb(15, 23, 42))  - Dark contrast badges & dark headers
+- `--color-navy-800`: #1e293b (rgb(30, 41, 59))  - Elevated dark surfaces
+- `--color-navy-700`: #334155 (rgb(51, 65, 85))  - Secondary dark outlines
+
+2.3.3 Technical Accent Scale (Cyan & Sky Blue)
+- `--color-accent-300`: #7dd3fc (rgb(125, 211, 252)) - Micro accent light
+- `--color-accent-400`: #38bdf8 (rgb(56, 189, 248))  - Bright cyan highlights
+- `--color-accent-500`: #0284c7 (rgb(2, 132, 199))   - Technical info tags, AI assistant accents
+- `--color-accent-600`: #0369a1 (rgb(3, 105, 161))   - Deep cyan text link
+
+2.3.4 Light Surface & Background Depth Hierarchy
+- Level 1 Canvas Background (`--color-bg`): #f8fafc (Slate 50) - Main page background, hero backdrop, cart table.
+- Level 1.5 Soft Section (`--color-bg-soft`): #f1f5f9 (Slate 100) - Header bar, footer container, callout backgrounds.
+- Level 2 Card Surface (`--color-surface`): #ffffff (Pure White) - Product cards, filter sidebars, checkout panels, modals.
+- Level 3 Elevated Surface (`--color-surface-2`): #f8fafc (Slate 50) - Input containers, thumbnail frames, dropdown menus.
+- Level 3.5 Active/Hover Surface (`--color-surface-3`): #e2e8f0 (Slate 200) - Active navigation items, table row hovers.
+
+2.3.5 Precision Border System & Focus Ring Styling
+- Default Structural Border (`--color-border`): #e2e8f0 (Slate 200) - Product cards, inputs, table borders, dividers.
+- Soft Internal Border (`--color-border-soft`): #f1f5f9 (Slate 100) - Sub-table lines, card interior dividers.
+- Hover Border (`--color-border-hover`): #cbd5e1 (Slate 300) - Card hover outline, button hover outline.
+- Focus Ring Border (`--color-border-focus`): #2563eb (Primary Blue) - Input field focus ring (`box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2)`).
+
+2.3.6 Text & Typography Contrast Scale (WCAG AAA/AA Compliant)
+- Primary Text (`--color-text-primary`): #0f172a (Slate 900) - Main headings, product titles, active labels.
+- Secondary Text (`--color-text-secondary`): #475569 (Slate 600) - Subtitles, input labels, breadcrumbs.
+- Muted Text (`--color-text-muted`): #94a3b8 (Slate 400) - Metadata, timestamps, placeholders, footer links.
+- Disabled Text (`--color-text-disabled`): #cbd5e1 (Slate 300) - Inactive controls, disabled buttons.
+
+2.3.7 Semantic Status Colors
+- Success State:
+  * Text & Border: #059669 (text-emerald-700, border-emerald-200)
+  * Background: #ecfdf5 (bg-emerald-50)
+  * Application: In Stock (>5 units), Order Delivered, Active System status.
+- Warning State:
+  * Text & Border: #d97706 (text-amber-700, border-amber-200)
+  * Background: #fffbeb (bg-amber-50)
+  * Application: Low Stock (1–5 units), Pending Orders, Action Required.
+- Danger State:
+  * Text & Border: #dc2626 (text-rose-700, border-rose-200)
+  * Background: #fff1f2 (bg-rose-50)
+  * Application: Out of Stock (0 units), Cancelled Orders, Delete Actions.
+- Info State:
+  * Text & Border: #2563eb (text-blue-700, border-blue-200)
+  * Background: #eff6ff (bg-blue-50)
+  * Application: Technical Spec Badges, Category Tags, System Notes.
+
+2.4 Typography System & Scale
+--------------------------------------------------------------------------------
+Font Families:
+- Primary Sans-serif (`--font-family-sans`): 'Plus Jakarta Sans', Inter, system-ui, -apple-system, sans-serif.
+  Used for all headings, body copy, navigation tabs, form controls, and buttons.
+- Technical Monospace (`--font-family-mono`): 'JetBrains Mono', 'Fira Code', monospace.
+  Used for price tags (e.g. `Rs. 385,000`), SKU codes, Order IDs (`#ETC-89241`), stock counts, RAM/GPU specs, and timestamps.
+
+Font Size Scale:
+- `--text-xs`:   0.75rem  (12px) - Badges, superheaders, table headers, captions
+- `--text-sm`:   0.875rem (14px) - Form labels, secondary body, card descriptions
+- `--text-base`: 1.0rem   (16px) - Standard body copy, primary navigation tabs
+- `--text-lg`:   1.125rem (18px) - Card titles, modal subheaders, section headers
+- `--text-xl`:   1.25rem  (20px) - Section subheaders, shopping cart totals
+- `--text-2xl`:  1.5rem   (24px) - Section titles, feature headlines
+- `--text-3xl`:  1.875rem (30px) - Page main titles
+- `--text-4xl`:  2.25rem  (36px) - Marketing headlines
+- `--text-5xl`:  3.0rem   (48px) - Hero Banner headline ("Built for Performance")
+
+2.5 Spacing Scale, Layout Rhythm & Border Radius Guidelines
+--------------------------------------------------------------------------------
+Modular Spacing Scale:
+- `--space-1`:  0.25rem (4px)  - Micro gap, badge interior padding
+- `--space-2`:  0.5rem  (8px)  - Small button padding, compact spacing
+- `--space-3`:  0.75rem (12px) - Button vertical padding, chip gaps
+- `--space-4`:  1.0rem  (16px) - Standard card interior padding
+- `--space-6`:  1.5rem  (24px) - Section gap, modal padding
+- `--space-8`:  2.0rem  (32px) - Grid column gap, container padding
+- `--space-12`: 3.0rem  (48px) - Major section vertical margin
+- `--space-16`: 4.0rem  (64px) - Large page section separator
+- `--space-20`: 5.0rem  (80px) - Hero section top/bottom padding
+
+Precision Border Radius:
+- `--radius-sm`:  0.25rem (4px)   - Badges, mini tags, code snippets
+- `--radius-md`:  0.375rem (6px)  - Form inputs, select dropdowns, secondary buttons
+- `--radius-lg`:  0.5rem (8px)    - Product cards, category cards, modal windows, sidebars
+- `--radius-xl`:  0.75rem (12px)  - Feature callout banners, hero layered cards
+- `--radius-2xl`: 1.0rem (16px)   - Dynamic full-screen promotional overlays
+- `--radius-full`: 9999px         - Notification badges, avatars, floating FAB button
+
+2.6 Elevation, Shadow Hierarchy & Micro-Glow Effects
+--------------------------------------------------------------------------------
+- `--shadow-sm`: 0 1px 2px 0 rgba(0, 0, 0, 0.05) - Micro elevation for compact chips.
+- `--shadow-md`: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05) - Card default rest state.
+- `--shadow-lg`: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04) - Dropdown menus, sticky sidebars.
+- `--shadow-xl`: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.04) - Modals, chatbot drawer.
+- `--shadow-glow-blue`: 0 0 20px rgba(37, 99, 235, 0.12) - Primary card hover glow.
+- `--shadow-glow-cyan`: 0 0 20px rgba(6, 182, 212, 0.10) - AI Advisor & special promo callout glow.
+
+2.7 Motion, Transitions & Micro-Animations
+--------------------------------------------------------------------------------
+
+2.7.1 Transition Timing Curves
+- `--ease-default`: cubic-bezier(0.4, 0, 0.2, 1)
+- `--ease-bounce`:  cubic-bezier(0.16, 1, 0.3, 1)
+- `--duration-fast`: 150ms (Hover state, color shift)
+- `--duration-normal`: 200ms (Dropdown expand, tab switch)
+- `--duration-slow`: 300ms (Hero carousel slide, modal open)
+
+2.7.2 Keyframe Animations
+1. Pulse Ring (`et-pulse`):
+   Animates surrounding ring on the floating Chatbot FAB and live online indicators.
+   ```css
+   @keyframes et-pulse {
+     0%, 100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.35); }
+     50% { box-shadow: 0 0 0 8px rgba(37, 99, 235, 0); }
+   }
+   ```
+2. Chatbot Typing Indicator (`et-dot`):
+   ```css
+   @keyframes et-dot {
+     0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+     40% { transform: scale(1); opacity: 1; }
+   }
+   ```
+3. Sliding Active Tab Underline Indicator:
+   Smooth 2.5px royal blue underline sliding horizontally under active navigation links (`.nav-tab-btn.active`).
+
+2.7.3 Hero Section 3D Layered Carousel Mechanics
+The dynamic 3-card 3D product carousel presents hardware in an overlapping depth view:
+- Left Card (`.card-3d-left`): `transform: translate3d(-20%, 0, 0) scale(0.88); opacity: 0.55; z-index: 10;`
+- Center Card (`.card-3d-center`): `transform: translate3d(0, 0, 0) scale(1); opacity: 1; z-index: 30; box-shadow: 0 16px 36px rgba(0,0,0,0.12);`
+- Right Card (`.card-3d-right`): `transform: translate3d(20%, 0, 0) scale(0.88); opacity: 0.55; z-index: 10;`
+- Hover State: Center card lifts (`translate3d(0, -3px, 0) scale(1.01)`) with soft blue ambient glow.
+- Auto-play: Rotates automatically every 3.5 seconds; pauses on mouse enter; supports touch swipe gestures.
+
+
+================================================================================
+3. COMPONENT & STOREFRONT LOGIC
+================================================================================
+
+3.1 Dynamic Header Navigation & Mobile Drawer (Auth UI Sync)
+--------------------------------------------------------------------------------
+Function: `updateHeaderAuthUI()` (in `src/js/app/app.js`)
+- Checks `getCurrentUser()`.
+- Unauthenticated User: Displays "Sign In" button leading to `#login`.
+- Authenticated Customer: Displays user avatar pill (user's first initial, e.g. "H") and first name linked to `#account`.
+- Authenticated Admin/Staff: Adds a quick "Admin Console" link to `#admin` in both desktop header and mobile drawer.
+
+3.2 Hero Section & 3D Layered New Arrivals Product Carousel Engine
+--------------------------------------------------------------------------------
+Function: `renderHomeNewArrivalsCarousel()` (in `src/js/app/app.js`)
+- Pulls product array via `getNewArrivalProducts()` (products with `badge === 'New Arrival'` or newly added flag).
+- Renders prev, current, and next cards in 3D depth stacked view.
+- Provides interactive navigation arrows, numeric indicator (`current / total`), touch swipe listeners, and timer control (`startHeroCarouselAutoPlay()`, `pauseHeroCarousel()`).
+
+3.3 Catalog Shop Logic & Multi-Parametric Filter System
+--------------------------------------------------------------------------------
+Module: `src/js/controller/shop_controller.js`
+Logic Flow:
+1. State Management: Tracks search keyword, selected category filters (set/array), selected brand, price range filter (min/max), sorting option, and current pagination page.
+2. Multi-Parametric Filter Chain (`getFilteredProducts()`):
+   - Step 1: Category Filter - Matches product category against selected category tags.
+   - Step 2: Search Filter - Performs case-insensitive matching on product name, description, category, and technical specs.
+   - Step 3: Brand Filter - Filters products matching selected brand.
+   - Step 4: Price Range Filter - Enforces min & max price bounds.
+   - Step 5: Sorting:
+     * `featured`: Default priority ordering.
+     * `price-low`: Ascending price order.
+     * `price-high`: Descending price order.
+     * `newest`: Sorted by product ID / creation timestamp descending.
+     * `rating`: Sorted by customer review rating average.
+3. Pagination: Calculates total pages (`Math.ceil(total / itemsPerPage)`) and slices result array for current page view.
+
+3.4 Product Details View, Image Gallery & Rating System
+--------------------------------------------------------------------------------
+Module: `src/js/controller/product-details_controller.js` & `src/js/models/rating_data.js`
+Features:
+- Dynamic 5-Image Gallery: Primary large preview image with 4 interactive thumbnail selectors (`changeMainImage(url)`).
+- Stock Availability Badge: Dynamic calculation based on total warehouse stock across Colombo, Kandy, Galle, and Matara.
+- Key Specifications Table: Renders dynamic key-value pairs (Processor, RAM, VRAM, Chipset, Socket, Power Draw).
+- Customer Review & Star Rating:
+  * Computes weighted average rating (1.0 to 5.0 stars).
+  * Enforces verified buyer review submission (`submitProductReview()`).
+  * Displays star breakdown bars (5-star down to 1-star counts).
+
+3.5 Cart Logic & Checkout Engine
+--------------------------------------------------------------------------------
+Module: `src/js/controller/cart_controller.js`
+Logic Flow:
+1. `addToCart(productId, quantity)`:
+   - Fetches product details.
+   - Checks stock availability.
+   - Adds item to `localStorage` key `etech_cart` or updates quantity if item exists.
+   - Dispatches `cartUpdated` event and updates header cart badge counter (`updateCartBadge()`).
+2. Cart Operations: `updateItemQuantity(productId, newQty)`, `removeItemFromCart(productId)`.
+3. Financial Calculations:
+   - Subtotal = Sum of `(item.price * item.quantity)`.
+   - Tax = Subtotal * 0.00 (or configured tax rate).
+   - Shipping Fee = Calculated dynamically based on shipping city distance from fulfillment branch.
+   - Order Total = Subtotal + Shipping Fee.
+
+3.6 Branch Selection & Shipping Fee Calculation Algorithm
+--------------------------------------------------------------------------------
+Module: `src/js/controller/branch_controller.js`
+Features:
+- Branch Network: Colombo HQ, Kandy Branch, Galle Branch, Matara Branch.
+- Geographic Coordinates & Distance Matrix:
+  Computes approximate distance in kilometers between customer delivery city and nearest branch.
+- Shipping Fee Matrix:
+  * Standard Delivery (< 15 km): Rs. 350
+  * Regional Delivery (15 – 50 km): Rs. 750
+  * Express Long-Distance (> 50 km): Rs. 1,250 + Rs. 15/km excess.
+- Automated Fulfillment Branch Selection Algorithm (`autoSelectFulfillmentBranch(deliveryCity, orderItems)`):
+  Iterates through branches to locate the nearest branch that has full stock available for all items in the cart.
+
+3.7 User Authentication, Access Control & Roles
+--------------------------------------------------------------------------------
+Module: `src/js/controller/login_controller.js`
+Roles & Permissions Matrix:
+- `ADMIN`: Full access to storefront, product management, order updates, stock health restock/transfers, branch configuration, user management, analytics, taxonomy rules, and policy editing.
+- `STAFF`: Access to storefront, product creation/editing, order status management, and stock monitoring. Restricted from deleting users or altering taxonomy rules.
+- `CUSTOMER`: Access to storefront, shop catalog, cart, checkout, customer account portal, review submission, and order history tracking.
+
+3.8 Customer Account Portal & Order History Tracking
+--------------------------------------------------------------------------------
+Function: `initAccountLogic()`, `renderUserOrderHistory()` (in `app.js`)
+- Displays profile card (Avatar initial, Name, Username, Email, User ID, Registration date, Role).
+- Renders customer order history cards with order ID (`#ETC-XXXXXX`), order status badge, date, total amount, dispatch hub, destination city, items grid, and payment verification badge.
+
+
+================================================================================
+4. ADMIN & MANAGEMENT CONSOLE LOGIC
+================================================================================
+
+4.1 Admin Console Architecture & Responsive Collapsible Sidebar
+--------------------------------------------------------------------------------
+Module: `src/js/controller/admin_dashboard_controller.js` & `src/js/app/administrator/administrator.js`
+Features:
+- Full-Screen Desktop Shell: Hides storefront header/footer/chatbot.
+- Responsive Collapsible Sidebar:
+  * Expanded Mode (`.sidebar-force-expanded`): 256px (`16rem`) displaying icons and text labels.
+  * Collapsed Mode (`.sidebar-force-collapsed`): 72px (`4.5rem`) displaying icons only with floating tooltips.
+- Tab Router (`switchAdminTab(tabId)`):
+  Supported Tabs: `#dashboard-overview`, `#products-tab`, `#orders-tab`, `#stock-health-tab`, `#branches-tab`, `#users-tab`, `#taxonomy-tab`, `#analytics-tab`, `#policies-tab`.
+
+4.2 Product Management Module
+--------------------------------------------------------------------------------
+Module: `src/js/controller/product_management_controller.js`
+Capabilities:
+- Product Table View: Search, filter by category, sort by stock/price, edit product, delete product.
+- Product Form Editor:
+  * Dynamic 5-Image Gallery Builder: Add/remove image URL fields with real-time thumbnail preview.
+  * Technical Specification Key-Value Builder: Dynamic fields for spec key and spec value (e.g. `VRAM`: `16GB GDDR6X`).
+  * Feature Highlights Bullet Builder: Add/remove feature bullet points.
+  * Regional Warehouse Stock Allocator: Input stock quantities for Colombo, Kandy, Galle, and Matara warehouses.
+  * Live Preview Modal: Preview how the product card will appear on the storefront before saving.
+
+4.3 Order Management Module & Order Lifecycle Tracking
+--------------------------------------------------------------------------------
+Module: `src/js/controller/order_management_controller.js`
+Lifecycle Workflow:
+1. `PENDING`: Order placed by customer; pending fulfillment verification.
+2. `PROCESSING`: Items allocated in warehouse; packaging for courier dispatch.
+3. `SHIPPED`: Order handed to courier with tracking number.
+4. `DELIVERED`: Order confirmed delivered to customer.
+5. `CANCELLED`: Order cancelled; warehouse stock restored automatically.
+
+4.4 Stock Health & Inventory Alert Monitor
+--------------------------------------------------------------------------------
+Module: `src/js/controller/stock_health_controller.js`
+Functionality:
+- Multi-Branch Inventory Matrix: Displays branch breakdown (Colombo, Kandy, Galle, Matara) and total stock.
+- Automated Alert Triggers:
+  * Out of Stock Alert (Total stock = 0): Danger badge (`bg-rose-50`).
+  * Low Stock Alert (Total stock <= reorder margin): Warning badge (`bg-amber-50`).
+  * Optimal Stock (Total stock > reorder margin): Success badge (`bg-emerald-50`).
+- Restock Modal Algorithm (`handleQuickRestockSubmit()`):
+  Allows direct stock additions to specific warehouse locations.
+- Inter-Branch Stock Transfer Algorithm (`handleStockTransferSubmit()`):
+  Transfers inventory from a source branch (e.g., Colombo HQ) to a destination branch (e.g., Kandy Branch), verifying stock sufficiency before execution.
+
+4.5 Branch Management Module
+--------------------------------------------------------------------------------
+Module: `src/js/controller/branch_management_controller.js`
+- Manages branch profile, contact phone, manager name, address, coordinates, delivery radius, and operating hours.
+
+4.6 User Account Management Module
+--------------------------------------------------------------------------------
+Module: `src/js/controller/user_management_controller.js`
+- Displays registered users table, changes roles (`ADMIN`, `STAFF`, `CUSTOMER`), suspends/activates accounts, or removes users.
+
+4.7 Taxonomy, Automated Badge System & Product Behavior Analytics
+--------------------------------------------------------------------------------
+Module: `src/js/controller/taxonomy_controller.js` & `src/js/models/taxonomy_data.js`
+Features:
+- Category Management: Create, edit, delete product categories with slug, icon, and parent relationship.
+- Automated Product Badge Engine (`runAutoBadgeAssignment()`):
+  Automatically assigns badges (`Best Seller`, `Trending`, `Hot Deal`, `Low Stock`) based on metric thresholds:
+  * `Best Seller`: Total units sold >= threshold (e.g. 50 units).
+  * `Trending`: View count within 7 days >= threshold.
+  * `Hot Deal`: Discount percentage >= 15%.
+  * `Low Stock`: Stock between 1 and 5.
+
+4.8 Corporate Profile & Legal Policy Management Engine
+--------------------------------------------------------------------------------
+Module: `src/js/controller/policy_management_controller.js` & `src/js/models/policy-data.js`
+- WYSIWYG section builder for Privacy Policy, Terms of Service, Warranty Guarantee, and Refund Policy.
+- Editable corporate contact info (Hotline, Email, Tax Registration Number, HQ Address).
+
+4.9 E-T AI Technical Advisor Chatbot Engine
+--------------------------------------------------------------------------------
+Module: `src/js/controller/chatbot_controller.js` & `src/js/models/et-training.js`
+Features:
+- Gemini API Integration: Connects to Google Gemini API for hardware advice and PC building recommendations.
+- Context Training System (`ET_CONFIG`): Embedded system prompt training the AI as an expert hardware consultant for ETech Computers.
+- Local Intelligent Fallback Engine: Provides instant responses for stock availability, store hours, shipping rates, and warranty policies when offline.
+- Quick Suggestion Chips: Preset query buttons (e.g., "Build Gaming PC under 300k", "Check RTX 4080 Stock").
+
+
+================================================================================
+5. DATA MODELS & LOCAL STORAGE SCHEMAS
+================================================================================
+
+5.1 Product Schema (`etech_products`)
+--------------------------------------------------------------------------------
+```json
+[
+  {
+    "id": 1,
+    "name": "NVIDIA GeForce RTX 4080 Super 16GB",
+    "category": "Graphics Cards",
+    "brand": "NVIDIA",
+    "price": 385000,
+    "originalPrice": 420000,
+    "stock": 14,
+    "branchStock": {
+      "colombo": 8,
+      "kandy": 3,
+      "galle": 2,
+      "matara": 1
+    },
+    "reorderMargin": 5,
+    "alertsEnabled": true,
+    "badge": "Top Seller",
+    "image": "public/images/products/rtx4080.jpg",
+    "images": [
+      "public/images/products/rtx4080_1.jpg",
+      "public/images/products/rtx4080_2.jpg"
+    ],
+    "description": "Ada Lovelace architecture with DLSS 3 & full ray-tracing support.",
+    "specs": {
+      "CUDA Cores": "10240",
+      "VRAM": "16GB GDDR6X",
+      "Memory Bus": "256-bit",
+      "Recommended PSU": "750W"
+    },
+    "features": [
+      "3rd Gen RT Cores",
+      "4th Gen Tensor Cores",
+      "NVIDIA Reflex Low Latency"
+    ],
+    "warranty": "3 Years Official Warranty",
+    "createdAt": "2026-01-15T08:00:00.000Z"
+  }
+]
+```
+
+5.2 User Schema (`etech_users`, `etech_current_user`)
+--------------------------------------------------------------------------------
+```json
+[
+  {
+    "id": "USR-1001",
+    "name": "Hasitha Admin",
+    "username": "hasitha",
+    "email": "admin@etech.com",
+    "password": "hashed_or_plain_password",
+    "role": "ADMIN",
+    "createdAt": "2026-01-01"
+  }
+]
+```
+
+5.3 Cart Schema (`etech_cart`)
+--------------------------------------------------------------------------------
+```json
+[
+  {
+    "id": 1,
+    "name": "NVIDIA GeForce RTX 4080 Super 16GB",
+    "price": 385000,
+    "image": "public/images/products/rtx4080.jpg",
+    "quantity": 1,
+    "category": "Graphics Cards"
+  }
+]
+```
+
+5.4 Order Schema (`etech_orders`)
+--------------------------------------------------------------------------------
+```json
+[
+  {
+    "orderId": "ETC-892410",
+    "date": "2026-08-20 14:30",
+    "customerName": "John Doe",
+    "customerEmail": "john@example.com",
+    "phone": "+94771234567",
+    "address": "123 Galle Road",
+    "city": "Colombo",
+    "fulfillmentBranch": "Colombo HQ",
+    "distanceKm": 4.5,
+    "items": [
+      {
+        "id": 1,
+        "name": "NVIDIA GeForce RTX 4080 Super 16GB",
+        "price": 385000,
+        "quantity": 1,
+        "image": "public/images/products/rtx4080.jpg"
+      }
+    ],
+    "subtotal": 385000,
+    "shippingFee": 350,
+    "totalAmount": 385350,
+    "paymentMethod": "Cash on Delivery",
+    "status": "Processing"
+  }
+]
+```
+
+5.5 Branch Schema (`etech_branches`)
+--------------------------------------------------------------------------------
+```json
+[
+  {
+    "id": "colombo",
+    "name": "Colombo HQ Hub",
+    "city": "Colombo",
+    "address": "No. 450, R. A. De Mel Mawatha, Colombo 03",
+    "phone": "+94 11 255 8800",
+    "manager": "Kamal Perera",
+    "coordinates": { "lat": 6.9012, "lng": 79.8541 },
+    "coverageRadiusKm": 35
+  }
+]
+```
+
+
+================================================================================
+6. BACKEND API MIGRATION ROADMAP (SPRING BOOT + MYSQL)
+================================================================================
+
+6.1 Target Database Relational Schema Overview (DDL)
+--------------------------------------------------------------------------------
+To migrate from `localStorage` to a Spring Boot REST API:
+
+1. `users` Table: `id` (BIGINT PK), `name`, `username`, `email`, `password_hash`, `role` (ENUM: ADMIN, STAFF, CUSTOMER), `created_at`.
+2. `categories` Table: `id` (BIGINT PK), `name`, `slug`, `icon`, `parent_id` (FK).
+3. `products` Table: `id` (BIGINT PK), `name`, `category_id` (FK), `brand`, `price` (DECIMAL), `original_price`, `reorder_margin`, `badge`, `main_image_url`, `description`, `warranty`, `created_at`.
+4. `product_images` Table: `id` (BIGINT PK), `product_id` (FK), `image_url`, `display_order`.
+5. `product_specs` Table: `id` (BIGINT PK), `product_id` (FK), `spec_key`, `spec_value`.
+6. `branches` Table: `id` (VARCHAR PK), `name`, `city`, `address`, `phone`, `manager`, `latitude`, `longitude`.
+7. `branch_inventory` Table: `id` (BIGINT PK), `branch_id` (FK), `product_id` (FK), `stock_quantity`.
+8. `orders` Table: `order_id` (VARCHAR PK), `user_id` (FK), `customer_name`, `email`, `phone`, `address`, `city`, `fulfillment_branch_id` (FK), `subtotal`, `shipping_fee`, `total_amount`, `payment_method`, `status`, `created_at`.
+9. `order_items` Table: `id` (BIGINT PK), `order_id` (FK), `product_id` (FK), `unit_price`, `quantity`.
+
+6.2 Spring Boot REST API Endpoint Specifications
+--------------------------------------------------------------------------------
+- Product Endpoints:
+  * `GET /api/v1/products` - Returns paginated, filtered hardware catalog.
+  * `GET /api/v1/products/{id}` - Returns complete product details with images & specs.
+  * `POST /api/v1/products` - Creates new product (Admin/Staff).
+  * `PUT /api/v1/products/{id}` - Updates product specs and inventory (Admin/Staff).
+  * `DELETE /api/v1/products/{id}` - Removes product (Admin).
+- Inventory & Stock Endpoints:
+  * `GET /api/v1/inventory/stock-health` - Stock alert status across all branches.
+  * `POST /api/v1/inventory/restock` - Adds stock to branch inventory.
+  * `POST /api/v1/inventory/transfer` - Inter-branch stock transfer.
+- Order Endpoints:
+  * `POST /api/v1/orders` - Places order, calculates branch allocation & shipping fee.
+  * `GET /api/v1/orders/my-orders` - Fetches authenticated user's order history.
+  * `GET /api/v1/orders` - Fetches all customer orders (Admin/Staff).
+  * `PATCH /api/v1/orders/{orderId}/status` - Updates order state (PENDING -> PROCESSING -> SHIPPED -> DELIVERED).
+- Auth Endpoints:
+  * `POST /api/v1/auth/login` - Authenticates user & returns JWT token.
+  * `POST /api/v1/auth/register` - Registers new customer account.
+
+6.3 Client Migration Checklist & Logic Separation
+--------------------------------------------------------------------------------
+1. Replace `localStorage.setItem()` calls in controllers with `fetch()` / `axios` REST API calls.
+2. Store JWT authentication token in `localStorage` or HttpOnly cookie.
+3. Remove client-side distance matrix & stock reduction logic from `cart_controller.js`, deferring calculation to Spring Boot order placement service.
+
+
+================================================================================
+7. COMPLETE FILE & DIRECTORY MAP
+================================================================================
+
+```
+root/
+├── index.html                                  Main SPA HTML Document & Tailwind Config
+├── script.js                                   Central ES Module Bridge (Window Bindings)
+├── README.md                                   Overview & Quick Start Guide
+├── THEME_AND_STYLING_GUIDE.md                  Design Tokens & UI Component Specifications
+├── BACKEND_API_MIGRATION.md                    Spring Boot REST API & MySQL DDL Guide
+├── PROJECT_DOCUMENTATION.txt                   Comprehensive Project Architecture Document
+│
+├── public/                                     Static Assets
+│   ├── fonts/                                  Local Font Preloads
+│   └── images/                                 Product Imagery, Hero Setup, Icons
+│
+└── src/
+    ├── css/
+    │   ├── variables.css                       Design System Tokens (Colors, Typography, Radius)
+    │   └── global.css                          Base Resets, Keyframe Animations, Scrollbar
+    │
+    ├── data/
+    │   └── products.json                       Placeholder Data Seed
+    │
+    ├── pages/
+    │   └── chatbot.html                        Standalone Chatbot View
+    │
+    └── js/
+        ├── app.js                              SPA Hash Router & Global Header Hooks
+        │
+        ├── app/
+        │   ├── about/
+        │   │   └── about.js                    About Us Page Renderer
+        │   ├── administrator/
+        │   │   └── administrator.js            Admin Dashboard Page Shell Renderer
+        │   └── login/
+        │       └── login.js                    Authentication Page Renderer
+        │
+        ├── components/
+        │   └── product_detail_cart.js          Product Details Component Builder
+        │
+        ├── controller/
+        │   ├── admin_dashboard_controller.js   Admin Shell Navigation & Sidebar Handler
+        │   ├── analytics_and_report_controller.js Analytics Tab Data Summarizer
+        │   ├── branch_controller.js            Branch Network & Shipping Fee Calculator
+        │   ├── branch_management_controller.js Admin Branch CRUD Management
+        │   ├── cart_controller.js              Cart Engine & Checkout Pipeline
+        │   ├── chatbot_controller.js           Gemini AI Chatbot Engine & Fallback Logic
+        │   ├── login_controller.js             Auth Controller (Login/Signup/Roles)
+        │   ├── order_management_controller.js  Admin Order Processing Lifecycle
+        │   ├── policy_management_controller.js Legal Policy Editor & Corporate Profile
+        │   ├── product-details_controller.js   Product Details & Reviews Renderer
+        │   ├── product_management_controller.js Admin Product CRUD & Live Preview
+        │   ├── shop_controller.js              Catalog Filter, Search & Pagination Engine
+        │   ├── stock_health_controller.js      Stock Alert Center & Branch Transfers
+        │   ├── taxonomy_controller.js          Taxonomy Rules & Auto-Badge Engine
+        │   └── user_management_controller.js   Admin User Access & Role Controller
+        │
+        └── models/
+            ├── data.js                         Product Mock Model & LocalStorage Data Engine
+            ├── et-training.js                  Gemini AI Chatbot Context Prompt System
+            ├── policy-data.js                  Legal Policies & Corporate Profile Model
+            ├── product_model.js                Product Data Structures & Schema Helper
+            ├── rating_data.js                  Ratings & Reviews Data Model
+            └── taxonomy_data.js                Categories, Badges & Behavior Analytics Model
+```
+
+================================================================================
+END OF DOCUMENTATION FILE
+================================================================================

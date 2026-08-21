@@ -5,62 +5,88 @@
 export const products = [
     {
         id: 1,
-        name: "Apex Raider Pro RTX 4090 Gaming Laptop",
-        category: "laptops",
-        price: 2499,
-        originalPrice: 2799,
+        name: "ASUS GeForce RTX 4070 Super 12GB GDDR6X",
+        brand: "ASUS GeForce",
+        category: "components",
+        price: 289999,
+        originalPrice: 310000,
         rating: 4.9,
-        reviews: 128,
-        image: "https://images.unsplash.com/photo-1603302576837-37561b2e2302?auto=format&fit=crop&w=600&q=80",
-        description: "Intel Core i9-14900HX, 32GB DDR5 RAM, 2TB PCIe Gen4 SSD, NVIDIA RTX 4090 16GB, 16\" QHD+ 240Hz mini-LED Display.",
-        fullDescription: "The Apex Raider Pro is engineered for competitive gamers and creative professionals demanding uncompromised Desktop-class performance on the go. Powered by Intel's flagship Core i9 14th Gen processor and NVIDIA GeForce RTX 4090 graphics with 175W Max TGP. Featuring a breathtaking 240Hz Mini-LED display with 100% DCI-P3 color accuracy and liquid metal vapor chamber cooling.",
+        reviews: 142,
+        image: "https://images.unsplash.com/photo-1591488320449-011701bb6704?auto=format&fit=crop&w=600&q=80",
+        description: "12GB GDDR6X, DLSS 3.5 AI Frame Generation, 3rd Gen Ray Tracing Cores & Axial-tech Fan Thermal System.",
+        fullDescription: "Built for insane 1440p and 4K gaming performance. The ASUS GeForce RTX 4070 Super 12GB GDDR6X features military-grade capacitors, dual ball fan bearings, and auto-extreme automated manufacturing for rock-solid stability.",
         inStock: true,
-        badge: "Bestseller",
-        sku: "ETC-LAP-4090X",
-        warranty: "2-Year Comprehensive Hardware & On-Site Support",
+        badge: "New Arrival",
+        sku: "ETC-GPU-4070S",
+        warranty: "3-Year Official Manufacturer Warranty",
         specs: {
-            "Processor": "Intel Core i9-14900HX (24 Cores, up to 5.8GHz)",
-            "Graphics": "NVIDIA GeForce RTX 4090 16GB GDDR6 (175W TGP)",
-            "RAM": "32GB DDR5 5600MHz Dual-Channel",
-            "Storage": "2TB M.2 PCIe Gen4 NVMe SSD",
-            "Display": "16\" QHD+ (2560x1600) 240Hz Mini-LED 1100-nits",
-            "Weight & OS": "2.4 kg | Windows 11 Pro 64-bit"
+            "CUDA Cores": "7168 CUDA Cores",
+            "VRAM": "12GB GDDR6X (192-bit)",
+            "Boost Clock": "2505 MHz (OC Mode: 2535 MHz)",
+            "Power Connectors": "1x 16-pin (12VHPWR)",
+            "Recommended PSU": "750W Gold Certified"
         },
         features: [
-            "Advanced Liquid Metal Vapor Chamber Thermal Cooling System",
-            "Per-Key RGB Mechanical Keyboard powered by SteelSeries",
-            "Thunderbolt 4, Wi-Fi 7, HDMI 2.1, 2.5Gb Ethernet connectivity",
-            "99.9Wh Ultra-High Capacity Battery with 330W Fast Charging"
+            "NVIDIA DLSS 3.5 & Reflex Low Latency Technology",
+            "Auto-Extreme Precision Automated Manufacturing Process",
+            "Dual Ball Fan Bearings lasting up to 2x longer",
+            "Protective Backplate with Wide Vented Air Flow Design"
         ]
     },
     {
         id: 2,
-        name: "CyberBlade RGB Mechanical Keyboard",
-        category: "peripherals",
-        price: 129,
-        originalPrice: 159,
-        rating: 4.8,
-        reviews: 94,
-        image: "https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=600&q=80",
-        description: "Hot-swappable tactile switches, aircraft-grade aluminum frame, per-key RGB backlighting & detachable USB-C braided cable.",
-        fullDescription: "Crafted for speed and durability, the CyberBlade Mechanical Keyboard features custom hot-swappable tactile switches, pre-lubed stabilizers, and sound-absorbing foam layers. Housed in a solid CNC anodized aluminum chassis with vibrant dynamic per-key RGB lighting and custom macro programming support.",
+        name: "ROG Strix G16 (2024) Gaming Laptop",
+        brand: "ASUS ROG",
+        category: "laptops",
+        price: 529999,
+        originalPrice: 579999,
+        rating: 4.9,
+        reviews: 98,
+        image: "https://images.unsplash.com/photo-1603302576837-37561b2e2302?auto=format&fit=crop&w=600&q=80",
+        description: "Intel Core i9-14900HX, NVIDIA RTX 4070 8GB, 32GB DDR5 RAM, 1TB Gen4 SSD, 16\" QHD+ 240Hz Nebula Display.",
+        fullDescription: "Draw more frames and win more games with the 2024 ROG Strix G16. Powered by an Intel Core i9 processor 14900HX and NVIDIA GeForce RTX 4070 Laptop GPU, paired with Conductonaut Extreme liquid metal for ultra-cool operation.",
         inStock: true,
-        badge: "Popular",
-        sku: "ETC-KB-CYBER80",
-        warranty: "1-Year Advance Replacement Guarantee",
+        badge: "New Arrival",
+        sku: "ETC-LAP-ROGG16",
+        warranty: "2-Year Comprehensive Hardware Warranty",
         specs: {
-            "Switch Type": "Hot-Swappable Tactile Mechanical Switches (50M Clicks)",
-            "Frame": "Aircraft-Grade CNC Anodized Aluminum Top Plate",
-            "Keycaps": "Double-Shot PBT Shine-Through Keycaps",
-            "Connectivity": "Detachable Braided USB-C / 2.4GHz Wireless",
-            "Polling Rate": "1000Hz Ultra-Low Latency Response",
-            "Lighting": "Per-Key RGB with 18 Preset Lighting Modes"
+            "Processor": "Intel Core i9-14900HX (24 Cores, 32 Threads)",
+            "Graphics": "NVIDIA GeForce RTX 4070 8GB GDDR6 (140W TGP)",
+            "Display": "16\" QHD+ (2560x1600) 240Hz 3ms ROG Nebula",
+            "Memory & Storage": "32GB DDR5 5600MHz | 1TB PCIe 4.0 NVMe SSD"
         },
         features: [
-            "Hot-Swappable PCB compatible with 3-pin & 5-pin MX switches",
-            "Dual-Layer Poron dampening foam for acoustic typing sound",
-            "Dedicated CNC Aluminum Volume Knob & Media Controls",
-            "Onboard memory profiles for custom macros and lighting"
+            "ROG Intelligent Cooling with Tri-Fan Tech & Liquid Metal",
+            "Per-Key RGB Keyboard powered by Aura Sync",
+            "Dolby Vision HDR & Dolby Atmos Spatial Audio"
+        ]
+    },
+    {
+        id: 3,
+        name: "Intel Core i9-14900K Flagship Processor",
+        brand: "Intel Core",
+        category: "components",
+        price: 159999,
+        originalPrice: 174999,
+        rating: 4.8,
+        reviews: 185,
+        image: "https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?auto=format&fit=crop&w=600&q=80",
+        description: "24 Cores (8 P-cores + 16 E-cores), 32 Threads, up to 6.0 GHz Max Turbo Frequency, PCIe 5.0 & DDR5 Support.",
+        fullDescription: "Empower your rig with Intel's ultimate 14th Gen Desktop Processor. Featuring Thermal Velocity Boost up to 6.0GHz, 36MB Intel Smart Cache, and support for LGA1700 motherboards.",
+        inStock: true,
+        badge: "New Arrival",
+        sku: "ETC-CPU-14900K",
+        warranty: "3-Year Official Intel Warranty",
+        specs: {
+            "Cores / Threads": "24 Cores (8P + 16E) / 32 Threads",
+            "Max Frequency": "6.0 GHz Thermal Velocity Boost",
+            "Cache": "36MB L3 Cache + 32MB L2 Cache",
+            "Socket": "LGA1700 (Intel 600 & 700 Series Chipsets)"
+        },
+        features: [
+            "Intel Application Optimization (APO) for enhanced gaming FPS",
+            "PCIe 5.0 Express Lanes & Dual Channel DDR5 5600MHz Memory",
+            "Unlocked multiplier for extreme enthusiast overclocking"
         ]
     },
     {
@@ -387,9 +413,10 @@ const PRODUCTS_STORAGE_KEY = 'etech_products';
  */
 export function getStoredProducts() {
     const raw = localStorage.getItem(PRODUCTS_STORAGE_KEY);
+    let list = [];
     if (!raw) {
         // Hydrate default products with branch stock
-        const seeded = products.map(p => {
+        list = products.map(p => {
             const stockMap = DEFAULT_BRANCH_ALLOCATION[p.id] || { "BR-COL": 10, "BR-GAL": 5, "BR-MAT": 3, "BR-KND": 4 };
             const totalStock = Object.values(stockMap).reduce((a, b) => a + b, 0);
             return {
@@ -397,16 +424,34 @@ export function getStoredProducts() {
                 branchStock: stockMap,
                 totalStock: totalStock,
                 inStock: totalStock > 0,
+                discount: p.originalPrice ? Math.round(((p.originalPrice - p.price) / p.originalPrice) * 100) : 0,
                 alertEnabled: p.alertEnabled !== undefined ? p.alertEnabled : true,
                 lowStockMargin: p.lowStockMargin !== undefined ? parseInt(p.lowStockMargin) : 5
             };
         });
-        localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(seeded));
-        return seeded;
+        localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(list));
+    } else {
+        try {
+            list = JSON.parse(raw);
+        } catch (e) {
+            list = products;
+        }
     }
-    const parsed = JSON.parse(raw);
+
+    // Always ensure items 1, 2, 3 have updated hero product metadata matching reference design
+    [0, 1, 2].forEach(i => {
+        if (products[i] && list[i]) {
+            list[i].name = products[i].name;
+            list[i].category = products[i].category;
+            list[i].price = products[i].price;
+            list[i].originalPrice = products[i].originalPrice;
+            list[i].badge = products[i].badge;
+            list[i].image = products[i].image;
+        }
+    });
+
     // Ensure all items have alertEnabled and lowStockMargin properties
-    return parsed.map(p => ({
+    return list.map(p => ({
         ...p,
         alertEnabled: p.alertEnabled !== undefined ? p.alertEnabled : true,
         lowStockMargin: p.lowStockMargin !== undefined ? parseInt(p.lowStockMargin) : 5

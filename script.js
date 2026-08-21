@@ -43,7 +43,7 @@ import {
     initShopLogic, renderFilteredProducts, 
     addCategoryFilter, removeCategoryFilter, clearCategoryFilters, getSelectedCategories 
 } from './src/js/controller/shop_controller.js';
-import { handleLogout, updateHeaderAuthUI } from './src/js/app/app.js';
+import { handleLogout, updateHeaderAuthUI, renderHomeNewArrivalsGrid } from './src/js/app/app.js';
 import { renderLoginPage, initLoginPage } from './src/js/app/login/login.js';
 import { renderAdminPage, initAdminPage } from './src/js/app/administrator/administrator.js';
 import { renderAboutPage } from './src/js/app/about/about.js';
@@ -138,7 +138,7 @@ Object.assign(window, {
 
     // Authentication & User Profile Management
     getUsers, registerUser, loginUser, setCurrentUser,
-    getCurrentUser, isLoggedIn, logoutUser, handleLogout, updateHeaderAuthUI,
+    getCurrentUser, isLoggedIn, logoutUser, handleLogout, updateHeaderAuthUI, renderHomeNewArrivalsGrid,
     switchTab, togglePasswordVisibility, showAlert, handleLoginSubmit, handleSignupSubmit,
     updateUserProfile, changeUserPassword, openEditProfileModal, closeEditProfileModal,
     switchProfileModalTab, toggleModalPasswordVisibility, handleSaveProfileDetailsSubmit,

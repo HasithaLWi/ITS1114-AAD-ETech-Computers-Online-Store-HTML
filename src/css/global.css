@@ -5,7 +5,9 @@
    ============================================================ */
 
 /* ── Base Reset & Scroll Behavior ───────────────────────────── */
-*, *::before, *::after {
+*,
+*::before,
+*::after {
     box-sizing: border-box;
 }
 
@@ -53,9 +55,12 @@ textarea:focus {
 
 /* ── Pulse Animation for Status Indicators ──────────────────── */
 @keyframes et-pulse {
-    0%, 100% {
+
+    0%,
+    100% {
         box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.4);
     }
+
     50% {
         box-shadow: 0 0 0 8px rgba(37, 99, 235, 0);
     }
@@ -69,7 +74,8 @@ textarea:focus {
     justify-content: center;
     height: 100%;
     padding: 0 14px;
-    font-size: 0.9375rem; /* 15px */
+    font-size: 0.9375rem;
+    /* 15px */
     font-weight: 500;
     color: #475569;
     text-decoration: none;
@@ -116,10 +122,14 @@ textarea:focus {
 }
 
 @keyframes et-dot {
-    0%, 80%, 100% {
+
+    0%,
+    80%,
+    100% {
         transform: scale(0.6);
         opacity: 0.4;
     }
+
     40% {
         transform: scale(1);
         opacity: 1;
@@ -193,67 +203,101 @@ textarea:focus {
     }
 }
 
-/* ── Hero 3-Card Layered Carousel (Clean Light Look) ──────────── */
+/* ── Hero 3D Card Deck Mockup (Cascading Deck Stack) ──────────── */
 .hero-carousel-container-3d {
     position: relative;
+    perspective: 1200px;
+    transform-style: preserve-3d;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 }
 
-.card-3d {
-    transition: transform 0.4s var(--ease-default), opacity 0.4s var(--ease-default), z-index 0.4s ease, box-shadow 0.4s ease;
-    will-change: transform, opacity;
+.card-3d-deck-item {
+    transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    will-change: transform, left, opacity, z-index, box-shadow;
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
 }
 
-.card-3d-left {
-    transform: translate3d(-20%, 0, 0) scale(0.88);
-    opacity: 0.65;
-    z-index: 10;
+/* Front Card (Slot 0 - Active Focus) */
+.card-deck-slot-0 {
+
+    transform: translate3d(-200px, 0, 0) scale(1) rotateY(0deg);
+    opacity: 1 !important;
+    z-index: 30 !important;
+    box-shadow: 0 20px 40px -10px rgba(37, 99, 235, 0.18), 0 10px 20px -5px rgba(15, 23, 42, 0.08);
 }
 
-.card-3d-left:hover {
-    opacity: 0.85;
-    transform: translate3d(-20%, 0, 0) scale(0.90);
+.card-deck-slot-0:hover {
+    transform: translate3d(-200px, -6px, 0px) scale(1.02);
+    box-shadow: 0 25px 50px -10px rgba(37, 99, 235, 0.24), 0 15px 30px -5px rgba(15, 23, 42, 0.12);
 }
 
-.card-3d-center {
-    transform: translate3d(0, 0, 0) scale(1);
-    opacity: 1;
-    z-index: 30;
-    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.08);
+/* Middle Card (Slot 1 - Offset Right behind Front) */
+.card-deck-slot-1 {
+
+    transform: translate3d(-100px, 0, 0) scale(0.96) rotateY(-4deg);
+    opacity: 0.92 !important;
+    z-index: 20 !important;
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
 }
 
-.card-3d-center:hover {
-    transform: translate3d(0, -3px, 0) scale(1.01);
-    box-shadow: 0 20px 45px rgba(0, 0, 0, 0.12), 0 0 20px rgba(37, 99, 235, 0.12);
+.card-deck-slot-1:hover {
+    opacity: 1 !important;
+    transform: translate3d(-104px, -4px, 10px) scale(0.98);
 }
 
-.card-3d-right {
-    transform: translate3d(20%, 0, 0) scale(0.88);
-    opacity: 0.65;
-    z-index: 10;
+/* Back Card (Slot 2 - Offset Further Right behind Middle) */
+.card-deck-slot-2 {
+
+    transform: translate3d(0, 0, 0) scale(0.92) rotateY(-8deg) !important;
+    opacity: 0.82 !important;
+    z-index: 10 !important;
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
 }
 
-.card-3d-right:hover {
-    opacity: 0.85;
-    transform: translate3d(20%, 0, 0) scale(0.90);
+.card-deck-slot-2:hover {
+    opacity: 0.95 !important;
+    transform: translate3d(-4px, -4px, 20px) scale(0.94);
+}
+
+@media (min-width: 1024px) and (max-width: 1280px) {
+    .card-deck-slot-0 {
+        transform: translate3d(-150px, 0, 0) scale(1) rotateY(0deg);
+    }
+
+    /* Middle Card (Slot 1 - Offset Right behind Front) */
+    .card-deck-slot-1 {
+        transform: translate3d(-75px, 0, 0) scale(0.96) rotateY(-4deg);
+    }
+
+
 }
 
 @media (max-width: 640px) {
-    .card-3d-left {
-        transform: translate3d(-14%, 0, 0) scale(0.88);
-        opacity: 0.4;
+    .card-deck-slot-0 {
+        transform: translate3d(-100px, 0, 0) scale(1) rotateY(0deg);
     }
-    .card-3d-right {
-        transform: translate3d(14%, 0, 0) scale(0.88);
-        opacity: 0.4;
+
+    .card-deck-slot-0:hover {
+        transform: translate3d(-100px, -6px, 0px) scale(1.02);
     }
+
+    /* Middle Card (Slot 1 - Offset Right behind Front) */
+    .card-deck-slot-1 {
+        transform: translate3d(-50px, 0, 0) scale(0.96) rotateY(-4deg);
+    }
+
+    .card-deck-slot-1:hover {
+        transform: translate3d(-52px, -2px, 10px) scale(0.98);
+    }
+
 }
 
+
+
 .hero-carousel-indicator {
-    transition: width 0.25s ease, background-color 0.25s ease;
+    transition: width 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.3s ease;
 }
 
 .hero-carousel-indicator.active {
@@ -319,6 +363,7 @@ textarea:focus {
 
 /* Show tooltip on hover in icon-only mode */
 @media (max-width: 1023px) {
+
     .admin-sidebar:not(.sidebar-force-expanded) .sidebar-nav-btn:hover .sidebar-tooltip,
     .admin-sidebar:not(.sidebar-force-expanded) a:hover .sidebar-tooltip,
     .admin-sidebar:not(.sidebar-force-expanded) button:hover .sidebar-tooltip {
@@ -336,7 +381,8 @@ textarea:focus {
 
 /* Manual collapse overrides on desktop */
 .admin-sidebar.sidebar-force-collapsed {
-    width: 4.5rem !important; /* 72px */
+    width: 4.5rem !important;
+    /* 72px */
     padding-left: 0.5rem !important;
     padding-right: 0.5rem !important;
 }
@@ -365,7 +411,8 @@ textarea:focus {
 
 /* Manual expand override on mobile/tablet */
 .admin-sidebar.sidebar-force-expanded {
-    width: 16rem !important; /* 256px */
+    width: 16rem !important;
+    /* 256px */
     position: fixed;
     top: 0;
     bottom: 0;
@@ -379,6 +426,7 @@ textarea:focus {
 }
 
 @media (min-width: 1024px) {
+
     .admin-sidebar.sidebar-force-expanded .sidebar-close-btn,
     .sidebar-close-btn {
         display: none !important;

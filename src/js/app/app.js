@@ -174,6 +174,7 @@ function triggerPageHooks(pageName, queryPart) {
   if (pageName === 'home') {
     renderHomeFeaturedProducts();
     renderHomeNewArrivalsCarousel();
+    renderHomeNewArrivalsGrid();
   } else if (pageName === 'shop') {
     initShopLogic(queryPart);
   } else if (pageName === 'cart') {
@@ -455,13 +456,50 @@ function renderHomeFeaturedProducts() {
   `).join('');
 }
 
+/**
+ * Renders top 4 new arrival products in New Arrivals grid on home page
+ */
+export function renderHomeNewArrivalsGrid() {
+  const grid = document.getElementById('home-new-arrivals-grid');
+  if (!grid || typeof getNewArrivalProducts === 'undefined') return;
+
+  const arrivals = getNewArrivalProducts().slice(0, 4);
+  grid.innerHTML = arrivals.map(product => `
+    <div class="group rounded-lg bg-white border border-[#e2e8f0] hover:border-[#cbd5e1] p-3.5 flex flex-col justify-between transition-all duration-200 hover:-translate-y-0.5 shadow-sm hover:shadow-md">
+      <div>
+        <div onclick="viewProductDetails(${product.id})" class="relative overflow-hidden rounded-md bg-[#f8fafc] mb-3 h-36 flex items-center justify-center cursor-pointer border border-[#e2e8f0]">
+          <img src="${product.image}" alt="${product.name}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+          <span class="absolute top-2 left-2 bg-blue-600 text-white text-[9px] font-bold uppercase px-2 py-0.5 rounded shadow-sm">${product.badge || 'New Arrival'}</span>
+        </div>
+        <span class="text-[10px] font-bold uppercase text-blue-600 font-mono tracking-wider">${product.category}</span>
+        <h3 onclick="viewProductDetails(${product.id})" class="text-xs font-bold text-[#0f172a] mt-1 line-clamp-1 group-hover:text-blue-600 transition-colors cursor-pointer">${product.name}</h3>
+        <div class="flex items-center space-x-1 mt-1 text-[11px] text-amber-500 font-bold">
+          <span>★</span>
+          <span>${product.rating || '4.8'}</span>
+          <span class="text-[#94a3b8] font-normal">(${product.reviews || '24'})</span>
+        </div>
+      </div>
+      
+      <div class="mt-3 pt-2.5 border-t border-[#e2e8f0] flex items-center justify-between">
+        <div>
+          ${product.originalPrice ? `<span class="text-[10px] text-[#94a3b8] line-through font-mono">Rs. ${product.originalPrice}</span>` : ''}
+          <p class="text-sm font-extrabold text-[#0f172a] font-mono">Rs. ${product.price}</p>
+        </div>
+        <button onclick="addToCart(${product.id})" class="p-2 bg-blue-600 hover:bg-blue-500 text-white rounded-md shadow-sm transition-all flex items-center justify-center" title="Add to Cart">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+        </button>
+      </div>
+    </div>
+  `).join('');
+}
+
 // ── Hero New Arrivals Product Carousel Controller ──
 let currentCarouselIndex = 0;
 let carouselTimer = null;
 let carouselTouchStartX = 0;
 
 /**
- * Renders dynamic 3-Card 3D Layered New Arrivals Product Carousel in Hero Section
+ * Renders dynamic 3D Stacked Product Card Mockup Carousel in Hero Section
  */
 export function renderHomeNewArrivalsCarousel() {
   const container = document.getElementById('hero-carousel-container');
@@ -470,8 +508,8 @@ export function renderHomeNewArrivalsCarousel() {
   const arrivals = getNewArrivalProducts();
   if (!arrivals || arrivals.length === 0) {
     container.innerHTML = `
-      <div class="relative rounded-xl overflow-hidden border border-[#e2e8f0] bg-white shadow-xl">
-        <img src="public/images/hero_setup.jpg" alt="ETech PC Workstation Setup" class="w-full h-auto object-cover rounded-xl">
+      <div class="relative rounded-2xl overflow-hidden border border-[#e2e8f0] bg-white shadow-xl p-4 text-center">
+        <img src="public/images/home-hero-image-1.png" alt="ETech PC Workstation Setup" class="w-full h-auto object-contain rounded-xl">
       </div>`;
     return;
   }
@@ -482,101 +520,113 @@ export function renderHomeNewArrivalsCarousel() {
   }
 
   const n = arrivals.length;
-  const prevIndex = (currentCarouselIndex - 1 + n) % n;
-  const nextIndex = (currentCarouselIndex + 1) % n;
+  const idx0 = currentCarouselIndex;
+  const idx1 = (currentCarouselIndex + 1) % n;
+  const idx2 = (currentCarouselIndex + 2) % n;
 
-  const prevProduct = arrivals[prevIndex];
-  const currentProduct = arrivals[currentCarouselIndex];
-  const nextProduct = arrivals[nextIndex];
+  const product0 = arrivals[idx0];
+  const product1 = arrivals[idx1];
+  const product2 = arrivals[idx2];
 
-  // Helper renderer for individual clean product card
-  const renderCard = (p, labelTag = '') => `
-    <div class="relative group/card h-full flex flex-col justify-between p-3.5 rounded-lg bg-white border border-[#e2e8f0] cursor-pointer overflow-hidden shadow-md transition-all" onclick="viewProductDetails(${p.id})">
-      <!-- Product Image & Badge -->
-      <div class="relative w-full h-36 sm:h-44 lg:h-48 rounded-md overflow-hidden mb-2 bg-[#f8fafc] border border-[#e2e8f0]">
-        <img src="${p.image}" alt="${p.name}" class="w-full h-full object-cover group-hover/card:scale-105 transition-transform duration-300">
+  // Helper renderer for clean vertical card in the 3D deck
+  const renderCardItem = (p, slotClass, slideIdx, isFront) => `
+    <div class="absolute top-0  w-[100px] h-[280px] sm:w-[160px] sm:h-[320px] card-3d-deck-item ${slotClass} cursor-pointer select-none" 
+         onclick="${isFront ? `viewProductDetails(${p.id})` : `goToHeroCarouselSlide(${slideIdx})`}">
+      <div class="relative h-full flex flex-col justify-between p-3 rounded-2xl bg-white border border-slate-200/80 shadow-xl overflow-hidden group">
         
-        <!-- Hover View Specs Overlay Button -->
-        <div class="absolute inset-0 bg-[#0f172a]/20 opacity-0 group-hover/card:opacity-100 transition-opacity duration-200 flex items-center justify-center pointer-events-none">
-          <span class="px-3 py-1.5 rounded-md bg-blue-600 text-white text-xs font-bold shadow-md flex items-center space-x-1.5">
-            <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-            <span>View Specs</span>
+        <!-- Top Pill Badge -->
+        <div class="flex items-center justify-between z-10 mb-1">
+          <span class="px-2.5 py-0.5 rounded-full bg-blue-600 text-white text-[9.5px] font-extrabold uppercase tracking-wider shadow-sm">
+            ${p.badge || 'NEW ARRIVAL'}
           </span>
+          ${isFront ? '<span class="w-2 h-2 rounded-full bg-blue-600 animate-pulse"></span>' : ''}
         </div>
 
-        <div class="absolute top-2 left-2 flex items-center space-x-1 z-10">
-          <span class="px-2 py-0.5 rounded bg-blue-600 text-white text-[9px] font-extrabold uppercase tracking-wider shadow-sm">
-            ${p.badge || 'New Arrival'}
-          </span>
+        <!-- Product Image Showcase Container -->
+        <div class="relative w-full flex items-center justify-center py-3 px-0 my-1 rounded-xl bg-white border border-slate-100 group-hover:border-blue-100 transition-colors">
+          <div class="flex justify-center items-center w-full h-36 overflow-hidden">
+          <img src="${p.image}" alt="${p.name}" class="max-w-full w-full object-cover drop-shadow-sm transition-transform duration-300 group-hover:scale-105">
+          </div>
+          ${isFront ? `
+          <!-- Hover View Specs overlay -->
+          <div class="absolute inset-0 bg-[#0f172a]/10 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center rounded-xl pointer-events-none">
+            <span class="px-3 py-1.5 rounded-lg bg-blue-600 text-white text-[10px] font-bold shadow-md flex items-center space-x-1">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+              <span>View Specs</span>
+            </span>
+          </div>` : ''}
         </div>
-      </div>
 
-      <!-- Card Details -->
-      <div class="space-y-1">
-        <div class="flex items-center justify-between">
-          <span class="text-[10px] font-bold text-blue-600 uppercase font-mono tracking-wider">${p.category}</span>
-          <div class="text-right">
-            ${p.originalPrice ? `<span class="text-[10px] text-[#94a3b8] line-through mr-1 font-mono">Rs. ${p.originalPrice.toLocaleString()}</span>` : ''}
-            <span class="text-sm font-extrabold text-[#0f172a] font-mono">Rs. ${p.price.toLocaleString()}</span>
+        <!-- Product Title & Pricing -->
+        <div class="space-y-0.5 z-10">
+          <p class="text-[9.5px] font-bold text-[#94a3b8] uppercase tracking-wider truncate">
+            ${p.brand || (p.category === 'laptops' ? 'ASUS ROG' : p.name.includes('Intel') ? 'Intel Core' : 'ASUS GeForce')}
+          </p>
+          <h3 class="text-xs sm:text-[13px] font-extrabold text-[#0f172a] line-clamp-2 leading-tight group-hover:text-blue-600 transition-colors">
+            ${p.name}
+          </h3>
+
+          <div class="pt-1.5 flex flex-col items-start">
+            ${p.originalPrice ? `<span class="text-[9.5px] text-[#94a3b8] line-through font-semibold font-mono">Rs. ${p.originalPrice.toLocaleString()}</span>` : ''}
+            <span class="text-sm sm:text-base font-black text-blue-600 font-mono tracking-tight">
+              Rs. ${p.price.toLocaleString()}
+            </span>
           </div>
         </div>
-        <h3 class="text-xs sm:text-sm font-bold text-[#0f172a] line-clamp-1 group-hover/card:text-blue-600 transition-colors">${p.name}</h3>
-        <p class="text-[11px] text-[#64748b] line-clamp-2 leading-relaxed">${p.description}</p>
+
       </div>
     </div>
   `;
 
   container.innerHTML = `
-    <div class="relative w-full max-w-lg sm:max-w-xl mx-auto py-1" id="hero-carousel-wrapper"
+    <div class="relative w-full max-w-[340px] sm:max-w-[360px] pt-1 pb-4" id="hero-carousel-wrapper"
          onmouseenter="pauseHeroCarousel()" 
          onmouseleave="startHeroCarouselAutoPlay()">
       
-      <!-- Top Slide Count Indicator -->
-      <div class="flex items-center justify-end mb-2 px-1">
-        <span class="text-[10px] font-mono font-bold text-[#64748b] bg-white px-2.5 py-0.5 rounded border border-[#e2e8f0] shadow-sm">
-          ${currentCarouselIndex + 1} / ${arrivals.length}
+      <!-- Top Right Counter Badge -->
+      <div class="flex items-center justify-end mb-2 pr-1">
+        <span class="text-[11px] font-mono font-extrabold text-[#64748b] bg-white/90 backdrop-blur px-2.5 py-0.5 rounded-md border border-[#e2e8f0] shadow-sm">
+          ${currentCarouselIndex + 1}/${arrivals.length}
         </span>
       </div>
 
-      <!-- 3D Stack Viewport: Shows 3 Cards at once (Left 1st, Center TOP, Right Next) -->
-      <div class="relative h-[290px] sm:h-[330px] lg:h-[360px] w-full flex items-center justify-center overflow-visible hero-carousel-container-3d">
-        
-        <!-- Left / 1st Card (Behind on Left) -->
-        <div class="absolute top-0 bottom-0 left-0 w-[76%] sm:w-[72%] card-3d card-3d-left" onclick="prevHeroCarouselSlide()">
-          ${renderCard(prevProduct, '1st')}
-        </div>
+      <!-- 3D Card Deck Viewport -->
+      <div class="relative h-[330px] sm:h-[345px] w-full hero-carousel-container-3d overflow-visible">
+        <!-- Back Card (Slot 2) -->
+        ${renderCardItem(product2, 'card-deck-slot-2', idx2, false)}
 
-        <!-- Right / Next Card (Behind on Right) -->
-        <div class="absolute top-0 bottom-0 right-0 w-[76%] sm:w-[72%] card-3d card-3d-right" onclick="nextHeroCarouselSlide()">
-          ${renderCard(nextProduct, 'next')}
-        </div>
+        <!-- Middle Card (Slot 1) -->
+        ${renderCardItem(product1, 'card-deck-slot-1', idx1, false)}
 
-        <!-- Center TOP Active Card (Foreground) -->
-        <div class="absolute top-0 bottom-0 w-[84%] sm:w-[80%] card-3d card-3d-center">
-          ${renderCard(currentProduct, 'TOP')}
-        </div>
-
-        <!-- Navigation Arrow Controls -->
-        <button onclick="prevHeroCarouselSlide()" 
-                class="absolute left-0 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white hover:bg-blue-600 hover:text-white text-[#0f172a] border border-[#e2e8f0] flex items-center justify-center shadow-md transition-all z-40" 
-                title="Previous Slide">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-        </button>
-        
-        <button onclick="nextHeroCarouselSlide()" 
-                class="absolute right-0 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white hover:bg-blue-600 hover:text-white text-[#0f172a] border border-[#e2e8f0] flex items-center justify-center shadow-md transition-all z-40" 
-                title="Next Slide">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-        </button>
+        <!-- Front Active Card (Slot 0) -->
+        ${renderCardItem(product0, 'card-deck-slot-0', idx0, true)}
       </div>
 
-      <!-- Pagination Indicators -->
-      <div class="flex items-center justify-center space-x-1.5 mt-3">
-        ${arrivals.map((_, idx) => `
-          <button onclick="goToHeroCarouselSlide(${idx})" 
-                  class="hero-carousel-indicator h-1 rounded-full transition-all duration-200 ${idx === currentCarouselIndex ? 'active w-6 bg-blue-600' : 'w-3 bg-[#cbd5e1] hover:bg-[#94a3b8]'}"
-                  title="Go to slide ${idx + 1}"></button>
-        `).join('')}
+      <!-- Bottom Controls Row -->
+      <div class="flex items-center justify-end space-x-3 mt-3 pr-2">
+        <!-- Navigation Arrow Buttons -->
+        <div class="flex items-center space-x-2">
+          <button onclick="prevHeroCarouselSlide()" 
+                  class="w-8 h-8 rounded-full bg-white hover:bg-blue-600 hover:text-white text-[#0f172a] border border-[#cbd5e1] flex items-center justify-center shadow-md transition-all transform hover:scale-105 active:scale-95" 
+                  title="Previous Card">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
+          </button>
+          
+          <button onclick="nextHeroCarouselSlide()" 
+                  class="w-8 h-8 rounded-full bg-white hover:bg-blue-600 hover:text-white text-[#0f172a] border border-[#cbd5e1] flex items-center justify-center shadow-md transition-all transform hover:scale-105 active:scale-95" 
+                  title="Next Card">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+          </button>
+        </div>
+
+        <!-- Dot Pagination Indicators -->
+        <div class="flex items-center space-x-1.5 ml-1">
+          ${arrivals.map((_, idx) => `
+            <button onclick="goToHeroCarouselSlide(${idx})" 
+                    class="hero-carousel-indicator h-2 rounded-full transition-all duration-300 ${idx === currentCarouselIndex ? 'active w-5 bg-blue-600' : 'w-2 bg-[#cbd5e1] hover:bg-[#94a3b8]'}"
+                    title="Go to card ${idx + 1}"></button>
+          `).join('')}
+        </div>
       </div>
 
     </div>
@@ -601,7 +651,6 @@ export function renderHomeNewArrivalsCarousel() {
 
   startHeroCarouselAutoPlay();
 }
-
 /**
  * Jump to specific carousel slide
  */

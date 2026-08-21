@@ -77,46 +77,104 @@
   <!-- ============================================================ -->
   <!-- 1. PERSISTENT HEADER NAVIGATION BAR                          -->
   <!-- ============================================================ -->
-  <header class="sticky top-0 z-50 backdrop-blur-md bg-white/95 border-b border-[#e2e8f0] text-[#0f172a] shadow-sm">
-    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="flex items-center justify-between h-20">
+  <header class="sticky top-0 z-50 backdrop-blur-md bg-white/95 text-[#0f172a] shadow-sm">
 
-        <!-- Brand Logo (Mockup Accurate) -->
-        <a href="#home" class="flex items-center space-x-3 group">
+    <!-- Top Announcement / Utility Bar -->
+    <div class="bg-[#f1f5f9] border-b border-[#e2e8f0] text-[#475569] text-xs py-2">
+      <div class="container mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-2">
+        <div class="flex items-center space-x-2">
+          <span
+            class="bg-blue-600 text-white font-extrabold text-[10px] uppercase px-2 py-0.5 rounded shadow-sm">NEW</span>
+          <span class="font-medium text-[#0f172a]">Build your dream PC with premium components. Free shipping on orders
+            over Rs. 25,000!</span>
+        </div>
+        <div class="flex items-center space-x-4 text-[11px] font-semibold text-[#64748b]">
+          <a href="#account" class="hover:text-blue-600 transition-colors">Track Order</a>
+          <a href="#policies?policy=warranty" class="hover:text-blue-600 transition-colors">Support</a>
+          <a href="mailto:info@etechcomputers.lk" class="hover:text-blue-600 transition-colors">Contact Us</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Header Bar -->
+    <div class="border-b border-[#e2e8f0] bg-white py-3.5">
+      <div class="container mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4">
+
+        <!-- Brand Logo -->
+        <a href="#home" class="flex items-center space-x-3 group flex-shrink-0">
           <div class="flex flex-col">
-            <span class="text-xl font-extrabold tracking-tight text-[#0f172a]">
+            <span class="text-2xl font-extrabold tracking-tight text-[#0f172a]">
               ETech<span class="text-blue-600">Computers</span>
             </span>
-            <span class="text-[10px] tracking-[0.2em] uppercase text-[#64748b] font-semibold">Next-Gen Tech Store</span>
+            <span class="text-[10px] tracking-[0.2em] uppercase text-[#64748b] font-semibold">NEXT-GEN TECH STORE</span>
           </div>
         </a>
 
-        <!-- Desktop Nav Links (Exact Mockup Match) -->
-        <nav class="hidden md:flex items-center space-x-2 h-20">
-          <a href="#home" class="nav-tab-btn active">Home</a>
-          <a href="#shop" class="nav-tab-btn">Shop Catalog</a>
-          <a href="#about" class="nav-tab-btn">About Us</a>
-        </nav>
+        <!-- Search Bar with Category Dropdown -->
+        <div class="hidden md:flex flex-1 max-w-2xl items-center mx-4">
+          <div
+            class="flex w-full items-center bg-[#f8fafc] border border-[#e2e8f0] rounded-lg focus-within:border-blue-600 transition-colors shadow-sm overflow-hidden">
+            <select id="header-category-select"
+              onchange="if(this.value) window.location.hash = '#shop?cat=' + this.value"
+              class="bg-transparent text-xs font-semibold text-[#475569] px-3.5 py-2.5 border-r border-[#e2e8f0] focus:outline-none cursor-pointer">
+              <option value="">All Categories</option>
+              <option value="laptops">Laptops</option>
+              <option value="desktops">Desktop PCs</option>
+              <option value="gpus">Graphics Cards</option>
+              <option value="cpus">Processors</option>
+              <option value="motherboards">Motherboards</option>
+              <option value="ram">RAM</option>
+              <option value="storage">Storage</option>
+              <option value="monitors">Monitors</option>
+              <option value="accessories">Accessories</option>
+            </select>
+            <input type="text" id="header-search-input" placeholder="Search laptops, components, peripherals..."
+              onkeypress="if(event.key==='Enter') { window.location.hash='#shop?search=' + encodeURIComponent(this.value); }"
+              class="w-full px-3.5 py-2.5 bg-transparent text-sm text-[#0f172a] placeholder-[#94a3b8] focus:outline-none">
+            <button
+              onclick="const q = document.getElementById('header-search-input').value; window.location.hash='#shop?search=' + encodeURIComponent(q);"
+              class="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 flex items-center justify-center transition-colors">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </button>
+          </div>
+        </div>
 
-        <!-- Right Action Items (Cart Badge, Admin Console, Profile) -->
-        <div class="flex items-center space-x-3 sm:space-x-3.5">
-
-          <!-- Cart Button with Dynamic Badge -->
-          <a href="#cart"
-            class="relative p-2.5 rounded-lg bg-[#f1f5f9] text-[#475569] hover:text-[#0f172a] hover:bg-[#e2e8f0] transition-all border border-[#e2e8f0] hover:border-[#cbd5e1] flex items-center group shadow-sm"
-            title="Shopping Cart">
-            <svg class="w-5 h-5 text-[#475569] group-hover:text-blue-600 transition-colors" fill="none"
-              stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-            </svg>
-            <span id="cart-count-badge"
-              class="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 bg-blue-600 text-white text-[10px] font-extrabold rounded-full flex items-center justify-center ring-2 ring-white">0</span>
+        <!-- Right Action Controls (Wishlist, Cart, Admin Console) -->
+        <div class="flex items-center space-x-3">
+          <!-- Wishlist Button -->
+          <a href="#shop"
+            class="hidden sm:flex items-center space-x-1.5 p-2 rounded-lg text-[#475569] hover:text-blue-600 hover:bg-[#f1f5f9] transition-all relative">
+            <div class="relative">
+              <svg class="w-5 h-5 text-[#475569]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+              </svg>
+              <span
+                class="absolute -top-1.5 -right-1.5 w-4 h-4 bg-blue-600 text-white text-[9px] font-extrabold rounded-full flex items-center justify-center">2</span>
+            </div>
+            <span class="text-xs font-bold hidden lg:inline">Wishlist</span>
           </a>
 
-          <!-- Dynamic Header Auth Button / Admin Console / User Menu -->
+          <!-- Cart Button -->
+          <a href="#cart"
+            class="flex items-center space-x-1.5 p-2 rounded-lg text-[#475569] hover:text-blue-600 hover:bg-[#f1f5f9] transition-all relative"
+            title="Shopping Cart">
+            <div class="relative">
+              <svg class="w-5 h-5 text-[#475569]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+              </svg>
+              <span id="cart-count-badge"
+                class="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 bg-blue-600 text-white text-[10px] font-extrabold rounded-full flex items-center justify-center ring-2 ring-white">0</span>
+            </div>
+            <span class="text-xs font-bold hidden lg:inline">Cart</span>
+          </a>
+
+          <!-- Header Auth Container / Admin Console / Profile -->
           <div id="header-auth-btn-container" class="flex items-center space-x-2">
-            <!-- Sign In button (initial fallback before JS hydrates session) -->
             <a href="#login"
               class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-all flex items-center space-x-1.5 shadow-sm">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -137,20 +195,64 @@
         </div>
 
       </div>
-
-      <!-- Mobile Navigation Drawer -->
-      <div id="mobile-menu" class="hidden md:hidden pb-4 pt-2 border-t border-[#e2e8f0] bg-white space-y-1">
-        <a href="#home" onclick="document.getElementById('mobile-menu').classList.add('hidden')"
-          class="nav-link block px-4 py-2.5 rounded-lg text-base font-medium text-[#475569] hover:bg-[#f1f5f9] hover:text-blue-600 transition-all">Home</a>
-        <a href="#shop" onclick="document.getElementById('mobile-menu').classList.add('hidden')"
-          class="nav-link block px-4 py-2.5 rounded-lg text-base font-medium text-[#475569] hover:bg-[#f1f5f9] hover:text-blue-600 transition-all">Shop
-          Catalog</a>
-        <a href="#about" onclick="document.getElementById('mobile-menu').classList.add('hidden')"
-          class="nav-link block px-4 py-2.5 rounded-lg text-base font-medium text-[#475569] hover:bg-[#f1f5f9] hover:text-blue-600 transition-all">About Us</a>
-        <div id="mobile-auth-drawer" class="pt-2 px-4"></div>
-      </div>
-
     </div>
+
+    <!-- Primary Navigation Bar -->
+    <div class="bg-white border-b border-[#e2e8f0] shadow-sm">
+      <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <nav class="flex items-center space-x-1 overflow-x-auto py-2 scrollbar-none">
+          <a href="#home"
+            class="nav-tab-btn active px-4 py-2 rounded-md font-bold text-xs text-[#475569] hover:text-blue-600 hover:bg-[#f8fafc] transition-all flex items-center space-x-1">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+            </svg>
+            <span>Home</span>
+          </a>
+          <a href="#shop"
+            class="nav-tab-btn px-4 py-2 rounded-md font-bold text-xs text-[#475569] hover:text-blue-600 hover:bg-[#f8fafc] transition-all flex items-center space-x-1">
+            <span>Shop Catalog</span>
+            <svg class="w-3.5 h-3.5 text-[#94a3b8]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            </svg>
+          </a>
+          <a href="#shop?badge=Hot%20Deal"
+            class="nav-tab-btn px-4 py-2 rounded-md font-bold text-xs text-[#475569] hover:text-blue-600 hover:bg-[#f8fafc] transition-all flex items-center space-x-1">
+            <span>Deals</span>
+            <span class="bg-rose-500 text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded uppercase">HOT</span>
+          </a>
+          <a href="#shop?cat=components"
+            class="nav-tab-btn px-4 py-2 rounded-md font-bold text-xs text-[#475569] hover:text-blue-600 hover:bg-[#f8fafc] transition-all">Build
+            Your PC</a>
+          <a href="#home-brands"
+            class="nav-tab-btn px-4 py-2 rounded-md font-bold text-xs text-[#475569] hover:text-blue-600 hover:bg-[#f8fafc] transition-all">Brands</a>
+          <a href="#policies?policy=warranty"
+            class="nav-tab-btn px-4 py-2 rounded-md font-bold text-xs text-[#475569] hover:text-blue-600 hover:bg-[#f8fafc] transition-all flex items-center space-x-1">
+            <span>Support</span>
+            <svg class="w-3.5 h-3.5 text-[#94a3b8]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            </svg>
+          </a>
+          <a href="#about"
+            class="nav-tab-btn px-4 py-2 rounded-md font-bold text-xs text-[#475569] hover:text-blue-600 hover:bg-[#f8fafc] transition-all">About
+            Us</a>
+        </nav>
+      </div>
+    </div>
+
+    <!-- Mobile Navigation Drawer -->
+    <div id="mobile-menu" class="hidden md:hidden pb-4 pt-2 border-t border-[#e2e8f0] bg-white space-y-1">
+      <a href="#home" onclick="document.getElementById('mobile-menu').classList.add('hidden')"
+        class="nav-link block px-4 py-2.5 rounded-lg text-base font-medium text-[#475569] hover:bg-[#f1f5f9] hover:text-blue-600 transition-all">Home</a>
+      <a href="#shop" onclick="document.getElementById('mobile-menu').classList.add('hidden')"
+        class="nav-link block px-4 py-2.5 rounded-lg text-base font-medium text-[#475569] hover:bg-[#f1f5f9] hover:text-blue-600 transition-all">Shop
+        Catalog</a>
+      <a href="#about" onclick="document.getElementById('mobile-menu').classList.add('hidden')"
+        class="nav-link block px-4 py-2.5 rounded-lg text-base font-medium text-[#475569] hover:bg-[#f1f5f9] hover:text-blue-600 transition-all">About
+        Us</a>
+      <div id="mobile-auth-drawer" class="pt-2 px-4"></div>
+    </div>
+
   </header>
 
   <!-- ============================================================ -->
@@ -159,127 +261,122 @@
   <main id="app-content" class="flex-grow">
 
     <!-- ================= SECTION 1: HOME PAGE ================= -->
-    <section id="home-page" class="page-section">
+    <section id="home-page" class="page-section space-y-12 pb-16">
 
-      <!-- Hero Banner Section (Clean Light Mockup Match) -->
-      <div class="relative overflow-hidden bg-[#f8fafc] py-14 sm:py-20 lg:py-24 border-b border-[#e2e8f0]">
-
-        <!-- Hero Background Image Layer & Atmospheric Overlays -->
-        <div class="absolute inset-0 z-0 pointer-events-none select-none">
-          <img src="public/images/hero_section_background.jpeg" alt="ETech Gaming & PC Workstation Background"
-            class="w-full h-full object-cover object-center lg:object-right opacity-15 sm:opacity-20 lg:opacity-25">
-          <!-- Horizontal gradient for text contrast on the left -->
-          <div class="absolute inset-0 bg-gradient-to-r from-[#f8fafc] via-[#f8fafc]/90 to-transparent"></div>
-          <!-- Vertical top/bottom gradient transitions -->
-          <div class="absolute inset-0 bg-gradient-to-t from-[#f8fafc] via-transparent to-[#f8fafc]/70"></div>
-          <div class="absolute inset-0 bg-gradient-to-b from-[#f8fafc]/90 via-transparent to-[#f8fafc]"></div>
-        </div>
-
-        <!-- Subtle Ambient Glows -->
-        <div
-          class="absolute top-1/4 left-1/3 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[300px] bg-blue-600/5 blur-[140px] rounded-full pointer-events-none z-0">
-        </div>
+      <!-- HERO SECTION -->
+      <div class="relative overflow-hidden bg-[#f8fafc] py-12 sm:py-16 lg:py-20 border-b border-[#e2e8f0]">
 
         <div class="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 xl:gap-1 items-center relative">
 
             <!-- Hero Left: Typography & CTAs -->
-            <div class="lg:col-span-6 space-y-6 text-center lg:text-left">
+            <div class="lg:col-span-5 space-y-5 text-center lg:text-left">
+              <span
+                class="inline-flex items-center space-x-2 px-3.5 py-1 rounded-full bg-blue-50 border border-blue-200/80 text-blue-600 text-[11px] font-mono font-bold tracking-wider uppercase shadow-sm">
+                <span>PREMIUM HARDWARE. POWERFUL PERFORMANCE.</span>
+              </span>
 
-              <!-- Category Superheader -->
-              <p class="text-xs font-mono font-bold text-blue-600 tracking-[0.2em] uppercase">
-                PREMIUM HARDWARE. POWERFUL PERFORMANCE.
-              </p>
-
-              <!-- Hero Headline -->
               <h1
-                class="text-4xl sm:text-5xl lg:text-[56px] font-extrabold tracking-tight text-[#0f172a] leading-[1.12]">
+                class="text-3xl sm:text-4xl lg:text-[44px] xl:text-[48px] font-extrabold tracking-tight text-[#0f172a] leading-[1.12]">
                 Built for Performance.<br>
                 Designed for <span class="text-blue-600">You.</span>
               </h1>
 
-              <!-- Hero Subtitle -->
-              <p class="text-[#475569] text-base sm:text-lg max-w-xl mx-auto lg:mx-0 leading-relaxed font-normal">
-                Explore high-performance laptops, powerful components, and premium peripherals from trusted brands.
+              <p class="text-[#475569] text-sm sm:text-base max-w-xl mx-auto lg:mx-0 leading-relaxed font-normal">
+                Explore high-performance laptops, powerful components, and premium <strong
+                  class="font-bold text-[#0f172a]">peripherals</strong> from <strong
+                  class="font-bold text-[#0f172a]">trusted brands</strong>.
               </p>
 
-              <!-- Action CTAs -->
+              <!-- Action Buttons -->
               <div
-                class="flex flex-col sm:flex-row items-center justify-center lg:justify-start space-y-3 sm:space-y-0 sm:space-x-4 pt-2">
+                class="flex flex-col sm:flex-row items-center justify-center lg:justify-start space-y-2.5 sm:space-y-0 sm:space-x-3 pt-1">
                 <a href="#shop"
-                  class="w-full sm:w-auto px-7 py-3.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm rounded-lg transition-all flex items-center justify-center space-x-2 shadow-md">
+                  class="w-full sm:w-auto px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs sm:text-sm rounded-xl transition-all flex items-center justify-center space-x-2 shadow-lg shadow-blue-500/20 transform hover:-translate-y-0.5">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                       d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
                   </svg>
-                  <span>Explore Catalog</span>
+                  <span>Shop Catalog</span>
                 </a>
 
-                <a href="#featured"
-                  class="w-full sm:w-auto px-7 py-3.5 bg-white hover:bg-[#f1f5f9] text-[#0f172a] font-semibold text-sm rounded-lg border border-[#e2e8f0] hover:border-[#cbd5e1] transition-all flex items-center justify-center space-x-2 shadow-sm">
+                <a href="#shop?cat=components"
+                  class="w-full sm:w-auto px-6 py-3 bg-white hover:bg-[#f8fafc] text-[#0f172a] font-bold text-xs sm:text-sm rounded-xl border border-[#cbd5e1] hover:border-[#94a3b8] transition-all flex items-center justify-center space-x-2 shadow-sm transform hover:-translate-y-0.5">
                   <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                      d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
                   </svg>
-                  <span>View Hot Deals</span>
+                  <span>Build Your PC</span>
                 </a>
               </div>
 
-              <!-- 3 Trust Badges -->
-              <div class="grid grid-cols-3 gap-4 pt-6 border-t border-[#e2e8f0] max-w-lg mx-auto lg:mx-0 text-left">
-
-                <div class="flex items-center space-x-2.5">
+              <!-- 3 Trust Indicators -->
+              <div
+                class="grid grid-cols-3 gap-2 sm:gap-3 pt-5 border-t border-[#e2e8f0] max-w-lg mx-auto lg:mx-0 text-left">
+                <div class="flex items-center space-x-2">
                   <div
-                    class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0 border border-blue-100">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    class="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0 border border-blue-100 shadow-sm">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                     </svg>
                   </div>
                   <div>
-                    <p class="text-sm font-extrabold text-[#0f172a]">100%</p>
-                    <p class="text-[10px] text-[#64748b] uppercase tracking-wider font-medium">Genuine Hardware</p>
+                    <p class="text-xs font-extrabold text-[#0f172a]">100%</p>
+                    <p class="text-[9px] text-[#64748b] uppercase tracking-wider font-bold">Genuine Products</p>
                   </div>
                 </div>
 
-                <div class="flex items-center space-x-2.5">
+                <div class="flex items-center space-x-2">
                   <div
-                    class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0 border border-blue-100">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    class="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0 border border-blue-100 shadow-sm">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 100-6 3 3 0 000 6z" />
                     </svg>
                   </div>
                   <div>
-                    <p class="text-sm font-extrabold text-[#0f172a]">24/7</p>
-                    <p class="text-[10px] text-[#64748b] uppercase tracking-wider font-medium">Tech Support</p>
+                    <p class="text-xs font-extrabold text-[#0f172a]">24/7</p>
+                    <p class="text-[9px] text-[#64748b] uppercase tracking-wider font-bold">Expert Support</p>
                   </div>
                 </div>
 
-                <div class="flex items-center space-x-2.5">
+                <div class="flex items-center space-x-2">
                   <div
-                    class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0 border border-blue-100">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    class="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0 border border-blue-100 shadow-sm">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   </div>
                   <div>
-                    <p class="text-sm font-extrabold text-[#0f172a]">2 Years</p>
-                    <p class="text-[10px] text-[#64748b] uppercase tracking-wider font-medium">Official Warranty</p>
+                    <p class="text-xs font-extrabold text-[#0f172a]">2 Years</p>
+                    <p class="text-[9px] text-[#64748b] uppercase tracking-wider font-bold">Official Warranty</p>
                   </div>
                 </div>
-
               </div>
 
             </div>
+            <!-- left side include static image and 3d card -->
+            <div class="lg:col-span-7 flex items-center justify-center relative">
 
-            <!-- Hero Right: Dynamic Interactive Showcase / Setup -->
-            <div class="lg:col-span-6 relative overflow-hidden" id="hero-carousel-container">
-              <!-- Rendered dynamically by JS (3D Carousel or Mockup Setup showcase) -->
-              <div class="relative rounded-xl overflow-hidden border border-[#e2e8f0] bg-white shadow-xl">
-                <img src="public/images/hero_setup.jpg" alt="ETech PC Workstation Setup"
-                  class="w-full h-auto object-cover rounded-xl">
+              <!-- Hero Center & Right: Prominent Setup Image home-hero-image-1.png -->
+
+              <div class="relative flex items-center justify-center w-full transform lg:translate-x-[-20%]">
+                <!-- Glowing Ambient Light Blue Base Aura -->
+                <div
+                  class="absolute -bottom-4 left-1/2 -translate-x-1/2 w-4/5 h-24 bg-blue-400/25 blur-3xl rounded-full pointer-events-none">
+                </div>
+
+                <img src="public/images/home-hero-image-1.png" alt="ETech High Performance Gaming Workstation Setup"
+                  class="w-full max-w-[600px] min-w-[420px] 2xl:max-w-[760px] h-auto   object-contain drop-shadow-2xl ">
+              </div>
+
+
+              <!-- Hero Right: Interactive 3D Stacked Product Cards Deck (Absolute on Right) -->
+              <div class="relative lg:absolute  lg:right-0 z-20 flex justify-center lg:justify-end pointer-events-auto"
+                id="hero-carousel-container">
+                <!-- Rendered dynamically by JS app.js -->
               </div>
             </div>
 
@@ -287,12 +384,12 @@
         </div>
       </div>
 
-      <!-- Value Propositions Horizontal Bar (4-Cards in one row matching mockup) -->
-      <div class="py-6 bg-[#f1f5f9] border-b border-[#e2e8f0]">
-        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <!-- SERVICE / TRUST STRIP -->
+      <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="bg-white border border-[#e2e8f0] rounded-xl p-5 shadow-sm">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
 
-            <div class="flex items-start space-x-3.5 p-4 rounded-lg bg-white border border-[#e2e8f0] shadow-sm">
+            <div class="flex items-start space-x-3.5">
               <div
                 class="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0 border border-blue-100">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -307,7 +404,7 @@
               </div>
             </div>
 
-            <div class="flex items-start space-x-3.5 p-4 rounded-lg bg-white border border-[#e2e8f0] shadow-sm">
+            <div class="flex items-start space-x-3.5">
               <div
                 class="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0 border border-blue-100">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -317,11 +414,12 @@
               </div>
               <div>
                 <h4 class="text-sm font-bold text-[#0f172a]">Official Warranty</h4>
-                <p class="text-xs text-[#64748b] mt-0.5 leading-normal">Full 2-year manufacturer warranty & support.</p>
+                <p class="text-xs text-[#64748b] mt-0.5 leading-normal">Full 2-year manufacturer warranty on most
+                  products.</p>
               </div>
             </div>
 
-            <div class="flex items-start space-x-3.5 p-4 rounded-lg bg-white border border-[#e2e8f0] shadow-sm">
+            <div class="flex items-start space-x-3.5">
               <div
                 class="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0 border border-blue-100">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -335,7 +433,7 @@
               </div>
             </div>
 
-            <div class="flex items-start space-x-3.5 p-4 rounded-lg bg-white border border-[#e2e8f0] shadow-sm">
+            <div class="flex items-start space-x-3.5">
               <div
                 class="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0 border border-blue-100">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -353,99 +451,513 @@
         </div>
       </div>
 
-      <!-- Shop By Category Grid -->
-      <div class="py-14 bg-[#f8fafc]">
-        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div class="flex flex-col md:flex-row md:items-end justify-between mb-8">
-            <div>
-              <h2 class="text-2xl sm:text-3xl font-extrabold text-[#0f172a] tracking-tight">Shop By Category</h2>
-              <p class="text-[#64748b] text-sm mt-1">Browse our top computer hardware and gaming categories</p>
-            </div>
-            <a href="#shop"
-              class="mt-3 md:mt-0 text-xs font-bold text-blue-600 hover:text-blue-700 inline-flex items-center space-x-1 uppercase tracking-wider">
-              <span>View All Categories</span>
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+      <!-- SHOP BY CATEGORY -->
+      <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between mb-6">
+          <div>
+            <h2 class="text-2xl font-extrabold text-[#0f172a] tracking-tight">Shop By Category</h2>
+            <p class="text-[#64748b] text-xs mt-0.5">Explore our complete hardware catalog by product category</p>
+          </div>
+          <a href="#shop"
+            class="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center space-x-1 uppercase tracking-wider">
+            <span>View All Categories</span>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </a>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-9 gap-3">
+          <a href="#shop?cat=laptops"
+            class="group rounded-xl bg-white p-3.5 border border-[#e2e8f0] hover:border-[#cbd5e1] hover:-translate-y-1 transition-all text-center flex flex-col items-center shadow-sm hover:shadow-md">
+            <div
+              class="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center mb-2.5 group-hover:bg-blue-600 group-hover:text-white transition-all border border-blue-100">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
               </svg>
-            </a>
+            </div>
+            <h3 class="font-bold text-[#0f172a] text-xs line-clamp-1">Laptops</h3>
+            <p class="text-[10px] text-[#64748b] mt-0.5 font-mono">120+ Products</p>
+          </a>
+
+          <a href="#shop?cat=desktops"
+            class="group rounded-xl bg-white p-3.5 border border-[#e2e8f0] hover:border-[#cbd5e1] hover:-translate-y-1 transition-all text-center flex flex-col items-center shadow-sm hover:shadow-md">
+            <div
+              class="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center mb-2.5 group-hover:bg-blue-600 group-hover:text-white transition-all border border-blue-100">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714a2.25 2.25 0 00.659 1.591L19 14.5M14.25 3.104c.251.023.501.05.75.082M19 14.5l-2.47-2.47m0 0L19 9.56m-2.47 2.47H14.25m-8.5 2.47L3 14.5m2.75 0L3 11.53m2.75 2.97H8.25" />
+              </svg>
+            </div>
+            <h3 class="font-bold text-[#0f172a] text-xs line-clamp-1">Desktop PCs</h3>
+            <p class="text-[10px] text-[#64748b] mt-0.5 font-mono">80+ Products</p>
+          </a>
+
+          <a href="#shop?cat=gpus"
+            class="group rounded-xl bg-white p-3.5 border border-[#e2e8f0] hover:border-[#cbd5e1] hover:-translate-y-1 transition-all text-center flex flex-col items-center shadow-sm hover:shadow-md">
+            <div
+              class="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center mb-2.5 group-hover:bg-blue-600 group-hover:text-white transition-all border border-blue-100">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+              </svg>
+            </div>
+            <h3 class="font-bold text-[#0f172a] text-xs line-clamp-1">Graphics Cards</h3>
+            <p class="text-[10px] text-[#64748b] mt-0.5 font-mono">200+ Products</p>
+          </a>
+
+          <a href="#shop?cat=cpus"
+            class="group rounded-xl bg-white p-3.5 border border-[#e2e8f0] hover:border-[#cbd5e1] hover:-translate-y-1 transition-all text-center flex flex-col items-center shadow-sm hover:shadow-md">
+            <div
+              class="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center mb-2.5 group-hover:bg-blue-600 group-hover:text-white transition-all border border-blue-100">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+              </svg>
+            </div>
+            <h3 class="font-bold text-[#0f172a] text-xs line-clamp-1">Processors</h3>
+            <p class="text-[10px] text-[#64748b] mt-0.5 font-mono">150+ Products</p>
+          </a>
+
+          <a href="#shop?cat=motherboards"
+            class="group rounded-xl bg-white p-3.5 border border-[#e2e8f0] hover:border-[#cbd5e1] hover:-translate-y-1 transition-all text-center flex flex-col items-center shadow-sm hover:shadow-md">
+            <div
+              class="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center mb-2.5 group-hover:bg-blue-600 group-hover:text-white transition-all border border-blue-100">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+              </svg>
+            </div>
+            <h3 class="font-bold text-[#0f172a] text-xs line-clamp-1">Motherboards</h3>
+            <p class="text-[10px] text-[#64748b] mt-0.5 font-mono">120+ Products</p>
+          </a>
+
+          <a href="#shop?cat=ram"
+            class="group rounded-xl bg-white p-3.5 border border-[#e2e8f0] hover:border-[#cbd5e1] hover:-translate-y-1 transition-all text-center flex flex-col items-center shadow-sm hover:shadow-md">
+            <div
+              class="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center mb-2.5 group-hover:bg-blue-600 group-hover:text-white transition-all border border-blue-100">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+              </svg>
+            </div>
+            <h3 class="font-bold text-[#0f172a] text-xs line-clamp-1">RAM</h3>
+            <p class="text-[10px] text-[#64748b] mt-0.5 font-mono">110+ Products</p>
+          </a>
+
+          <a href="#shop?cat=storage"
+            class="group rounded-xl bg-white p-3.5 border border-[#e2e8f0] hover:border-[#cbd5e1] hover:-translate-y-1 transition-all text-center flex flex-col items-center shadow-sm hover:shadow-md">
+            <div
+              class="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center mb-2.5 group-hover:bg-blue-600 group-hover:text-white transition-all border border-blue-100">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+              </svg>
+            </div>
+            <h3 class="font-bold text-[#0f172a] text-xs line-clamp-1">Storage</h3>
+            <p class="text-[10px] text-[#64748b] mt-0.5 font-mono">140+ Products</p>
+          </a>
+
+          <a href="#shop?cat=monitors"
+            class="group rounded-xl bg-white p-3.5 border border-[#e2e8f0] hover:border-[#cbd5e1] hover:-translate-y-1 transition-all text-center flex flex-col items-center shadow-sm hover:shadow-md">
+            <div
+              class="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center mb-2.5 group-hover:bg-blue-600 group-hover:text-white transition-all border border-blue-100">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <h3 class="font-bold text-[#0f172a] text-xs line-clamp-1">Monitors</h3>
+            <p class="text-[10px] text-[#64748b] mt-0.5 font-mono">90+ Products</p>
+          </a>
+
+          <a href="#shop?cat=peripherals"
+            class="group rounded-xl bg-white p-3.5 border border-[#e2e8f0] hover:border-[#cbd5e1] hover:-translate-y-1 transition-all text-center flex flex-col items-center shadow-sm hover:shadow-md">
+            <div
+              class="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center mb-2.5 group-hover:bg-blue-600 group-hover:text-white transition-all border border-blue-100">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" />
+              </svg>
+            </div>
+            <h3 class="font-bold text-[#0f172a] text-xs line-clamp-1">Accessories</h3>
+            <p class="text-[10px] text-[#64748b] mt-0.5 font-mono">200+ Products</p>
+          </a>
+        </div>
+      </div>
+
+      <!-- BEST SELLERS & WEEKEND TECH DEAL ROW -->
+      <div id="featured" class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+
+          <!-- Best Sellers (8 Cols) -->
+          <div class="lg:col-span-8 space-y-4">
+            <div class="flex items-center justify-between">
+              <div>
+                <h2 class="text-xl font-extrabold text-[#0f172a] tracking-tight">Best Sellers</h2>
+                <p class="text-xs text-[#64748b]">Top rated hardware components chosen by PC builders</p>
+              </div>
+              <a href="#shop?sort=rating"
+                class="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center space-x-1">
+                <span>View All</span>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+              </a>
+            </div>
+
+            <!-- Dynamic Best Sellers Grid -->
+            <div id="home-featured-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <!-- Injected by JS -->
+            </div>
           </div>
 
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-5">
-            <a href="#shop?cat=laptops"
-              class="group relative rounded-lg bg-white p-5 border border-[#e2e8f0] hover:border-[#cbd5e1] hover:-translate-y-1 transition-all text-center flex flex-col items-center shadow-sm hover:shadow-md">
-              <div
-                class="w-12 h-12 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center mb-3 group-hover:bg-blue-600 group-hover:text-white transition-all border border-blue-100">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                </svg>
+          <!-- Weekend Tech Deal Feature Card (4 Cols) -->
+          <div class="lg:col-span-4">
+            <div
+              class="h-full bg-blue-600 text-white rounded-xl p-6 shadow-md border border-blue-500 flex flex-col justify-between relative overflow-hidden group">
+              <!-- Background Accent Graphic -->
+              <div class="absolute -right-8 -bottom-8 w-44 h-44 rounded-full bg-white/10 blur-2xl pointer-events-none">
               </div>
-              <h3 class="font-bold text-[#0f172a] text-sm">Gaming Laptops</h3>
-              <p class="text-xs text-[#64748b] mt-1">Ultra Portable Power</p>
-            </a>
+              <div
+                class="absolute top-4 right-4 w-9 h-9 rounded-full bg-white/20 border border-white/30 flex items-center justify-center font-extrabold text-base">
+                %</div>
 
-            <a href="#shop?cat=peripherals"
-              class="group relative rounded-lg bg-white p-5 border border-[#e2e8f0] hover:border-[#cbd5e1] hover:-translate-y-1 transition-all text-center flex flex-col items-center shadow-sm hover:shadow-md">
-              <div
-                class="w-12 h-12 rounded-lg bg-sky-50 text-sky-600 flex items-center justify-center mb-3 group-hover:bg-sky-600 group-hover:text-white transition-all border border-sky-100">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" />
-                </svg>
+              <div class="space-y-3 relative z-10">
+                <span
+                  class="text-[10px] font-mono font-extrabold uppercase tracking-widest bg-white/20 text-white px-2.5 py-1 rounded">WEEKEND
+                  TECH DEAL</span>
+                <h3 class="text-2xl font-extrabold tracking-tight leading-snug">
+                  Upgrade your setup<br>
+                  <span class="text-blue-100">Save up to 20%</span> on selected components
+                </h3>
               </div>
-              <h3 class="font-bold text-[#0f172a] text-sm">Peripherals</h3>
-              <p class="text-xs text-[#64748b] mt-1">Mice, Keyboards & Audio</p>
-            </a>
 
-            <a href="#shop?cat=monitors"
-              class="group relative rounded-lg bg-white p-5 border border-[#e2e8f0] hover:border-[#cbd5e1] hover:-translate-y-1 transition-all text-center flex flex-col items-center shadow-sm hover:shadow-md">
-              <div
-                class="w-12 h-12 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center mb-3 group-hover:bg-blue-600 group-hover:text-white transition-all border border-blue-100">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
-                </svg>
+              <!-- Countdown Timer Blocks -->
+              <div class="my-6 grid grid-cols-4 gap-2 text-center relative z-10">
+                <div class="bg-white/15 backdrop-blur-md rounded-lg p-2 border border-white/20">
+                  <span class="block text-lg font-extrabold font-mono leading-none">02</span>
+                  <span class="text-[9px] uppercase tracking-wider text-blue-100">Days</span>
+                </div>
+                <div class="bg-white/15 backdrop-blur-md rounded-lg p-2 border border-white/20">
+                  <span class="block text-lg font-extrabold font-mono leading-none">14</span>
+                  <span class="text-[9px] uppercase tracking-wider text-blue-100">Hours</span>
+                </div>
+                <div class="bg-white/15 backdrop-blur-md rounded-lg p-2 border border-white/20">
+                  <span class="block text-lg font-extrabold font-mono leading-none">45</span>
+                  <span class="text-[9px] uppercase tracking-wider text-blue-100">Mins</span>
+                </div>
+                <div class="bg-white/15 backdrop-blur-md rounded-lg p-2 border border-white/20">
+                  <span class="block text-lg font-extrabold font-mono leading-none">30</span>
+                  <span class="text-[9px] uppercase tracking-wider text-blue-100">Secs</span>
+                </div>
               </div>
-              <h3 class="font-bold text-[#0f172a] text-sm">Displays</h3>
-              <p class="text-xs text-[#64748b] mt-1">QD-OLED & 240Hz Panels</p>
-            </a>
 
-            <a href="#shop?cat=components"
-              class="group relative rounded-lg bg-white p-5 border border-[#e2e8f0] hover:border-[#cbd5e1] hover:-translate-y-1 transition-all text-center flex flex-col items-center shadow-sm hover:shadow-md">
-              <div
-                class="w-12 h-12 rounded-lg bg-sky-50 text-sky-600 flex items-center justify-center mb-3 group-hover:bg-sky-600 group-hover:text-white transition-all border border-sky-100">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+              <a href="#shop?badge=Hot%20Deal"
+                class="w-full py-3 bg-white hover:bg-blue-50 text-blue-600 font-extrabold text-xs rounded-lg transition-all text-center shadow-md flex items-center justify-center space-x-2 relative z-10">
+                <span>Shop Deals Now</span>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7-7 7" />
                 </svg>
+              </a>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- NEW ARRIVALS & BUILD YOUR PC ROW -->
+      <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+
+          <!-- New Arrivals (8 Cols) -->
+          <div class="lg:col-span-8 space-y-4">
+            <div class="flex items-center justify-between">
+              <div>
+                <h2 class="text-xl font-extrabold text-[#0f172a] tracking-tight">New Arrivals</h2>
+                <p class="text-xs text-[#64748b]">Check out the latest high-performance hardware</p>
               </div>
-              <h3 class="font-bold text-[#0f172a] text-sm">PC Components</h3>
-              <p class="text-xs text-[#64748b] mt-1">GPUs, RAM & PSUs</p>
-            </a>
+              <a href="#shop?sort=newest"
+                class="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center space-x-1">
+                <span>View All</span>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+              </a>
+            </div>
+
+            <!-- Dynamic New Arrivals Grid -->
+            <div id="home-new-arrivals-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <!-- Injected by JS -->
+            </div>
+          </div>
+
+          <!-- Build Your Dream PC Banner Card (4 Cols) -->
+          <div class="lg:col-span-4">
+            <div
+              class="h-full bg-blue-50/70 border border-blue-100 rounded-xl p-6 flex flex-col justify-between shadow-sm">
+              <div class="space-y-3">
+                <h3 class="text-xl font-extrabold text-[#0f172a] tracking-tight">
+                  Build Your <span class="text-blue-600">Dream PC</span>
+                </h3>
+                <p class="text-xs text-[#64748b] leading-relaxed">
+                  Choose components, check compatibility, and build a system tailored precisely to your performance
+                  needs.
+                </p>
+
+                <!-- Blue Checklist Items -->
+                <ul class="space-y-2 pt-2 text-xs font-semibold text-[#0f172a]">
+                  <li class="flex items-center space-x-2">
+                    <div
+                      class="w-4 h-4 rounded-full bg-blue-600 text-white flex items-center justify-center text-[10px]">✓
+                    </div>
+                    <span>Smart Compatibility Check</span>
+                  </li>
+                  <li class="flex items-center space-x-2">
+                    <div
+                      class="w-4 h-4 rounded-full bg-blue-600 text-white flex items-center justify-center text-[10px]">✓
+                    </div>
+                    <span>Best Price Guarantee</span>
+                  </li>
+                  <li class="flex items-center space-x-2">
+                    <div
+                      class="w-4 h-4 rounded-full bg-blue-600 text-white flex items-center justify-center text-[10px]">✓
+                    </div>
+                    <span>Performance Guide</span>
+                  </li>
+                </ul>
+              </div>
+
+              <div class="pt-6">
+                <a href="#shop?cat=components"
+                  class="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-lg transition-all text-center shadow-md flex items-center justify-center space-x-2">
+                  <span>Start Building Now</span>
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7-7 7" />
+                  </svg>
+                </a>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- WHY CHOOSE ETECH COMPUTERS -->
+      <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center max-w-2xl mx-auto mb-8">
+          <h2 class="text-2xl font-extrabold text-[#0f172a] tracking-tight">Why Choose ETech Computers?</h2>
+          <p class="text-xs text-[#64748b] mt-1">We are Sri Lanka's leading high-performance computer hardware provider
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          <div
+            class="bg-white border border-[#e2e8f0] rounded-xl p-5 shadow-sm space-y-2 hover:border-[#cbd5e1] transition-all">
+            <div
+              class="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-100">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              </svg>
+            </div>
+            <h3 class="text-sm font-bold text-[#0f172a]">100% Genuine Products</h3>
+            <p class="text-xs text-[#64748b] leading-relaxed">We only sell authentic products from trusted global brands
+              with full certification.</p>
+          </div>
+
+          <div
+            class="bg-white border border-[#e2e8f0] rounded-xl p-5 shadow-sm space-y-2 hover:border-[#cbd5e1] transition-all">
+            <div
+              class="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-100">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <h3 class="text-sm font-bold text-[#0f172a]">Official Warranty Support</h3>
+            <p class="text-xs text-[#64748b] leading-relaxed">Get full manufacturer warranty and local support across
+              all product lines.</p>
+          </div>
+
+          <div
+            class="bg-white border border-[#e2e8f0] rounded-xl p-5 shadow-sm space-y-2 hover:border-[#cbd5e1] transition-all">
+            <div
+              class="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-100">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 100-6 3 3 0 000 6z" />
+              </svg>
+            </div>
+            <h3 class="text-sm font-bold text-[#0f172a]">Expert Technical Support</h3>
+            <p class="text-xs text-[#64748b] leading-relaxed">Our experienced PC builders help you choose and configure
+              the right hardware.</p>
+          </div>
+
+          <div
+            class="bg-white border border-[#e2e8f0] rounded-xl p-5 shadow-sm space-y-2 hover:border-[#cbd5e1] transition-all">
+            <div
+              class="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-100">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </div>
+            <h3 class="text-sm font-bold text-[#0f172a]">Multi-Branch Availability</h3>
+            <p class="text-xs text-[#64748b] leading-relaxed">Stock available across our Colombo, Kandy, Galle & Matara
+              branches.</p>
           </div>
         </div>
       </div>
 
-      <!-- Featured Hot Deals Section -->
-      <div id="featured" class="py-14 bg-white border-t border-[#e2e8f0]">
-        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div class="flex flex-col md:flex-row md:items-end justify-between mb-8">
-            <div>
-              <span class="text-xs font-mono font-bold text-blue-600 tracking-wider uppercase">HANDPICKED
-                HARDWARE</span>
-              <h2 class="text-2xl sm:text-3xl font-extrabold text-[#0f172a] tracking-tight mt-1">Featured Hot Deals</h2>
+      <!-- TRUSTED BY THE BEST BRANDS -->
+      <div id="home-brands" class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="bg-white border border-[#e2e8f0] rounded-xl p-6 shadow-sm space-y-4">
+          <div class="flex items-center justify-between border-b border-[#e2e8f0] pb-3">
+            <h3 class="text-xs font-mono font-bold uppercase tracking-wider text-[#64748b]">Trusted By The Best Brands
+            </h3>
+            <div class="flex items-center space-x-1">
+              <button class="p-1 rounded bg-[#f8fafc] hover:bg-[#f1f5f9] border border-[#e2e8f0] text-[#64748b]"><svg
+                  class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                </svg></button>
+              <button class="p-1 rounded bg-[#f8fafc] hover:bg-[#f1f5f9] border border-[#e2e8f0] text-[#64748b]"><svg
+                  class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg></button>
             </div>
-            <a href="#shop"
-              class="mt-3 md:mt-0 text-xs font-bold text-[#475569] hover:text-blue-600 inline-flex items-center space-x-1 uppercase tracking-wider">
-              <span>View Full Shop</span>
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7-7 7" />
-              </svg>
-            </a>
           </div>
 
-          <div id="home-featured-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            <!-- Dynamic Cards Injected via JS -->
+          <div
+            class="flex flex-wrap items-center justify-between gap-6 opacity-75 grayscale hover:grayscale-0 transition-all duration-300">
+            <span class="font-extrabold text-lg text-[#0f172a] hover:text-blue-600 cursor-pointer">NVIDIA</span>
+            <span class="font-extrabold text-lg text-[#0f172a] hover:text-blue-600 cursor-pointer">AMD</span>
+            <span class="font-extrabold text-lg text-[#0f172a] hover:text-blue-600 cursor-pointer">Intel</span>
+            <span class="font-extrabold text-lg text-[#0f172a] hover:text-blue-600 cursor-pointer">ASUS</span>
+            <span class="font-extrabold text-lg text-[#0f172a] hover:text-blue-600 cursor-pointer">MSI</span>
+            <span class="font-extrabold text-lg text-[#0f172a] hover:text-blue-600 cursor-pointer">GIGABYTE</span>
+            <span class="font-extrabold text-lg text-[#0f172a] hover:text-blue-600 cursor-pointer">CORSAIR</span>
+            <span class="font-extrabold text-lg text-[#0f172a] hover:text-blue-600 cursor-pointer">Kingston</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- MEET E-T: YOUR AI TECHNICAL ADVISOR -->
+      <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="bg-blue-50/60 border border-blue-100 rounded-2xl p-6 sm:p-8 shadow-sm">
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+
+            <!-- Left Text & Mascot Callout -->
+            <div class="lg:col-span-5 space-y-4">
+              <div
+                class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-mono font-bold">
+                <span>🤖 AI TECH ASSISTANT</span>
+              </div>
+
+              <h2 class="text-3xl font-extrabold text-[#0f172a] tracking-tight leading-tight">
+                Meet E-T<br>
+                Your <span class="text-blue-600">AI Technical Advisor</span>
+              </h2>
+
+              <p class="text-xs text-[#475569] leading-relaxed">
+                Not sure which component is best for you? Ask E-T and get instant expert hardware recommendations for
+                your custom PC build.
+              </p>
+
+              <button onclick="if(window.ET_Chatbot) window.ET_Chatbot.open();"
+                class="px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-lg shadow-md transition-all inline-flex items-center space-x-2">
+                <span>Chat with E-T Now</span>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7-7 7" />
+                </svg>
+              </button>
+            </div>
+
+            <!-- Right Interactive Chat Preview UI -->
+            <div class="lg:col-span-7">
+              <div class="bg-white border border-[#e2e8f0] rounded-xl p-5 shadow-md space-y-4">
+                <div class="flex items-center space-x-3 border-b border-[#e2e8f0] pb-3">
+                  <div
+                    class="w-8 h-8 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center text-xs">
+                    E-T</div>
+                  <div>
+                    <h4 class="text-xs font-bold text-[#0f172a]">Hello! I'm E-T 🤖</h4>
+                    <p class="text-[10px] text-[#64748b]">How can I help you build your dream PC today?</p>
+                  </div>
+                </div>
+
+                <!-- Clickable Quick Suggestion Chips -->
+                <div class="flex flex-wrap gap-2 text-xs">
+                  <button
+                    onclick="if(window.ET_Chatbot) { window.ET_Chatbot.open(); window.ET_Chatbot.send('Build a gaming PC under Rs. 300,000'); }"
+                    class="px-3 py-1.5 rounded-full bg-[#f8fafc] hover:bg-blue-50 text-blue-700 border border-blue-200 font-semibold transition-all">
+                    Build a gaming PC under Rs. 300,000
+                  </button>
+                  <button
+                    onclick="if(window.ET_Chatbot) { window.ET_Chatbot.open(); window.ET_Chatbot.send('Best GPU for 4K gaming?'); }"
+                    class="px-3 py-1.5 rounded-full bg-[#f8fafc] hover:bg-blue-50 text-blue-700 border border-blue-200 font-semibold transition-all">
+                    Best GPU for 4K gaming?
+                  </button>
+                  <button
+                    onclick="if(window.ET_Chatbot) { window.ET_Chatbot.open(); window.ET_Chatbot.send('Recommend a streaming PC setup'); }"
+                    class="px-3 py-1.5 rounded-full bg-[#f8fafc] hover:bg-blue-50 text-blue-700 border border-blue-200 font-semibold transition-all">
+                    Recommend a streaming PC setup
+                  </button>
+                  <button
+                    onclick="if(window.ET_Chatbot) { window.ET_Chatbot.open(); window.ET_Chatbot.send('What\'s new in graphics cards?'); }"
+                    class="px-3 py-1.5 rounded-full bg-[#f8fafc] hover:bg-blue-50 text-blue-700 border border-blue-200 font-semibold transition-all">
+                    What's new in graphics cards?
+                  </button>
+                </div>
+
+                <div class="flex items-center space-x-2 pt-2 border-t border-[#e2e8f0]">
+                  <input type="text" placeholder="Type your question here..."
+                    onkeypress="if(event.key==='Enter' && window.ET_Chatbot) { window.ET_Chatbot.open(); window.ET_Chatbot.send(this.value); this.value=''; }"
+                    class="w-full px-3.5 py-2 rounded-md bg-[#f8fafc] border border-[#e2e8f0] text-xs text-[#0f172a] placeholder-[#94a3b8] focus:border-blue-600 focus:outline-none">
+                  <button onclick="if(window.ET_Chatbot) { window.ET_Chatbot.open(); }"
+                    class="p-2 bg-blue-600 hover:bg-blue-500 text-white rounded-md flex-shrink-0">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- NEWSLETTER BANNER -->
+      <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="bg-[#0f172a] text-white rounded-2xl p-8 sm:p-10 shadow-xl relative overflow-hidden">
+          <div class="flex flex-col lg:flex-row items-center justify-between gap-6 relative z-10">
+            <div class="space-y-2 text-center lg:text-left">
+              <div class="flex items-center justify-center lg:justify-start space-x-2">
+                <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+                <h2 class="text-2xl font-extrabold tracking-tight">Stay Updated With The Latest Tech</h2>
+              </div>
+              <p class="text-xs text-slate-300 max-w-md">Get notified about new arrivals, exclusive deals and hardware
+                updates.</p>
+            </div>
+
+            <form
+              onsubmit="event.preventDefault(); alert('Thank you for subscribing to ETech Computers tech updates!'); this.reset();"
+              class="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-2 w-full lg:w-auto">
+              <input type="email" required placeholder="Enter your email address..."
+                class="w-full sm:w-80 px-4 py-3 rounded-lg bg-slate-800 border border-slate-700 text-white placeholder-slate-400 text-xs focus:outline-none focus:border-blue-500">
+              <button type="submit"
+                class="w-full sm:w-auto px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-lg transition-all shadow-md">
+                Subscribe
+              </button>
+            </form>
           </div>
         </div>
       </div>
@@ -507,7 +1019,8 @@
               <div>
                 <div class="flex items-center justify-between mb-2">
                   <label class="block text-xs font-bold text-[#475569] uppercase tracking-wider">Categories</label>
-                  <span id="category-selected-badge" class="text-[10px] text-blue-600 font-mono hidden">0 selected</span>
+                  <span id="category-selected-badge" class="text-[10px] text-blue-600 font-mono hidden">0
+                    selected</span>
                 </div>
                 <div class="relative">
                   <select id="shop-category-combobox"
@@ -908,8 +1421,7 @@
 
           <!-- Left Column: User Profile Card -->
           <div class="lg:col-span-4 space-y-6">
-            <div
-              class="bg-white border border-[#e2e8f0] rounded-lg p-5 space-y-5 shadow-sm relative overflow-hidden">
+            <div class="bg-white border border-[#e2e8f0] rounded-lg p-5 space-y-5 shadow-sm relative overflow-hidden">
 
               <div class="flex items-center space-x-3.5">
                 <div
@@ -948,8 +1460,12 @@
                 </div>
               </div>
 
-              <button onclick="openEditProfileModal()" class="w-full py-2 bg-[#f8fafc] hover:bg-[#f1f5f9] text-blue-600 hover:text-blue-700 font-bold text-xs rounded-md border border-[#e2e8f0] transition-all flex items-center justify-center space-x-1.5 shadow-sm">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+              <button onclick="openEditProfileModal()"
+                class="w-full py-2 bg-[#f8fafc] hover:bg-[#f1f5f9] text-blue-600 hover:text-blue-700 font-bold text-xs rounded-md border border-[#e2e8f0] transition-all flex items-center justify-center space-x-1.5 shadow-sm">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
                 <span>Edit Profile & Security</span>
               </button>
             </div>
@@ -1085,74 +1601,125 @@
   <!-- ============================================================ -->
   <!-- 3. PERSISTENT FOOTER                                         -->
   <!-- ============================================================ -->
-  <footer id="store-footer" class="bg-[#f8fafc] border-t border-[#e2e8f0] text-[#64748b] text-sm mt-auto">
-    <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+  <footer id="store-footer" class="bg-[#0f172a] text-[#94a3b8] text-sm mt-auto border-t border-[#1e293b]">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-16">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
 
-        <div class="space-y-3">
-          <div class="flex items-center space-x-2">
-            <span class="text-lg font-bold text-[#0f172a]">ETech<span class="text-blue-600">Computers</span></span>
+        <!-- Column 1: Brand Info & Social -->
+        <div class="space-y-4 lg:col-span-1">
+          <div class="flex flex-col">
+            <span class="text-xl font-extrabold tracking-tight text-white">
+              ETech<span class="text-blue-500">Computers</span>
+            </span>
+            <span class="text-[9px] tracking-[0.2em] uppercase text-slate-400 font-semibold">NEXT-GEN TECH STORE</span>
           </div>
-          <p class="text-[#64748b] leading-relaxed text-xs">
-            Your premium destination for high-performance workstations, custom PCs, cutting-edge laptops, and top-tier
-            computer peripherals.
+          <p class="text-xs text-slate-400 leading-relaxed">
+            Your trusted partner for high-performance computers, components, and tech solutions.
           </p>
-          <p class="text-[11px] text-[#94a3b8]">ISO 9001 Certified Authentic Importer</p>
+          <div class="flex items-center space-x-3 pt-2 text-slate-400">
+            <a href="#home"
+              class="w-8 h-8 rounded-full bg-slate-800 hover:bg-blue-600 hover:text-white flex items-center justify-center transition-colors"><svg
+                class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                <path
+                  d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+              </svg></a>
+            <a href="#home"
+              class="w-8 h-8 rounded-full bg-slate-800 hover:bg-blue-600 hover:text-white flex items-center justify-center transition-colors"><svg
+                class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                <path
+                  d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
+              </svg></a>
+            <a href="#home"
+              class="w-8 h-8 rounded-full bg-slate-800 hover:bg-blue-600 hover:text-white flex items-center justify-center transition-colors"><svg
+                class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                <path
+                  d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.612 4.385-8.816-.029-6.186-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z" />
+              </svg></a>
+          </div>
         </div>
 
+        <!-- Column 2: Shop -->
         <div>
-          <h3 class="text-[#0f172a] font-bold mb-3 text-xs tracking-wider uppercase">Navigation</h3>
-          <ul class="space-y-2 text-xs">
-            <li><a href="#home" class="hover:text-blue-600 transition-colors">Home Page</a></li>
-            <li><a href="#shop" class="hover:text-blue-600 transition-colors">Shop Catalog</a></li>
-            <li><a href="#about" class="hover:text-blue-600 transition-colors">About Us</a></li>
-            <li><a href="#cart" class="hover:text-blue-600 transition-colors">Shopping Cart</a></li>
-            <li><a href="#checkout" class="hover:text-blue-600 transition-colors">Checkout</a></li>
+          <h3 class="text-white font-bold mb-4 text-xs tracking-wider uppercase">Shop</h3>
+          <ul class="space-y-2.5 text-xs text-slate-400">
+            <li><a href="#shop?cat=laptops" class="hover:text-white transition-colors">Laptops</a></li>
+            <li><a href="#shop?cat=desktops" class="hover:text-white transition-colors">Desktop PCs</a></li>
+            <li><a href="#shop?cat=gpus" class="hover:text-white transition-colors">Components</a></li>
+            <li><a href="#shop?cat=monitors" class="hover:text-white transition-colors">Monitors</a></li>
+            <li><a href="#shop?cat=peripherals" class="hover:text-white transition-colors">Accessories</a></li>
+            <li><a href="#shop" class="hover:text-white transition-colors">All Categories</a></li>
           </ul>
         </div>
 
+        <!-- Column 3: Support -->
         <div>
-          <h3 class="text-[#0f172a] font-bold mb-3 text-xs tracking-wider uppercase">Categories</h3>
-          <ul class="space-y-2 text-xs">
-            <li><a href="#shop?cat=laptops" class="hover:text-blue-600 transition-colors">Pro Laptops</a></li>
-            <li><a href="#shop?cat=peripherals" class="hover:text-blue-600 transition-colors">Gaming Peripherals</a>
-            </li>
-            <li><a href="#shop?cat=monitors" class="hover:text-blue-600 transition-colors">UltraWide Monitors</a></li>
-            <li><a href="#shop?cat=components" class="hover:text-blue-600 transition-colors">PC Components</a></li>
+          <h3 class="text-white font-bold mb-4 text-xs tracking-wider uppercase">Support</h3>
+          <ul class="space-y-2.5 text-xs text-slate-400">
+            <li><a href="mailto:info@etechcomputers.lk" class="hover:text-white transition-colors">Contact Us</a></li>
+            <li><a href="#account" class="hover:text-white transition-colors">Track Order</a></li>
+            <li><a href="#policies?policy=shipping" class="hover:text-white transition-colors">Shipping Info</a></li>
+            <li><a href="#policies?policy=refund" class="hover:text-white transition-colors">Returns & Refunds</a></li>
+            <li><a href="#policies?policy=warranty" class="hover:text-white transition-colors">Warranty Policy</a></li>
+            <li><a href="#policies" class="hover:text-white transition-colors">FAQ</a></li>
           </ul>
         </div>
 
+        <!-- Column 4: Company -->
         <div>
-          <h3 class="text-[#0f172a] font-bold mb-3 text-xs tracking-wider uppercase">Stay Updated</h3>
-          <p class="text-xs text-[#64748b] mb-3">Subscribe to get special discounts & tech news updates.</p>
-          <form id="newsletter-form"
-            onsubmit="event.preventDefault(); alert('Thank you for subscribing to ETech Computers updates!'); this.reset();"
-            class="space-y-2">
-            <div class="relative">
-              <input type="email" required placeholder="Enter your email"
-                class="w-full px-3 py-2 rounded-md bg-white border border-[#e2e8f0] text-[#0f172a] placeholder-[#94a3b8] text-xs focus:border-blue-600 shadow-sm">
-              <button type="submit"
-                class="mt-2 w-full py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-md text-xs tracking-wider uppercase transition-all shadow-sm">
-                Subscribe Now
-              </button>
-            </div>
-          </form>
+          <h3 class="text-white font-bold mb-4 text-xs tracking-wider uppercase">Company</h3>
+          <ul class="space-y-2.5 text-xs text-slate-400">
+            <li><a href="#about" class="hover:text-white transition-colors">About Us</a></li>
+            <li><a href="#about" class="hover:text-white transition-colors">Our Branches</a></li>
+            <li><a href="#about" class="hover:text-white transition-colors">Careers</a></li>
+            <li><a href="#about" class="hover:text-white transition-colors">News & Blog</a></li>
+            <li><a href="mailto:corporate@etechcomputers.lk" class="hover:text-white transition-colors">Corporate
+                Sales</a></li>
+          </ul>
+        </div>
+
+        <!-- Column 5: Legal & Contact Info -->
+        <div>
+          <h3 class="text-white font-bold mb-4 text-xs tracking-wider uppercase">Legal & Contact</h3>
+          <ul class="space-y-2.5 text-xs text-slate-400">
+            <li><a href="#policies?policy=terms" class="hover:text-white transition-colors">Terms & Conditions</a></li>
+            <li><a href="#policies?policy=privacy" class="hover:text-white transition-colors">Privacy Policy</a></li>
+            <li><a href="#policies?policy=refund" class="hover:text-white transition-colors">Refund Policy</a></li>
+            <li class="pt-2 text-slate-300 font-bold">Hotline: +94 11 234 5678</li>
+            <li class="text-slate-400">Email: info@etechcomputers.lk</li>
+            <li class="text-slate-400">Colombo, Sri Lanka</li>
+          </ul>
         </div>
 
       </div>
 
+      <!-- Bottom Bar -->
       <div
-        class="border-t border-[#e2e8f0] mt-10 pt-6 flex flex-col sm:flex-row items-center justify-between text-xs text-[#64748b] space-y-4 sm:space-y-0">
-        <p>&copy; 2026 ETech Computers Inc. All rights reserved. Built for AAD Module.</p>
-        <div class="flex flex-wrap justify-center gap-4 text-[#64748b]">
-          <a href="#privacy" class="hover:text-blue-600 transition-colors">Privacy Policy</a>
-          <span>•</span>
-          <a href="#terms" class="hover:text-blue-600 transition-colors">Terms of Service</a>
-          <span>•</span>
-          <a href="#warranty" class="hover:text-blue-600 transition-colors">Guarantee & Warranty</a>
+        class="border-t border-slate-800 mt-12 pt-6 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-400 gap-4">
+        <p>&copy; 2026 ETech Computers. All rights reserved.</p>
+
+        <!-- Payment Gateway Badges -->
+        <div class="flex items-center space-x-2 text-[10px] font-mono uppercase tracking-wider text-slate-400">
+          <span class="px-2 py-1 rounded bg-slate-800 border border-slate-700 font-bold text-white">VISA</span>
+          <span class="px-2 py-1 rounded bg-slate-800 border border-slate-700 font-bold text-white">MASTERCARD</span>
+          <span class="px-2 py-1 rounded bg-slate-800 border border-slate-700 font-bold text-white">AMEX</span>
+          <span class="px-2 py-1 rounded bg-slate-800 border border-slate-700 font-bold text-blue-400">PAYHERE</span>
         </div>
+
+        <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})"
+          class="w-8 h-8 rounded bg-slate-800 hover:bg-blue-600 text-white flex items-center justify-center transition-colors"
+          title="Back to top">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+          </svg>
+        </button>
       </div>
     </div>
+  </footer>
+  <span>•</span>
+  <a href="#warranty" class="hover:text-blue-600 transition-colors">Guarantee & Warranty</a>
+  </div>
+  </div>
+  </div>
   </footer>
 
   <!-- ============================================================ -->
@@ -1222,7 +1789,8 @@
       <div id="et-messages" class="flex-1 overflow-y-auto p-4 flex flex-col gap-3 bg-[#f8fafc]"></div>
 
       <!-- Quick Suggestions -->
-      <div id="et-suggestions" class="px-3.5 py-2 flex gap-1.5 flex-wrap flex-shrink-0 border-t border-[#e2e8f0] bg-white">
+      <div id="et-suggestions"
+        class="px-3.5 py-2 flex gap-1.5 flex-wrap flex-shrink-0 border-t border-[#e2e8f0] bg-white">
       </div>
 
       <!-- Input Bar -->
