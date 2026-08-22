@@ -13,6 +13,8 @@ const PRODUCTS_STORAGE_KEY = 'etech_products';
 export function getStoredProducts() {
     const raw = localStorage.getItem(PRODUCTS_STORAGE_KEY);
     let list = [];
+    let shouldSave = false;
+
     if (!raw) {
         // Hydrate default products with branch stock
         list = products.map(p => {
@@ -20,6 +22,7 @@ export function getStoredProducts() {
             const totalStock = Object.values(stockMap).reduce((a, b) => a + b, 0);
             return {
                 ...p,
+                brand: p.brand || 'ASUS',
                 branchStock: stockMap,
                 totalStock: totalStock,
                 inStock: totalStock > 0,
@@ -29,34 +32,44 @@ export function getStoredProducts() {
             };
         });
         localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(list));
+        return list;
     } else {
         try {
             list = JSON.parse(raw);
+            if (!Array.isArray(list) || list.length === 0) {
+                list = [...products];
+                shouldSave = true;
+            }
         } catch (e) {
-            list = products;
+            list = [...products];
+            shouldSave = true;
         }
     }
 
-    // Always ensure items 0, 1, 2, 3 have updated metadata matching reference design
-    [0, 1, 2, 3].forEach(i => {
-        if (products[i] && list[i]) {
-            list[i].name = products[i].name;
-            list[i].category = products[i].category;
-            list[i].price = products[i].price;
-            list[i].originalPrice = products[i].originalPrice;
-            list[i].rating = products[i].rating;
-            list[i].reviews = products[i].reviews;
-            list[i].badge = products[i].badge;
-            list[i].image = products[i].image;
+    // Always ensure every product has a valid brand, category, and metadata synced from default catalog
+    list = list.map(p => {
+        const def = products.find(dp => dp.id === p.id || (dp.name && p.name && dp.name.toLowerCase() === p.name.toLowerCase()));
+        const fallbackBrand = def && def.brand ? def.brand : 'ASUS';
+        
+        let currentBrand = p.brand;
+        if (!currentBrand || currentBrand.trim() === '') {
+            currentBrand = fallbackBrand;
+            shouldSave = true;
         }
+
+        return {
+            ...p,
+            brand: currentBrand,
+            alertEnabled: p.alertEnabled !== undefined ? p.alertEnabled : true,
+            lowStockMargin: p.lowStockMargin !== undefined ? parseInt(p.lowStockMargin) : 5
+        };
     });
 
-    // Ensure all items have alertEnabled and lowStockMargin properties
-    return list.map(p => ({
-        ...p,
-        alertEnabled: p.alertEnabled !== undefined ? p.alertEnabled : true,
-        lowStockMargin: p.lowStockMargin !== undefined ? parseInt(p.lowStockMargin) : 5
-    }));
+    if (shouldSave) {
+        localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(list));
+    }
+
+    return list;
 }
 
 /**

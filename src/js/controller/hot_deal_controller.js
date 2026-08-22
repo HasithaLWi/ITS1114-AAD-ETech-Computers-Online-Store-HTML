@@ -236,7 +236,10 @@ export function renderFlashDealsGrid() {
     return;
   }
 
+  const allStoredProducts = getStoredProducts();
+
   container.innerHTML = filtered.map(deal => {
+    const dealProduct = allStoredProducts.find(p => p.id === deal.productId);
     const isWishlisted = wishlistDeals.has(deal.id);
     const remainingSecs = flashDealTimers.get(deal.id) || deal.timerSeconds;
     const hours = Math.floor(remainingSecs / 3600);
@@ -267,6 +270,9 @@ export function renderFlashDealsGrid() {
               src="${deal.image}" 
               alt="${deal.name}" 
               class="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300">
+            ${dealProduct && dealProduct.brand ? `
+              <span class="absolute top-2.5 left-2.5 bg-slate-900/90 text-white text-[9px] font-mono font-bold px-2 py-0.5 rounded border border-white/20 shadow-sm">${dealProduct.brand}</span>
+            ` : ''}
           </div>
 
           <!-- Title -->

@@ -1,6 +1,7 @@
 import { getProductById, products } from '../models/data.js';
 import { getCurrentUser } from '../controller/login_controller.js';
 import { getUserReviewForProduct, getProductReviews } from '../models/rating_data.js';
+import { getBrands } from '../models/brand_data.js';
 
 export default function renderProductDetails(productId) {
     const container = document.getElementById('product-details-container');
@@ -87,14 +88,20 @@ export default function renderProductDetails(productId) {
             ` : ''}
 
             <!-- Meta Information Pills -->
-            <div class="grid grid-cols-2 gap-2.5 text-xs">
-              <div class="bg-[#f8fafc] p-3 rounded-md border border-[#e2e8f0] space-y-0.5">
-                <span class="text-[#64748b] uppercase font-bold text-[10px] tracking-wider block">SKU Code</span>
-                <span class="text-blue-600 font-mono font-extrabold text-xs">${product.sku || `ETC-PROD-${product.id}`}</span>
+            <div class="grid grid-cols-3 gap-2 text-xs">
+              <div class="bg-[#f8fafc] p-2.5 rounded-md border border-[#e2e8f0] space-y-0.5">
+                <span class="text-[#64748b] uppercase font-bold text-[9px] tracking-wider block">SKU Code</span>
+                <span class="text-blue-600 font-mono font-extrabold text-xs truncate block">${product.sku || `ETC-PROD-${product.id}`}</span>
               </div>
-              <div class="bg-[#f8fafc] p-3 rounded-md border border-[#e2e8f0] space-y-0.5">
-                <span class="text-[#64748b] uppercase font-bold text-[10px] tracking-wider block">Warranty</span>
-                <span class="text-[#0f172a] font-semibold truncate block text-xs" title="${product.warranty}">${product.warranty ? product.warranty : 'Standard Warranty'}</span>
+              <div class="bg-[#f8fafc] p-2.5 rounded-md border border-[#e2e8f0] space-y-0.5">
+                <span class="text-[#64748b] uppercase font-bold text-[9px] tracking-wider block">Brand</span>
+                <a href="#shop?brand=${(product.brand || '').toLowerCase()}" class="text-indigo-600 font-bold text-xs truncate block hover:underline" title="View all ${product.brand || 'Hardware'} products">
+                  ${product.brand || 'Authentic Partner'}
+                </a>
+              </div>
+              <div class="bg-[#f8fafc] p-2.5 rounded-md border border-[#e2e8f0] space-y-0.5">
+                <span class="text-[#64748b] uppercase font-bold text-[9px] tracking-wider block">Warranty</span>
+                <span class="text-[#0f172a] font-semibold truncate block text-xs" title="${product.warranty}">${product.warranty ? product.warranty : 'Official Warranty'}</span>
               </div>
             </div>
           </div>
@@ -102,12 +109,19 @@ export default function renderProductDetails(productId) {
           <!-- Right Column: Product Overview, Specs, Purchasing -->
           <div class="lg:col-span-7 space-y-5">
             
-            <!-- Category & Rating Header -->
+            <!-- Category, Brand & Rating Header -->
             <div>
-              <div class="flex items-center space-x-3 text-xs mb-2">
+              <div class="flex items-center space-x-2 text-xs mb-2 flex-wrap gap-y-1">
                 <span class="px-2.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 uppercase font-bold font-mono tracking-wider text-[10px]">
                   ${product.category}
                 </span>
+                ${product.brand ? `
+                  <a href="#shop?brand=${product.brand.toLowerCase()}" class="px-2.5 py-0.5 rounded-md bg-slate-900 text-white font-mono font-bold text-[10px] tracking-wider flex items-center space-x-1.5 hover:bg-blue-600 transition-colors shadow-sm" title="View all ${product.brand} products">
+                    <svg class="w-3 h-3 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                    <span>${product.brand}</span>
+                    <span class="text-blue-300">↗</span>
+                  </a>
+                ` : ''}
                 <a href="#product-reviews-section" class="flex items-center space-x-1.5 bg-[#f8fafc] hover:bg-[#f1f5f9] px-2.5 py-0.5 rounded border border-[#e2e8f0] transition-colors cursor-pointer shadow-sm">
                   <span class="text-amber-500 text-sm">★</span>
                   <span class="font-bold text-[#0f172a] text-xs">${product.rating}</span>
@@ -337,13 +351,21 @@ export default function renderProductDetails(productId) {
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            ${relatedProducts.map(rel => `
+            ${relatedProducts.map(rel => {
+              const relBrand = rel.brand || '';
+              return `
               <div onclick="viewProductDetails(${rel.id})" class="group rounded-lg bg-white border border-[#e2e8f0] hover:border-[#cbd5e1] p-3.5 flex flex-col justify-between cursor-pointer transition-all duration-200 hover:-translate-y-0.5 shadow-sm hover:shadow-md">
                 <div>
                   <div class="relative overflow-hidden rounded-md bg-[#f8fafc] mb-2.5 h-36 flex items-center justify-center border border-[#e2e8f0]">
                     <img src="${rel.image}" alt="${rel.name}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                    ${relBrand ? `
+                      <span class="absolute top-2 left-2 bg-slate-900/90 text-white text-[8px] font-mono font-bold px-1.5 py-0.5 rounded border border-white/20 shadow-sm">${relBrand}</span>
+                    ` : ''}
                   </div>
-                  <span class="text-[9px] font-bold uppercase text-blue-600 font-mono tracking-wider">${rel.category}</span>
+                  <div class="flex items-center space-x-1.5 text-[9px] font-bold uppercase font-mono tracking-wider">
+                    <span class="text-blue-600">${rel.category}</span>
+                    ${relBrand ? `<span class="text-slate-300">•</span><span class="text-slate-700 bg-slate-100 px-1 py-0.2 rounded text-[8px] font-mono font-bold">${relBrand}</span>` : ''}
+                  </div>
                   <h4 class="text-xs font-bold text-[#0f172a] mt-1 line-clamp-1 group-hover:text-blue-600 transition-colors">${rel.name}</h4>
                 </div>
                 <div class="mt-3 pt-2.5 border-t border-[#e2e8f0] flex items-center justify-between">
@@ -351,7 +373,8 @@ export default function renderProductDetails(productId) {
                   <span class="text-[11px] font-bold text-blue-600 group-hover:underline">View Specs →</span>
                 </div>
               </div>
-            `).join('')}
+            `;
+            }).join('')}
           </div>
         </div>
       ` : ''}

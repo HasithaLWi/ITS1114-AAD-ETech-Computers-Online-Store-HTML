@@ -829,34 +829,39 @@
         </div>
       </div>
 
-      <!-- TRUSTED BY THE BEST BRANDS -->
+      <!-- OFFICIAL PARTNER BRANDS & IMPORTERS -->
       <div id="home-brands" class="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="bg-white border border-[#e2e8f0] rounded-xl p-6 shadow-sm space-y-4">
-          <div class="flex items-center justify-between border-b border-[#e2e8f0] pb-3">
-            <h3 class="text-xs font-mono font-bold uppercase tracking-wider text-[#64748b]">Trusted By The Best Brands
-            </h3>
-            <div class="flex items-center space-x-1">
-              <button class="p-1 rounded bg-[#f8fafc] hover:bg-[#f1f5f9] border border-[#e2e8f0] text-[#64748b]"><svg
-                  class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-                </svg></button>
-              <button class="p-1 rounded bg-[#f8fafc] hover:bg-[#f1f5f9] border border-[#e2e8f0] text-[#64748b]"><svg
-                  class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                </svg></button>
+        <div class="bg-white border border-[#e2e8f0] rounded-2xl p-6 sm:p-7 shadow-sm space-y-5">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[#e2e8f0] pb-4 gap-3">
+            <div>
+              <div class="flex items-center space-x-2">
+                <span class="text-[10px] font-mono font-extrabold uppercase tracking-widest text-blue-600 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
+                  OFFICIAL PARTNERS
+                </span>
+                <span class="text-xs text-[#64748b] hidden sm:inline font-semibold">100% Genuine Hardware & Manufacturer Warranties</span>
+              </div>
+              <h3 class="text-lg sm:text-xl font-extrabold text-[#0f172a] tracking-tight mt-1">
+                Authorized Brand Distributors
+              </h3>
+            </div>
+            
+            <div class="flex items-center space-x-2 self-end sm:self-auto">
+              <a href="#shop" class="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center space-x-1 mr-2">
+                <span>View All Brands in Shop</span>
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+              </a>
+              <button onclick="scrollHomeBrands(-1)" class="p-2 rounded-xl bg-[#f8fafc] hover:bg-[#f1f5f9] border border-[#e2e8f0] text-[#64748b] hover:text-[#0f172a] transition-all shadow-sm active:scale-95" title="Previous Brands">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+              </button>
+              <button onclick="scrollHomeBrands(1)" class="p-2 rounded-xl bg-[#f8fafc] hover:bg-[#f1f5f9] border border-[#e2e8f0] text-[#64748b] hover:text-[#0f172a] transition-all shadow-sm active:scale-95" title="Next Brands">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+              </button>
             </div>
           </div>
 
-          <div
-            class="flex flex-wrap items-center justify-between gap-6 opacity-75 grayscale hover:grayscale-0 transition-all duration-300">
-            <span class="font-extrabold text-lg text-[#0f172a] hover:text-blue-600 cursor-pointer">NVIDIA</span>
-            <span class="font-extrabold text-lg text-[#0f172a] hover:text-blue-600 cursor-pointer">AMD</span>
-            <span class="font-extrabold text-lg text-[#0f172a] hover:text-blue-600 cursor-pointer">Intel</span>
-            <span class="font-extrabold text-lg text-[#0f172a] hover:text-blue-600 cursor-pointer">ASUS</span>
-            <span class="font-extrabold text-lg text-[#0f172a] hover:text-blue-600 cursor-pointer">MSI</span>
-            <span class="font-extrabold text-lg text-[#0f172a] hover:text-blue-600 cursor-pointer">GIGABYTE</span>
-            <span class="font-extrabold text-lg text-[#0f172a] hover:text-blue-600 cursor-pointer">CORSAIR</span>
-            <span class="font-extrabold text-lg text-[#0f172a] hover:text-blue-600 cursor-pointer">Kingston</span>
+          <!-- Dynamic Brands Showcase Horizontal Scroll Track -->
+          <div id="home-brands-container" class="flex items-stretch space-x-4 overflow-x-auto scroll-smooth py-1">
+            <!-- Dynamically populated by renderHomeBrandsShowcase() -->
           </div>
         </div>
       </div>
@@ -1350,6 +1355,21 @@
                   </select>
                 </div>
                 <div id="shop-selected-category-tags" class="flex flex-wrap gap-1.5 mt-2.5 min-h-[4px]"></div>
+              </div>
+
+              <!-- Brand Filter -->
+              <div>
+                <div class="flex items-center justify-between mb-2">
+                  <label class="block text-xs font-bold text-[#475569] uppercase tracking-wider">Manufacturer Brands</label>
+                  <span id="brand-selected-badge" class="text-[10px] text-blue-600 font-mono hidden">0 selected</span>
+                </div>
+                <div class="relative">
+                  <select id="shop-brand-combobox"
+                    class="w-full px-3 py-2 rounded-md bg-[#f8fafc] border border-[#e2e8f0] text-[#0f172a] text-sm focus:border-blue-600 cursor-pointer focus:outline-none transition-colors">
+                    <option value="" disabled selected>Select brand...</option>
+                  </select>
+                </div>
+                <div id="shop-selected-brand-tags" class="flex flex-wrap gap-1.5 mt-2.5 min-h-[4px]"></div>
               </div>
 
               <!-- Price Slider Filter -->

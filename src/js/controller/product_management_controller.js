@@ -2,6 +2,7 @@ import { getBranches } from './branch_controller.js';
 import { getStoredProducts, saveProduct, deleteProduct, getProductById } from '../models/data.js';
 import { getCurrentUser } from './login_controller.js';
 import { getCategories, getBadges } from '../models/taxonomy_data.js';
+import { getBrands } from '../models/brand_data.js';
 
 /**
  * ============================================================
@@ -180,6 +181,19 @@ export function openProductFormPage(productId = null) {
       <option value="${c.slug}">${c.icon || '📦'} ${c.name}</option>
     `).join('');
     categorySelect.value = product ? product.category : (allCategories[0]?.slug || 'laptops');
+  }
+
+  // Populate dynamic brand options
+  const brandSelect = document.getElementById('form-p-brand');
+  if (brandSelect) {
+    const allBrands = getBrands();
+    brandSelect.innerHTML = allBrands.map(b => `
+      <option value="${b.name}">${b.name}</option>
+    `).join('');
+    if (product && product.brand && !allBrands.some(b => b.name.toLowerCase() === product.brand.toLowerCase())) {
+      brandSelect.innerHTML += `<option value="${product.brand}" selected>${product.brand}</option>`;
+    }
+    brandSelect.value = product ? (product.brand || allBrands[0]?.name || 'ASUS') : (allBrands[0]?.name || 'ASUS');
   }
 
   // Populate dynamic badge options (Excluding "Hot Deal" which is managed solely via Hot Deals promotions)
@@ -488,6 +502,7 @@ export function handleSaveProductSubmit(e) {
     : ["High Performance Tech Hardware"];
 
   const categoryVal = document.getElementById('form-p-category').value;
+  const brandVal = document.getElementById('form-p-brand') ? document.getElementById('form-p-brand').value : (existingProduct ? existingProduct.brand : 'ASUS');
   const priceVal = parseFloat(document.getElementById('form-p-price').value);
   const origPriceVal = document.getElementById('form-p-original-price').value ? parseFloat(document.getElementById('form-p-original-price').value) : priceVal;
 
@@ -495,6 +510,7 @@ export function handleSaveProductSubmit(e) {
     id: productId,
     name: document.getElementById('form-p-name').value,
     category: categoryVal,
+    brand: brandVal,
     price: priceVal,
     originalPrice: origPriceVal,
     sku: document.getElementById('form-p-sku').value || `ETC-${categoryVal.toUpperCase()}-${Math.floor(1000 + Math.random() * 9000)}`,

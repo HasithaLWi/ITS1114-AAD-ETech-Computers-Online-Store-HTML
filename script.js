@@ -41,17 +41,29 @@ import {
 } from './src/js/models/rating_data.js';
 import { 
     initShopLogic, renderFilteredProducts, 
-    addCategoryFilter, removeCategoryFilter, clearCategoryFilters, getSelectedCategories 
+    addCategoryFilter, removeCategoryFilter, clearCategoryFilters, getSelectedCategories,
+    addBrandFilter, removeBrandFilter, clearBrandFilters, getSelectedBrands
 } from './src/js/controller/shop_controller.js';
 import {
     initHotDealsLogic, renderDealCategoryTabs, filterDealsByCategory,
     renderFlashDealsGrid, toggleDealWishlist, buyFeaturedDeal,
     handleDealsNewsletter, HOT_DEALS_DATA
 } from './src/js/controller/hot_deal_controller.js';
-import { handleLogout, updateHeaderAuthUI, renderHomeNewArrivalsGrid } from './src/js/app/app.js';
+import { handleLogout, updateHeaderAuthUI, renderHomeNewArrivalsGrid, renderHomeBrandsShowcase, scrollHomeBrands } from './src/js/app/app.js';
 import { renderLoginPage, initLoginPage } from './src/js/app/login/login.js';
 import { renderAdminPage, initAdminPage } from './src/js/app/administrator/administrator.js';
 import { renderAboutPage } from './src/js/app/about/about.js';
+import {
+    renderBrandsTab, openBrandFormPage, closeBrandFormPage,
+    triggerBrandFormSubmit, handleSaveBrandFormPage, handleBrandSearch,
+    handleBrandFeaturedFilter, resetBrandFilters,
+    handleToggleBrandFeatured, handleDeleteBrand, handleBrandNameInput,
+    applyBrandPreset, updateBrandLivePreview
+} from './src/js/controller/brand_management_controller.js';
+import {
+    getBrands, getBrandById, getBrandBySlug, getFeaturedBrands,
+    saveBrand, deleteBrand, toggleBrandFeatured, getBrandProductCount
+} from './src/js/models/brand_data.js';
 import {
     renderPoliciesTab, openBusinessInfoModal, handleSaveBusinessInfoSubmit,
     openPolicyEditorModal, handleSavePolicySubmit, addClauseSection,
@@ -220,9 +232,20 @@ Object.assign(window, {
     getAllReviews, getProductReviews, getUserReviewForProduct, hasUserReviewedProduct, submitProductReview,
     getAllRatings, getProductRatings, getUserRatingForProduct, hasUserRatedProduct, submitProductRating,
 
-    // Shop Catalog
+    // Shop Catalog & Brand Filters
     initShopLogic, renderFilteredProducts,
     addCategoryFilter, removeCategoryFilter, clearCategoryFilters, getSelectedCategories,
+    addBrandFilter, removeBrandFilter, clearBrandFilters, getSelectedBrands,
+    renderHomeBrandsShowcase, scrollHomeBrands,
+
+    // Hardware Brands Management
+    renderBrandsTab, openBrandFormPage, closeBrandFormPage,
+    triggerBrandFormSubmit, handleSaveBrandFormPage, handleBrandSearch,
+    handleBrandFeaturedFilter, resetBrandFilters,
+    handleToggleBrandFeatured, handleDeleteBrand, handleBrandNameInput,
+    applyBrandPreset, updateBrandLivePreview,
+    getBrands, getBrandById, getBrandBySlug, getFeaturedBrands,
+    saveBrand, deleteBrand, toggleBrandFeatured, getBrandProductCount,
 
     // Hot Deals & Flash Sales
     initHotDealsLogic, renderDealCategoryTabs, filterDealsByCategory,

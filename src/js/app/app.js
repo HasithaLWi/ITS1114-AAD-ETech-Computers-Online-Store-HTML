@@ -8,6 +8,7 @@ import { initCartLogic, initCheckoutLogic, updateCartBadge, addToCart, getCart, 
 import { renderProductDetailsPage, viewProductDetails } from '../controller/product-details_controller.js';
 import { initShopLogic } from '../controller/shop_controller.js';
 import { initHotDealsLogic } from '../controller/hot_deal_controller.js';
+import { getFeaturedBrands } from '../models/brand_data.js';
 import { renderLoginPage } from './login/login.js';
 import { renderAdminPage } from './administrator/administrator.js';
 import { renderAboutPage } from './about/about.js';
@@ -178,6 +179,7 @@ function triggerPageHooks(pageName, queryPart) {
     renderHomeDealBannerLive();
     renderHomeNewArrivalsCarousel();
     renderHomeNewArrivalsGrid();
+    renderHomeBrandsShowcase();
   } else if (pageName === 'shop') {
     initShopLogic(queryPart);
   } else if (pageName === 'deals' || pageName === 'hot-deals') {
@@ -517,14 +519,22 @@ export function renderHomeNewArrivalsGrid() {
   if (!grid || typeof getNewArrivalProducts === 'undefined') return;
 
   const arrivals = getNewArrivalProducts().slice(0, 4);
-  grid.innerHTML = arrivals.map(product => `
+  grid.innerHTML = arrivals.map(product => {
+    const productBrand = product.brand || '';
+    return `
     <div class="group rounded-lg bg-white border border-[#e2e8f0] hover:border-[#cbd5e1] p-3.5 flex flex-col justify-between transition-all duration-200 hover:-translate-y-0.5 shadow-sm hover:shadow-md">
       <div>
         <div onclick="viewProductDetails(${product.id})" class="relative overflow-hidden rounded-md bg-[#f8fafc] mb-3 h-36 flex items-center justify-center cursor-pointer border border-[#e2e8f0]">
           <img src="${product.image}" alt="${product.name}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
-          <span class="absolute top-2 left-2 bg-blue-600 text-white text-[9px] font-bold uppercase px-2 py-0.5 rounded shadow-sm">${product.badge || 'New Arrival'}</span>
+          <div class="absolute top-2 left-2 flex flex-col gap-1 items-start">
+            <span class="bg-blue-600 text-white text-[9px] font-bold uppercase px-2 py-0.5 rounded shadow-sm">${product.badge || 'New Arrival'}</span>
+            ${productBrand ? `<span class="bg-slate-900/90 text-white text-[8px] font-mono font-bold px-1.5 py-0.5 rounded border border-white/20 shadow-sm">${productBrand}</span>` : ''}
+          </div>
         </div>
-        <span class="text-[10px] font-bold uppercase text-blue-600 font-mono tracking-wider">${product.category}</span>
+        <div class="flex items-center space-x-1.5 text-[10px] font-bold uppercase font-mono tracking-wider">
+          <span class="text-blue-600">${product.category}</span>
+          ${productBrand ? `<span class="text-slate-300">•</span><span class="text-slate-700 bg-slate-100 px-1 py-0.2 rounded text-[9px] font-mono font-bold">${productBrand}</span>` : ''}
+        </div>
         <h3 onclick="viewProductDetails(${product.id})" class="text-xs font-bold text-[#0f172a] mt-1 line-clamp-1 group-hover:text-blue-600 transition-colors cursor-pointer">${product.name}</h3>
         <div class="flex items-center space-x-1 mt-1 text-[11px] text-amber-500 font-bold">
           <span>★</span>
@@ -532,7 +542,6 @@ export function renderHomeNewArrivalsGrid() {
           <span class="text-[#94a3b8] font-normal">(${product.reviews || '24'})</span>
         </div>
       </div>
-      
       <div class="mt-3 pt-2.5 border-t border-[#e2e8f0] flex items-center justify-between">
         <div>
           ${product.originalPrice ? `<span class="text-[10px] text-[#94a3b8] line-through font-mono">Rs. ${product.originalPrice}</span>` : ''}
@@ -543,7 +552,72 @@ export function renderHomeNewArrivalsGrid() {
         </button>
       </div>
     </div>
-  `).join('');
+  `;
+
+  }).join('');
+}
+
+/**
+ * Renders Authorized Brands Showcase on Home Page
+ */
+export function renderHomeBrandsShowcase() {
+  const container = document.getElementById('home-brands-container');
+  if (!container) return;
+
+  const brands = getFeaturedBrands();
+  const allProducts = (typeof getStoredProducts === 'function' ? getStoredProducts() : null) || products || [];
+
+  if (!brands || brands.length === 0) {
+    container.innerHTML = `<div class="text-xs text-[#64748b] py-4">No featured brands available.</div>`;
+    return;
+  }
+
+  container.innerHTML = brands.map(brand => {
+    // Count products for this brand
+    const count = allProducts.filter(p => {
+      const pBrand = (p.brand || '').toLowerCase().trim();
+      const bName = brand.name.toLowerCase().trim();
+      return pBrand === bName || pBrand.includes(bName) || bName.includes(pBrand);
+    }).length;
+
+    const initials = (brand.name || 'BR').substring(0, 2).toUpperCase();
+
+    return `
+      <a href="#shop?brand=${brand.slug}" class="group flex-shrink-0 w-44 sm:w-52 bg-[#f8fafc] hover:bg-white border border-[#e2e8f0] hover:border-blue-300 rounded-2xl p-4 flex flex-col justify-between transition-all duration-300 hover:-translate-y-1 shadow-sm hover:shadow-md cursor-pointer">
+        <div>
+          <!-- Brand Logo Container -->
+          <div class="w-full h-16 rounded-xl bg-white border border-[#e2e8f0] p-2.5 flex items-center justify-center mb-3 shadow-sm group-hover:border-blue-200 transition-colors overflow-hidden">
+            ${brand.logo ? `
+              <img src="${brand.logo}" alt="${brand.name}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" class="max-h-full max-w-full object-contain filter group-hover:scale-105 transition-transform duration-300">
+              <span style="display:none" class="w-10 h-10 rounded-xl bg-blue-50 text-blue-700 font-extrabold text-sm items-center justify-center border border-blue-200">${initials}</span>
+            ` : `
+              <span class="w-10 h-10 rounded-xl bg-blue-50 text-blue-700 font-extrabold text-sm flex items-center justify-center border border-blue-200">${initials}</span>
+            `}
+          </div>
+
+          <!-- Brand Title & Tagline -->
+          <div class="space-y-0.5">
+            <h4 class="font-extrabold text-sm text-[#0f172a] group-hover:text-blue-600 transition-colors line-clamp-1">${brand.name}</h4>
+            <p class="text-[11px] text-[#64748b] line-clamp-1">${brand.tagline || `${brand.country || 'Global'} Official Hardware`}</p>
+          </div>
+        </div>
+
+        <!-- Footer: Product Count & Arrow -->
+        <div class="mt-3 pt-2.5 border-t border-[#e2e8f0] flex items-center justify-between text-[11px] font-mono">
+          <span class="text-blue-600 font-bold">${count} Products</span>
+          <span class="text-slate-400 group-hover:text-blue-600 group-hover:translate-x-0.5 transition-all">Explore →</span>
+        </div>
+      </a>
+    `;
+  }).join('');
+}
+
+export function scrollHomeBrands(direction) {
+  const container = document.getElementById('home-brands-container');
+  if (container) {
+    const scrollAmount = direction * 240;
+    container.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+  }
 }
 
 // ── Hero New Arrivals Product Carousel Controller ──

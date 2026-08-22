@@ -13,3 +13,4 @@ export * from './taxonomy.js';
 export * from './policies.js';
 export * from './ratings_reviews.js';
 export * from './transfers.js';
+export * from './brands.js';

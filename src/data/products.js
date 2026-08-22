@@ -6,7 +6,7 @@ export const DEFAULT_PRODUCTS = [
   {
     id: 1,
     name: "ASUS GeForce RTX 4070 Super 12GB GDDR6X",
-    brand: "ASUS GeForce",
+    brand: "ASUS",
     category: "components",
     price: 259999,
     originalPrice: 289999,
@@ -39,7 +39,7 @@ export const DEFAULT_PRODUCTS = [
   {
     id: 2,
     name: "Intel Core i7-14700K",
-    brand: "Intel Core",
+    brand: "Intel",
     category: "components",
     price: 179999,
     originalPrice: 199999,
@@ -131,8 +131,8 @@ export const DEFAULT_PRODUCTS = [
   },
   {
     id: 5,
-    name: "Zenith Studio Ultrabook M3",
-    brand: "Zenith",
+    name: "Apple MacBook Pro 14 M3",
+    brand: "Apple",
     category: "laptops",
     price: 349999,
     originalPrice: 389999,
@@ -143,10 +143,10 @@ export const DEFAULT_PRODUCTS = [
       "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=600&q=80"
     ],
     description: "Lightweight CNC aluminum chassis, 16GB Unified RAM, 1TB SSD, 14.2\" Liquid Retina display with 18-hour battery.",
-    fullDescription: "The Zenith Studio M3 Ultrabook delivers desktop-class creative power in an impossibly thin 1.3kg aluminum chassis. Optimized for video editing, software development, and 3D modeling, it offers up to 18 hours of all-day battery life with a radiant Liquid Retina XDR display.",
+    fullDescription: "The Apple MacBook Pro 14 M3 delivers desktop-class creative power in an impossibly thin 1.3kg aluminum chassis. Optimized for video editing, software development, and 3D modeling, it offers up to 18 hours of all-day battery life with a radiant Liquid Retina XDR display.",
     inStock: true,
     badge: "New Arrival",
-    sku: "ETC-LAP-ZENITHM3",
+    sku: "ETC-LAP-MACM3",
     warranty: "2-Year Hardware Warranty with Global Support",
     specs: {
       "Processor": "Next-Gen 12-Core M3 Architecture (18-Core GPU)",
@@ -165,8 +165,8 @@ export const DEFAULT_PRODUCTS = [
   },
   {
     id: 6,
-    name: "Immerse Pro 7.1 Wireless Gaming Headset",
-    brand: "Immerse Audio",
+    name: "Razer BlackShark V2 Pro Wireless Gaming Headset",
+    brand: "Razer",
     category: "peripherals",
     price: 34999,
     originalPrice: 42999,
@@ -177,10 +177,10 @@ export const DEFAULT_PRODUCTS = [
       "https://images.unsplash.com/photo-1546435770-a3e426bf472b?auto=format&fit=crop&w=600&q=80"
     ],
     description: "50mm Neodymium drivers, spatial audio 7.1 surround sound, broadcast-grade noise-canceling mic & memory foam ear cushions.",
-    fullDescription: "Gain competitive audio awareness with the Immerse Pro 7.1 Wireless Headset. Engineered with custom-tuned 50mm high-density drivers and THX Spatial 7.1 surround sound, ensuring pin-point accuracy for enemy footsteps and cinematic audio depth.",
+    fullDescription: "Gain competitive audio awareness with the Razer BlackShark V2 Pro Wireless Headset. Engineered with custom-tuned 50mm high-density drivers and THX Spatial 7.1 surround sound, ensuring pin-point accuracy for enemy footsteps and cinematic audio depth.",
     inStock: true,
     badge: "Top Rated",
-    sku: "ETC-HS-IMMERSE71",
+    sku: "ETC-HS-RAZERBS",
     warranty: "1-Year Hardware Protection Guarantee",
     specs: {
       "Audio Drivers": "50mm Custom Neodymium High-Density Drivers",
@@ -199,8 +199,8 @@ export const DEFAULT_PRODUCTS = [
   },
   {
     id: 7,
-    name: "NVIDIA GeForce RTX 4080 Super GPU",
-    brand: "NVIDIA Founders",
+    name: "NVIDIA GeForce RTX 4080 Super Founders Edition",
+    brand: "NVIDIA",
     category: "components",
     price: 389999,
     originalPrice: 429999,
@@ -233,8 +233,8 @@ export const DEFAULT_PRODUCTS = [
   },
   {
     id: 8,
-    name: "Quantum 64GB DDR5 6000MHz RGB RAM Kit",
-    brand: "Quantum Memory",
+    name: "Corsair Dominator Titanium 64GB DDR5 6000MHz RGB",
+    brand: "Corsair",
     category: "components",
     price: 49999,
     originalPrice: 59999,
@@ -245,7 +245,7 @@ export const DEFAULT_PRODUCTS = [
       "https://images.unsplash.com/photo-1562976540-1502c2145186?auto=format&fit=crop&w=600&q=80"
     ],
     description: "2x32GB Kit, CL30 low latency, Intel XMP 3.0 & AMD EXPO ready, custom heat spreader with ambient light sync.",
-    fullDescription: "Push high-speed system memory performance with the Quantum 64GB (2x32GB) DDR5 RAM Kit. Running at 6000MHz with tight CL30 timings, it delivers maximum bandwidth for extreme gaming, heavy multitasking, and workstation workloads.",
+    fullDescription: "Push high-speed system memory performance with the Corsair Dominator Titanium 64GB (2x32GB) DDR5 RAM Kit. Running at 6000MHz with tight CL30 timings, it delivers maximum bandwidth for extreme gaming, heavy multitasking, and workstation workloads.",
     inStock: true,
     badge: "New Arrival",
     sku: "ETC-RAM-64GDDR5",
@@ -267,8 +267,8 @@ export const DEFAULT_PRODUCTS = [
   },
   {
     id: 9,
-    name: "SuperNova 1000W 80+ Gold Modular PSU",
-    brand: "SuperNova",
+    name: "MSI MAG A1000GL 1000W 80+ Gold Modular PSU",
+    brand: "MSI",
     category: "components",
     price: 44999,
     originalPrice: 52999,
@@ -279,7 +279,7 @@ export const DEFAULT_PRODUCTS = [
       "https://images.unsplash.com/photo-1587202372775-e229f172b9d7?auto=format&fit=crop&w=600&q=80"
     ],
     description: "ATX 3.0 PCIe 5.0 native support, 100% Japanese capacitors, fluid dynamic bearing ultra-quiet fan, 10-year warranty.",
-    fullDescription: "Provide clean, continuous power to high-tier rigs with the SuperNova 1000W Power Supply. Fully modular with native PCIe 5.0 12VHPWR support for RTX 40-series cards, 80 PLUS Gold efficiency certification, and Japanese 105°C capacitors.",
+    fullDescription: "Provide clean, continuous power to high-tier rigs with the MSI MAG 1000W Power Supply. Fully modular with native PCIe 5.0 12VHPWR support for RTX 40-series cards, 80 PLUS Gold efficiency certification, and Japanese 105°C capacitors.",
     inStock: true,
     badge: "Top Rated",
     sku: "ETC-PSU-1000GOLD",
@@ -301,102 +301,104 @@ export const DEFAULT_PRODUCTS = [
   },
   {
     id: 10,
-    name: "UltraFlex Ergonomic Laptop Stand",
-    brand: "UltraFlex",
-    category: "accessories",
-    price: 12999,
-    originalPrice: 16999,
-    rating: 4.5,
-    reviews: 99,
+    name: "Logitech MX Master 3S Wireless Performance Mouse",
+    brand: "Logitech G",
+    category: "peripherals",
+    price: 32999,
+    originalPrice: 38999,
+    rating: 4.9,
+    reviews: 215,
     image: "https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?auto=format&fit=crop&w=600&q=80",
     images: [
       "https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?auto=format&fit=crop&w=600&q=80"
     ],
-    description: "Solid anodized aluminum structure, 360-degree rotation, dual heat ventilation silicone pads, foldable design.",
-    fullDescription: "Improve posture and cooling efficiency with the UltraFlex Ergonomic Laptop Stand. Crafted from premium anodized aluminum alloy, it features a 360-degree swivel base, infinite height and angle adjustment, and protective non-slip silicone pads.",
+    description: "8K DPI any-surface tracking, quiet clicks, MagSpeed electromagnetic scrolling, USB-C rechargeable 70-day battery.",
+    fullDescription: "Master your workflow with the Logitech MX Master 3S. Engineered with an 8000 DPI Darkfield optical sensor that tracks on glass, ultra-quiet mechanical switches with 90% less click noise, and the lightning-fast MagSpeed electromagnetic scroll wheel.",
     inStock: true,
-    badge: "Popular",
-    sku: "ETC-ACC-STAND360",
-    warranty: "1-Year Replacement Guarantee",
+    badge: "Best Seller",
+    sku: "ETC-MOU-MXM3S",
+    warranty: "2-Year Official Logitech Warranty",
     specs: {
-      "Material": "Premium CNC Anodized Aluminum Alloy",
-      "Adjustability": "360° Swivel Base | Height 3.5\" to 12\" | Tilt 0° - 180°",
-      "Compatibility": "Supports Laptops & MacBooks 10\" to 17.3\"",
-      "Max Load": "Supports up to 10 kg (22 lbs) without wobble",
-      "Weight": "1.1 kg Sturdy Solid Construction"
+      "Sensor": "Darkfield High Precision Optical (200 - 8000 DPI)",
+      "Buttons": "7 Custom Programmable Buttons + Gesture Button",
+      "Scroll Wheel": "MagSpeed Electromagnetic SmartShift Wheel",
+      "Connectivity": "Logi Bolt USB Receiver & Bluetooth Low Energy (3 Devices)",
+      "Battery": "500 mAh Li-Po Battery (Up to 70 days per full charge)",
+      "Weight": "141g Ergonomic Palm-Grip Design"
     },
     features: [
-      "Open-air ventilation cutout preventing laptop thermal throttling",
-      "Heavy-duty dual dampening shaft hinges maintaining position",
-      "Anti-scratch thick rubber silicone pads protecting laptop chassis",
-      "Folds completely flat for easy storage in backpacks"
+      "Quiet Click technology eliminating 90% of audible click sound",
+      "Flow cross-computer control to transfer text and files across systems",
+      "App-specific customizations in Logi Options+ software",
+      "1-minute quick charge provides up to 3 hours of use"
     ]
   },
   {
     id: 11,
-    name: "Thunderbolt 4 Pro Docking Station 12-in-1",
-    brand: "ThunderConnect",
-    category: "accessories",
-    price: 49999,
-    originalPrice: 58999,
+    name: "HyperX QuadCast S USB RGB Condenser Microphone",
+    brand: "HyperX",
+    category: "peripherals",
+    price: 45999,
+    originalPrice: 54999,
     rating: 4.8,
-    reviews: 44,
+    reviews: 164,
     image: "https://images.unsplash.com/photo-1544652478-6653e09f18a2?auto=format&fit=crop&w=600&q=80",
     images: [
       "https://images.unsplash.com/photo-1544652478-6653e09f18a2?auto=format&fit=crop&w=600&q=80"
     ],
-    description: "Dual 4K@60Hz or single 8K output, 96W Pass-Through Charging, SD/MicroSD card reader, 2.5Gb Ethernet, 4x USB-A.",
-    fullDescription: "Transform your laptop into a workstation powerstation with the Thunderbolt 4 Pro 12-in-1 Docking Station. Supporting up to dual 4K @ 60Hz displays or single 8K output, 96W host laptop charging, 40Gbps data transfer, and 2.5Gbps high-speed Ethernet.",
+    description: "Dynamic RGB lighting, anti-vibration shock mount, tap-to-mute sensor with LED indicator, 4 selectable polar patterns.",
+    fullDescription: "Deliver studio-grade commentary and podcast recordings with the HyperX QuadCast S. Equipped with a built-in anti-vibration shock mount to suppress rumbles, internal pop filter, tap-to-mute sensor with LED status indicator, and dynamic multi-zone RGB lighting customizable via HyperX NGENUITY.",
     inStock: true,
     badge: "Top Rated",
-    sku: "ETC-ACC-TB4DOCK",
-    warranty: "2-Year Hardware Replacement Warranty",
+    sku: "ETC-MIC-QUADCASTS",
+    warranty: "2-Year Manufacturer Replacement Warranty",
     specs: {
-      "Bandwidth": "40Gbps Thunderbolt 4 / USB4 Speed",
-      "Display Support": "Dual 4K@60Hz or Single 8K@30Hz Output",
-      "Power Delivery": "96W Pass-Through Fast Laptop Charging",
-      "Ports": "2x TB4, 2x HDMI 2.1, 4x USB-A 10Gbps, 2.5G LAN, SD/TF, 3.5mm",
-      "Ethernet": "2.5 Gigabit RJ45 High-Speed Networking"
+      "Polar Patterns": "Stereo, Omnidirectional, Cardioid, Bidirectional",
+      "Sample / Bit Rate": "48kHz / 16-bit Broadcast Fidelity",
+      "Capsule": "Three 14mm Electret Condenser Capsules",
+      "Frequency Response": "20Hz – 20kHz",
+      "Lighting": "Dynamic Two-Zone Custom RGB Lighting",
+      "Mounting": "Built-in Anti-Vibration Shock Mount + 3/8\" & 5/8\" Adapter"
     },
     features: [
-      "Plug-and-play driverless support for Windows, macOS, and Linux",
-      "Aluminum heatsink case ensuring low thermal operating temperature",
-      "High-speed SD 4.0 & MicroSD UHS-II card readers (up to 312MB/s)",
-      "Includes 0.8m certified Thunderbolt 4 40Gbps cable"
+      "Tap-to-Mute sensor with clear LED status indicator",
+      "Four selectable polar patterns optimizing for any recording scenario",
+      "Convenient gain control dial at the base for instant sensitivity adjustment",
+      "Multi-device & chat program certified (Discord, TeamSpeak, PC, PS5, Mac)"
     ]
   },
   {
     id: 12,
-    name: "HyperStream 4K USB-C Webcam & Ring Light",
-    brand: "HyperStream",
+    name: "Logitech Brio 4K Ultra HD Pro Webcam",
+    brand: "Logitech G",
     category: "accessories",
-    price: 28999,
-    originalPrice: 34999,
-    rating: 4.6,
-    reviews: 82,
+    price: 38999,
+    originalPrice: 46999,
+    rating: 4.7,
+    reviews: 118,
     image: "https://images.unsplash.com/photo-1585060544812-6b45742d762f?auto=format&fit=crop&w=600&q=80",
     images: [
       "https://images.unsplash.com/photo-1585060544812-6b45742d762f?auto=format&fit=crop&w=600&q=80"
     ],
-    description: "4K UHD @ 30fps sensor, auto-HDR, built-in dual omnidirectional microphones, touch control multi-tone fill light.",
-    fullDescription: "Broadcast in studio quality with the HyperStream 4K USB-C Webcam. Features a 1/2.8\" Sony STARVIS CMOS sensor capturing crystal-clear 4K video at 30fps with automatic HDR exposure, fast autofocus, dual noise-reducing microphones, and integrated LED ring light.",
+    description: "4K Ultra HD @ 30fps / 1080p @ 60fps, RightLight 3 HDR auto light correction, dual noise-canceling mics & Windows Hello IR.",
+    fullDescription: "Stream and present at maximum visual clarity with the Logitech Brio 4K. Features RightLight 3 with HDR to automatically look your best in low light or harsh backlighting, Windows Hello facial recognition infrared sensor, and dual omnidirectional noise-canceling microphones.",
     inStock: true,
     badge: "Popular",
-    sku: "ETC-ACC-4KCAM",
-    warranty: "1-Year Replacement Warranty",
+    sku: "ETC-ACC-BRIO4K",
+    warranty: "3-Year Limited Hardware Warranty",
     specs: {
-      "Video Resolution": "4K Ultra HD @ 30fps / 1080p @ 60fps",
-      "Sensor": "1/2.8\" Sony STARVIS CMOS Low-Light Sensor",
-      "Field of View": "Adjustable 65°, 78°, and 90° FOV",
-      "Ring Light": "Built-in Touch Controlled LED Ring Light (3 Color Tones)",
-      "Microphone": "Dual Omnidirectional Stereo Mics with Noise Suppression",
-      "Privacy Cover": "Magnetic Physical Privacy Shutter Included"
+      "Video Resolution": "4K Ultra HD @ 30fps / 1080p @ 60fps / 720p @ 90fps",
+      "Sensor": "13-Megapixel Ultra-Clear Optics with 5x Digital HD Zoom",
+      "Field of View": "Customizable 65°, 78°, and 90° Diagonal FOV",
+      "HDR": "RightLight 3 with High Dynamic Range (HDR) Exposure Balance",
+      "Security": "Infrared Sensor for Windows Hello Facial Recognition",
+      "Microphone": "Dual Integrated Omnidirectional Microphones with Noise Cancellation"
     },
     features: [
-      "AI-powered facial tracking autofocus & automatic light balance",
-      "Universal monitor clip with 1/4\" tripod thread mount",
-      "Detachable 2-meter USB-C to USB-A braided cable",
-      "Compatible with OBS, Zoom, Teams, Twitch, and YouTube Live"
+      "Smooth 60fps recording at 1080p for ultra-fluid gaming streams",
+      "Detachable privacy shade to protect your lens and privacy",
+      "Multiple mounting options including monitor clip and 1/4\" tripod mount",
+      "Certified for Microsoft Teams, Zoom, Google Meet, and OBS Studio"
     ]
   }
 ];

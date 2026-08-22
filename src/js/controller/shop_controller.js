@@ -1,21 +1,25 @@
-// ETech Computers - Shop Page Dynamic Logic
+// ============================================================
+//  src/js/controller/shop_controller.js — Shop Catalog & Multi-Filter Logic
+// ============================================================
 import { products, getStoredProducts } from '../models/data.js';
 import { addToCart } from './cart_controller.js';
 import { viewProductDetails } from './product-details_controller.js';
 import { getCategories } from '../models/taxonomy_data.js';
+import { getBrands, getBrandBySlug } from '../models/brand_data.js';
 
-// Module-level state for multi-selected category filters
+// Module-level state for multi-selected filters
 let selectedCategorySlugs = [];
+let selectedBrandSlugs = [];
 
 /**
- * Returns currently selected category slugs
+ * ============================================================
+ * CATEGORY FILTER MANAGEMENT
+ * ============================================================
  */
 export function getSelectedCategories() {
   return [...selectedCategorySlugs];
 }
-/**
- * Adds a category slug to the active filter set
- */
+
 export function addCategoryFilter(slug) {
   if (!slug) return;
   const normalizedSlug = slug.toLowerCase().trim();
@@ -27,9 +31,6 @@ export function addCategoryFilter(slug) {
   renderFilteredProducts();
 }
 
-/**
- * Removes a category slug from the active filter set
- */
 export function removeCategoryFilter(slug) {
   if (!slug) return;
   const normalizedSlug = slug.toLowerCase().trim();
@@ -39,9 +40,6 @@ export function removeCategoryFilter(slug) {
   renderFilteredProducts();
 }
 
-/**
- * Clears all active category filters
- */
 export function clearCategoryFilters() {
   selectedCategorySlugs = [];
   renderCategoryCombobox();
@@ -49,15 +47,11 @@ export function clearCategoryFilters() {
   renderFilteredProducts();
 }
 
-/**
- * Populates the category combobox dropdown options
- */
 export function renderCategoryCombobox() {
   const combobox = document.getElementById('shop-category-combobox');
   if (!combobox) return;
 
   const categories = getCategories();
-
   let optionsHtml = `<option value="" disabled selected>+ Select category...</option>`;
 
   categories.forEach(c => {
@@ -74,9 +68,6 @@ export function renderCategoryCombobox() {
   combobox.value = '';
 }
 
-/**
- * Renders selected category chips/tags with close '✕' icons underneath the combobox
- */
 export function renderSelectedCategoryTags() {
   const tagsContainer = document.getElementById('shop-selected-category-tags');
   const countBadge = document.getElementById('category-selected-badge');
@@ -119,7 +110,105 @@ export function renderSelectedCategoryTags() {
 }
 
 /**
- * Called by app.js router whenever #shop fragment is loaded into DOM
+ * ============================================================
+ * BRAND FILTER MANAGEMENT
+ * ============================================================
+ */
+export function getSelectedBrands() {
+  return [...selectedBrandSlugs];
+}
+
+export function addBrandFilter(slug) {
+  if (!slug) return;
+  const normalizedSlug = slug.toLowerCase().trim();
+  if (!selectedBrandSlugs.includes(normalizedSlug)) {
+    selectedBrandSlugs.push(normalizedSlug);
+  }
+  renderBrandCombobox();
+  renderSelectedBrandTags();
+  renderFilteredProducts();
+}
+
+export function removeBrandFilter(slug) {
+  if (!slug) return;
+  const normalizedSlug = slug.toLowerCase().trim();
+  selectedBrandSlugs = selectedBrandSlugs.filter(s => s !== normalizedSlug);
+  renderBrandCombobox();
+  renderSelectedBrandTags();
+  renderFilteredProducts();
+}
+
+export function clearBrandFilters() {
+  selectedBrandSlugs = [];
+  renderBrandCombobox();
+  renderSelectedBrandTags();
+  renderFilteredProducts();
+}
+
+export function renderBrandCombobox() {
+  const combobox = document.getElementById('shop-brand-combobox');
+  if (!combobox) return;
+
+  const brands = getBrands();
+  let optionsHtml = `<option value="" disabled selected>+ Select brand...</option>`;
+
+  brands.forEach(b => {
+    const isSelected = selectedBrandSlugs.includes(b.slug.toLowerCase()) || selectedBrandSlugs.includes(b.name.toLowerCase());
+    if (isSelected) {
+      optionsHtml += `<option value="${b.slug}" disabled class="text-[#94a3b8] bg-[#f8fafc]">${b.name} ✓ (Selected)</option>`;
+    } else {
+      optionsHtml += `<option value="${b.slug}" class="text-[#0f172a] bg-white">${b.name}</option>`;
+    }
+  });
+
+  combobox.innerHTML = optionsHtml;
+  combobox.value = '';
+}
+
+export function renderSelectedBrandTags() {
+  const tagsContainer = document.getElementById('shop-selected-brand-tags');
+  const countBadge = document.getElementById('brand-selected-badge');
+  if (!tagsContainer) return;
+
+  const brands = getBrands();
+
+  if (selectedBrandSlugs.length === 0) {
+    if (countBadge) {
+      countBadge.classList.add('hidden');
+      countBadge.textContent = '0 selected';
+    }
+    tagsContainer.innerHTML = `<span class="text-[11px] text-[#94a3b8] italic mt-0.5">Showing all brands</span>`;
+    return;
+  }
+
+  if (countBadge) {
+    countBadge.classList.remove('hidden');
+    countBadge.textContent = `${selectedBrandSlugs.length} selected`;
+  }
+
+  tagsContainer.innerHTML = selectedBrandSlugs.map(slug => {
+    const brand = brands.find(b => b.slug.toLowerCase() === slug.toLowerCase() || b.name.toLowerCase() === slug.toLowerCase());
+    const name = brand ? brand.name : slug;
+
+    return `
+      <span class="inline-flex items-center space-x-1.5 text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200 px-2.5 py-1 rounded-md shadow-sm transition-all hover:bg-indigo-100 group">
+        <span class="truncate max-w-[130px]" title="${name}">${name}</span>
+        <button type="button" onclick="removeBrandFilter('${slug}')"
+          class="text-indigo-600 hover:text-indigo-900 hover:bg-indigo-200/60 rounded p-0.5 ml-0.5 transition-colors focus:outline-none flex items-center justify-center cursor-pointer"
+          title="Remove ${name} filter">
+          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </span>
+    `;
+  }).join('');
+}
+
+/**
+ * ============================================================
+ * SHOP INITIALIZATION & URL QUERY PARSING
+ * ============================================================
  */
 export function initShopLogic(queryPart = '') {
   const searchInput = document.getElementById('search-input');
@@ -127,32 +216,52 @@ export function initShopLogic(queryPart = '') {
   const priceValueDisplay = document.getElementById('price-value');
   const sortSelect = document.getElementById('sort-select');
   const resetBtn = document.getElementById('reset-filters-btn');
-  const combobox = document.getElementById('shop-category-combobox');
+  const catCombobox = document.getElementById('shop-category-combobox');
+  const brandCombobox = document.getElementById('shop-brand-combobox');
 
-  // Parse query string (e.g. cat=laptops or cat=laptops,peripherals)
+  // Parse query string (e.g. cat=laptops&brand=asus or brand=corsair,razer)
   let initialCategory = '';
+  let initialBrand = '';
   if (queryPart) {
     const params = new URLSearchParams(queryPart);
-    initialCategory = params.get('cat') || '';
+    initialCategory = params.get('cat') || params.get('category') || '';
+    initialBrand = params.get('brand') || params.get('b') || '';
   }
 
   if (initialCategory) {
     selectedCategorySlugs = initialCategory.split(',')
       .map(s => s.trim().toLowerCase())
       .filter(Boolean);
+  } else {
+    selectedCategorySlugs = [];
   }
 
-  // Populate combobox and active tags
+  if (initialBrand) {
+    selectedBrandSlugs = initialBrand.split(',')
+      .map(s => s.trim().toLowerCase())
+      .filter(Boolean);
+  } else {
+    selectedBrandSlugs = [];
+  }
+
+  // Populate comboboxes and active tags
   renderCategoryCombobox();
   renderSelectedCategoryTags();
+  renderBrandCombobox();
+  renderSelectedBrandTags();
 
-  // Event Listeners for Combobox
-  if (combobox) {
-    combobox.onchange = (e) => {
+  // Event Listeners for Comboboxes
+  if (catCombobox) {
+    catCombobox.onchange = (e) => {
       const chosenSlug = e.target.value;
-      if (chosenSlug) {
-        addCategoryFilter(chosenSlug);
-      }
+      if (chosenSlug) addCategoryFilter(chosenSlug);
+    };
+  }
+
+  if (brandCombobox) {
+    brandCombobox.onchange = (e) => {
+      const chosenSlug = e.target.value;
+      if (chosenSlug) addBrandFilter(chosenSlug);
     };
   }
 
@@ -175,11 +284,12 @@ export function initShopLogic(queryPart = '') {
     resetBtn.onclick = () => {
       if (searchInput) searchInput.value = '';
       if (priceSlider) {
-        priceSlider.value = 3000;
-        if (priceValueDisplay) priceValueDisplay.textContent = 'Rs. 3,000';
+        priceSlider.value = 1000000;
+        if (priceValueDisplay) priceValueDisplay.textContent = 'Rs. 1,000,000';
       }
       if (sortSelect) sortSelect.value = 'featured';
       clearCategoryFilters();
+      clearBrandFilters();
     };
   }
 
@@ -188,7 +298,9 @@ export function initShopLogic(queryPart = '') {
 }
 
 /**
- * Filter and sort products, then render the catalog grid
+ * ============================================================
+ * FILTER, SORT & RENDER CATALOG PRODUCTS GRID
+ * ============================================================
  */
 export function renderFilteredProducts() {
   const grid = document.getElementById('product-grid');
@@ -199,6 +311,7 @@ export function renderFilteredProducts() {
   if (!grid) return;
 
   const allProducts = (typeof getStoredProducts === 'function' ? getStoredProducts() : null) || products || [];
+  const brandsList = getBrands();
 
   // Extract filter values
   const searchInput = document.getElementById('search-input');
@@ -206,7 +319,7 @@ export function renderFilteredProducts() {
   const sortSelect = document.getElementById('sort-select');
 
   const searchQuery = searchInput ? searchInput.value.toLowerCase().trim() : '';
-  const maxPrice = priceSlider ? parseInt(priceSlider.value) : 3000;
+  const maxPrice = priceSlider ? parseInt(priceSlider.value) : 1000000;
   const sortOption = sortSelect ? sortSelect.value : 'featured';
 
   // Apply filters
@@ -215,17 +328,30 @@ export function renderFilteredProducts() {
     const matchesSearch = searchQuery === '' ||
       (product.name && product.name.toLowerCase().includes(searchQuery)) ||
       (product.description && product.description.toLowerCase().includes(searchQuery)) ||
-      (product.category && product.category.toLowerCase().includes(searchQuery));
+      (product.category && product.category.toLowerCase().includes(searchQuery)) ||
+      (product.brand && product.brand.toLowerCase().includes(searchQuery));
 
     // 2. Category Filter (Multi-select)
     const productCat = (product.category || '').toLowerCase();
     const matchesCategory = selectedCategorySlugs.length === 0 ||
       selectedCategorySlugs.includes(productCat);
 
-    // 3. Price Filter
+    // 3. Brand Filter (Multi-select)
+    const productBrand = (product.brand || '').toLowerCase().trim();
+    const matchesBrand = selectedBrandSlugs.length === 0 ||
+      (productBrand !== '' && selectedBrandSlugs.some(bSlug => {
+        const brandObj = brandsList.find(b => b.slug.toLowerCase() === bSlug.toLowerCase() || b.name.toLowerCase() === bSlug.toLowerCase());
+        const targetName = (brandObj ? brandObj.name : bSlug).toLowerCase().trim();
+        const targetSlug = (brandObj ? brandObj.slug : bSlug).toLowerCase().trim();
+        return productBrand === targetName || productBrand === targetSlug ||
+               (productBrand.length >= 3 && targetName.includes(productBrand)) ||
+               (targetName.length >= 3 && productBrand.includes(targetName));
+      }));
+
+    // 4. Price Filter
     const matchesPrice = Number(product.price || 0) <= maxPrice;
 
-    return matchesSearch && matchesCategory && matchesPrice;
+    return matchesSearch && matchesCategory && matchesBrand && matchesPrice;
   });
 
   // Apply sorting
@@ -260,69 +386,117 @@ export function renderFilteredProducts() {
         const cat = categories.find(c => c.slug.toLowerCase() === slug.toLowerCase());
         const name = cat ? cat.name : slug;
         return `
-          <span class="inline-flex items-center space-x-1.5 text-[10px] font-bold bg-[#f1f5f9] text-blue-700 border border-[#e2e8f0] px-2 py-0.5 rounded font-mono shadow-sm">
-            <span>${name}</span>
+          <span class="inline-flex items-center space-x-1.5 text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded font-mono shadow-sm">
+            <span>📁 ${name}</span>
             <button type="button" onclick="removeCategoryFilter('${slug}')" class="text-blue-700 hover:text-red-600 ml-0.5 font-sans" title="Remove filter">✕</button>
           </span>
         `;
       }).join('');
     }
-    if (maxPrice < 3000) {
+
+    if (selectedBrandSlugs.length > 0) {
+      tagsHtml += selectedBrandSlugs.map(slug => {
+        const brandObj = brandsList.find(b => b.slug.toLowerCase() === slug.toLowerCase() || b.name.toLowerCase() === slug.toLowerCase());
+        const name = brandObj ? brandObj.name : slug;
+        return `
+          <span class="inline-flex items-center space-x-1.5 text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 px-2 py-0.5 rounded font-mono shadow-sm">
+            <span>${name}</span>
+            <button type="button" onclick="removeBrandFilter('${slug}')" class="text-indigo-700 hover:text-red-600 ml-0.5 font-sans cursor-pointer" title="Remove filter">✕</button>
+          </span>
+        `;
+      }).join('');
+    }
+
+    if (maxPrice < 1000000) {
       tagsHtml += `<span class="inline-flex items-center space-x-1 text-[10px] font-bold bg-[#f1f5f9] text-blue-700 border border-[#e2e8f0] px-2 py-0.5 rounded font-mono shadow-sm">Under Rs. ${maxPrice.toLocaleString()}</span>`;
     }
     activeTagsContainer.innerHTML = tagsHtml;
   }
 
   // Render cards
-  grid.innerHTML = filtered.map(product => `
-    <div class="group rounded-lg bg-white border border-[#e2e8f0] hover:border-[#cbd5e1] p-4 flex flex-col justify-between transition-all duration-200 hover:-translate-y-0.5 shadow-sm hover:shadow-md">
-      <div>
-        <!-- Product Image & Badge -->
-        <div onclick="viewProductDetails(${product.id})" class="relative overflow-hidden rounded-md bg-[#f8fafc] mb-3.5 h-44 flex items-center justify-center cursor-pointer border border-[#e2e8f0]">
-          <img src="${product.image}" alt="${product.name}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
-          ${product.badge ? `<span class="absolute top-2.5 left-2.5 bg-blue-600 text-white text-[9px] font-bold uppercase px-2 py-0.5 rounded shadow-sm">${product.badge}</span>` : ''}
-          <span class="absolute top-2.5 right-2.5 bg-white/95 text-[#475569] text-[10px] font-bold px-1.5 py-0.5 rounded border border-[#e2e8f0] flex items-center space-x-1 shadow-sm">
-            <span class="text-amber-500">★</span>
-            <span>${product.rating}</span>
-          </span>
-          <div class="absolute inset-0 bg-[#0f172a]/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-            <span class="px-3 py-1.5 rounded-md bg-blue-600 text-white text-xs font-bold shadow-md flex items-center space-x-1">
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-              <span>View Specs</span>
+  grid.innerHTML = filtered.map(product => {
+    const productBrand = product.brand || '';
+    const brandObj = productBrand ? brandsList.find(b => b.name.toLowerCase() === productBrand.toLowerCase() || b.slug.toLowerCase() === productBrand.toLowerCase()) : null;
+
+    return `
+      <div class="group rounded-2xl bg-white border border-[#e2e8f0] hover:border-[#cbd5e1] p-4 flex flex-col justify-between transition-all duration-200 hover:-translate-y-1 shadow-sm hover:shadow-md">
+        <div>
+          <!-- Product Image & Badges -->
+          <div onclick="viewProductDetails(${product.id})" class="relative overflow-hidden rounded-xl bg-[#f8fafc] mb-3.5 h-44 flex items-center justify-center cursor-pointer border border-[#e2e8f0]">
+            <img src="${product.image}" alt="${product.name}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+            
+            <!-- Left Badges Column -->
+            <div class="absolute top-2.5 left-2.5 flex flex-col gap-1.5 items-start">
+              ${product.badge ? `<span class="bg-blue-600 text-white text-[9px] font-extrabold uppercase px-2 py-0.5 rounded shadow-sm">${product.badge}</span>` : ''}
+              ${productBrand ? `
+                <span class="inline-flex items-center space-x-1 px-2 py-0.5 rounded bg-slate-900/90 backdrop-blur-md text-white text-[9px] font-mono font-bold border border-white/20 shadow-sm">
+                  ${brandObj && brandObj.logo ? `<img src="${brandObj.logo}" alt="${productBrand}" class="w-2.5 h-2.5 object-contain inline invert brightness-200">` : `<span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span>`}
+                  <span>${productBrand}</span>
+                </span>
+              ` : ''}
+            </div>
+
+            <span class="absolute top-2.5 right-2.5 bg-white/95 text-[#475569] text-[10px] font-bold px-1.5 py-0.5 rounded border border-[#e2e8f0] flex items-center space-x-1 shadow-sm">
+              <span class="text-amber-500">★</span>
+              <span>${product.rating}</span>
             </span>
+
+            <div class="absolute inset-0 bg-[#0f172a]/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+              <span class="px-3 py-1.5 rounded-xl bg-blue-600 text-white text-xs font-bold shadow-md flex items-center space-x-1">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                <span>View Specs</span>
+              </span>
+            </div>
+          </div>
+
+          <!-- Meta & Title -->
+          <div class="flex items-center justify-between text-[10px] font-bold uppercase font-mono tracking-wider mb-1">
+            <div class="flex items-center space-x-1.5 overflow-hidden">
+              <span class="text-blue-600 font-extrabold">${product.category}</span>
+              ${productBrand ? `
+                <span class="text-slate-300">•</span>
+                <span class="text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded text-[9px] font-mono font-bold truncate max-w-[120px]" title="Brand: ${productBrand}">${productBrand}</span>
+              ` : ''}
+            </div>
+            <span class="${product.inStock ? 'text-emerald-600' : 'text-amber-600'}">${product.inStock ? '● In Stock' : '○ Pre-order'}</span>
+          </div>
+          
+          <h3 onclick="viewProductDetails(${product.id})" class="text-sm font-bold text-[#0f172a] mt-1 line-clamp-1 group-hover:text-blue-600 transition-colors cursor-pointer" title="${product.name}">${product.name}</h3>
+          <p class="text-xs text-[#64748b] mt-1 line-clamp-2 leading-relaxed">${product.description}</p>
+        </div>
+        
+        <!-- Footer Price & Action -->
+        <div class="mt-4 pt-3 border-t border-[#e2e8f0] flex items-center justify-between">
+          <div>
+            ${product.originalPrice && product.originalPrice > product.price ? `
+              <span class="text-[10px] text-[#94a3b8] line-through font-mono">Rs. ${Number(product.originalPrice).toLocaleString()}</span>
+            ` : ''}
+            <p class="text-base font-extrabold text-[#0f172a] font-mono">Rs. ${Number(product.price).toLocaleString()}</p>
+          </div>
+          
+          <div class="flex items-center space-x-1.5">
+            <button onclick="viewProductDetails(${product.id})" class="p-2 bg-[#f8fafc] hover:bg-[#f1f5f9] text-[#475569] hover:text-[#0f172a] rounded-xl border border-[#e2e8f0] transition-all shadow-sm" title="View Product Details">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+            </button>
+            
+            <button onclick="addToCart(${product.id})" class="px-3 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl shadow-sm transition-all flex items-center space-x-1 active:scale-95">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+              </svg>
+              <span>Add</span>
+            </button>
           </div>
         </div>
-
-        <!-- Meta & Title -->
-        <div class="flex items-center justify-between text-[10px] font-bold uppercase text-[#64748b] font-mono tracking-wider">
-          <span class="text-blue-600">${product.category}</span>
-          <span class="${product.inStock ? 'text-emerald-600' : 'text-amber-600'}">${product.inStock ? 'In Stock' : 'Pre-order'}</span>
-        </div>
-        
-        <h3 onclick="viewProductDetails(${product.id})" class="text-sm font-bold text-[#0f172a] mt-1 line-clamp-1 group-hover:text-blue-600 transition-colors cursor-pointer">${product.name}</h3>
-        <p class="text-xs text-[#64748b] mt-1 line-clamp-2 leading-relaxed">${product.description}</p>
       </div>
-      
-      <!-- Footer Price & Action -->
-      <div class="mt-4 pt-3 border-t border-[#e2e8f0] flex items-center justify-between">
-        <div>
-          <span class="text-[10px] text-[#94a3b8] line-through font-mono">Rs. ${product.originalPrice}</span>
-          <p class="text-base font-extrabold text-[#0f172a] font-mono">Rs. ${product.price}</p>
-        </div>
-        
-        <div class="flex items-center space-x-1.5">
-          <button onclick="viewProductDetails(${product.id})" class="p-2 bg-[#f8fafc] hover:bg-[#f1f5f9] text-[#475569] hover:text-[#0f172a] rounded-md border border-[#e2e8f0] transition-all shadow-sm" title="View Product Details">
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-          </button>
-          
-          <button onclick="addToCart(${product.id})" class="px-3 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-md shadow-sm transition-all flex items-center space-x-1">
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-            </svg>
-            <span>Add</span>
-          </button>
-        </div>
-      </div>
-    </div>
-  `).join('');
+    `;
+  }).join('');
 }
+
+// Global window bindings for inline onclick attributes
+window.addCategoryFilter = addCategoryFilter;
+window.removeCategoryFilter = removeCategoryFilter;
+window.clearCategoryFilters = clearCategoryFilters;
+window.addBrandFilter = addBrandFilter;
+window.removeBrandFilter = removeBrandFilter;
+window.clearBrandFilters = clearBrandFilters;
+window.renderFilteredProducts = renderFilteredProducts;

@@ -1,6 +1,7 @@
 export class Product {
     id;
     name;
+    brand;
     category;
     price;
     originalPrice;
@@ -16,9 +17,10 @@ export class Product {
     specs;
     features;
 
-    constructor(id, name, category, price, originalPrice, rating, reviews, image, description, fullDescription, inStock, badge, sku, warranty, specs, features) {
+    constructor(id, name, category, price, originalPrice, rating, reviews, image, description, fullDescription, inStock, badge, sku, warranty, specs, features, brand = '') {
         this.id = id;
         this.name = name || '';
+        this.brand = brand || '';
         this.category = category;
         this.price = price;
         this.originalPrice = originalPrice;
@@ -27,7 +29,7 @@ export class Product {
         this.image = image;
         this.description = description;
         this.fullDescription = fullDescription;
-        this.inStock = inStock|| true;
+        this.inStock = inStock || true;
         this.badge = badge;
         this.sku = sku;
         this.warranty = warranty || 'warranty not specified';
