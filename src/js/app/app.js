@@ -1,5 +1,6 @@
 // ETech Computers - Single Page Section Toggle Router & Global App Logic
 import { products, getProductById, getFeaturedProducts, getNewArrivalProducts } from '../models/data.js';
+import { getHomeDealBanner } from '../models/deals_data.js';
 import { legalPolicies, getPolicyData, getStoredPolicies } from '../models/policy-data.js';
 import { getCurrentUser, isLoggedIn, logoutUser } from '../controller/login_controller.js';
 import { getUserOrders } from '../controller/order_management_controller.js';
@@ -174,6 +175,7 @@ function handleRoute() {
 function triggerPageHooks(pageName, queryPart) {
   if (pageName === 'home') {
     renderHomeFeaturedProducts();
+    renderHomeDealBannerLive();
     renderHomeNewArrivalsCarousel();
     renderHomeNewArrivalsGrid();
   } else if (pageName === 'shop') {
@@ -415,6 +417,42 @@ export function handleLogout() {
 window.handleLogout = handleLogout;
 
 /**
+ * Renders dynamic Home Deal Banner configuration
+ */
+export function renderHomeDealBannerLive() {
+  const container = document.getElementById('home-weekend-deal-card');
+  if (!container || typeof getHomeDealBanner === 'undefined') return;
+
+  const banner = getHomeDealBanner();
+  container.style.backgroundImage = `url('${banner.bgImage || 'public/images/WEEKEND-TECH-DEAL-cart-bg.jpeg'}')`;
+
+  const tagEl = document.getElementById('home-deal-tag');
+  if (tagEl) tagEl.textContent = banner.tag || 'WEEKEND TECH DEAL';
+
+  const headingEl = document.getElementById('home-deal-heading');
+  if (headingEl) {
+    headingEl.innerHTML = `
+      ${banner.title || 'Upgrade your setup'}<br>
+      ${banner.titleHighlight || 'Save up to 20%'}<br>
+      <span class="text-white/90 text-base sm:text-lg font-medium">${banner.subtitle || 'on selected components'}</span>
+    `;
+  }
+
+  const btnEl = document.getElementById('home-deal-btn');
+  if (btnEl) {
+    btnEl.innerHTML = `
+      <span>${banner.buttonText || 'Shop Deals'}</span>
+      <svg class="w-3.5 h-3.5 text-[#0f172a] group-hover:translate-x-1 transition-transform" fill="none"
+        stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+          d="M14 5l7 7m0 0l-7 7m7-7H3" />
+      </svg>
+    `;
+    btnEl.setAttribute('href', banner.targetUrl || '#deals');
+  }
+}
+
+/**
  * Renders top 4 featured products on home page section
  */
 function renderHomeFeaturedProducts() {
@@ -423,37 +461,29 @@ function renderHomeFeaturedProducts() {
 
   const featured = getFeaturedProducts().slice(0, 4);
   grid.innerHTML = featured.map(product => `
-    <div class="group rounded-lg bg-white border border-[#e2e8f0] hover:border-[#cbd5e1] p-4 flex flex-col justify-between transition-all duration-200 hover:-translate-y-0.5 shadow-sm hover:shadow-md">
+    <div class="group rounded-xl bg-white border border-slate-100 hover:border-slate-300 p-3.5 flex flex-col justify-between transition-all duration-200 hover:-translate-y-0.5 shadow-sm hover:shadow-md">
       <div>
-        <div onclick="viewProductDetails(${product.id})" class="relative overflow-hidden rounded-md bg-[#f8fafc] mb-3.5 h-44 flex items-center justify-center cursor-pointer border border-[#e2e8f0]">
-          <img src="${product.image}" alt="${product.name}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
-          ${product.badge ? `<span class="absolute top-2.5 left-2.5 bg-blue-600 text-white text-[9px] font-bold uppercase px-2 py-0.5 rounded shadow-sm">${product.badge}</span>` : ''}
-          <div class="absolute inset-0 bg-[#0f172a]/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-            <span class="px-3 py-1.5 rounded-md bg-blue-600 text-white text-xs font-bold shadow-md flex items-center space-x-1">
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-              <span>View Specs</span>
-            </span>
-          </div>
+        <div onclick="viewProductDetails(${product.id})" class="relative overflow-hidden rounded-lg bg-white mb-2.5 h-32 flex items-center justify-center cursor-pointer">
+          <img src="${product.image}" alt="${product.name}" class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300">
+          <span class="absolute top-1 left-1 bg-[#ff7a00] text-white text-[8px] sm:text-[8.5px] font-extrabold uppercase px-2 py-0.5 rounded shadow-sm tracking-wide">BEST SELLER</span>
         </div>
-        <span class="text-[10px] font-bold uppercase text-blue-600 font-mono tracking-wider">${product.category}</span>
-        <h3 onclick="viewProductDetails(${product.id})" class="text-sm font-bold text-[#0f172a] mt-1 line-clamp-1 group-hover:text-blue-600 transition-colors cursor-pointer">${product.name}</h3>
-        <p class="text-xs text-[#64748b] mt-1 line-clamp-2 leading-relaxed">${product.description}</p>
+        <h3 onclick="viewProductDetails(${product.id})" class="text-xs font-bold text-[#0f172a] line-clamp-2 group-hover:text-blue-600 transition-colors cursor-pointer leading-tight h-8" title="${product.name}">${product.name}</h3>
+        <div class="flex items-center space-x-1 mt-1 text-[11px] text-amber-500 font-bold">
+          <span>★</span>
+          <span>${product.rating || '4.8'}</span>
+          <span class="text-[#94a3b8] font-normal text-[11px]">(${product.reviews || '156'})</span>
+        </div>
       </div>
       
-      <div class="mt-4 pt-3 border-t border-[#e2e8f0] flex items-center justify-between">
+      <div class="mt-3.5 flex items-center justify-between">
         <div>
-          <span class="text-[10px] text-[#94a3b8] line-through font-mono">Rs. ${product.originalPrice}</span>
-          <p class="text-base font-extrabold text-[#0f172a] font-mono">Rs. ${product.price}</p>
+          <p class="text-sm font-extrabold text-blue-600 font-sans tracking-tight">Rs. ${product.price ? product.price.toLocaleString() : ''}</p>
         </div>
-        <div class="flex items-center space-x-1.5">
-          <button onclick="viewProductDetails(${product.id})" class="p-2 bg-[#f8fafc] hover:bg-[#f1f5f9] text-[#475569] hover:text-[#0f172a] rounded-md border border-[#e2e8f0] transition-all shadow-sm" title="View Product Details">
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-          </button>
-          <button onclick="addToCart(${product.id})" class="px-3 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-md shadow-sm transition-all flex items-center space-x-1">
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-            <span>Add</span>
-          </button>
-        </div>
+        <button onclick="addToCart(${product.id})" class="w-8 h-8 rounded-lg bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center transition-colors shadow-sm cursor-pointer" title="Add to Cart">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+          </svg>
+        </button>
       </div>
     </div>
   `).join('');
@@ -716,11 +746,15 @@ window.addEventListener('storage', (e) => {
     renderHomeNewArrivalsCarousel();
     renderHomeFeaturedProducts();
   }
+  if (e.key === 'etech_home_deal_banner') {
+    renderHomeDealBannerLive();
+  }
 });
 
 window.addEventListener('productsUpdated', () => {
   renderHomeNewArrivalsCarousel();
   renderHomeFeaturedProducts();
+  renderHomeDealBannerLive();
 });
 
 /**

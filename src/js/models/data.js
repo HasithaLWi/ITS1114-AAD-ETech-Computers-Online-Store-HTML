@@ -8,15 +8,15 @@ export const products = [
         name: "ASUS GeForce RTX 4070 Super 12GB GDDR6X",
         brand: "ASUS GeForce",
         category: "components",
-        price: 289999,
-        originalPrice: 310000,
-        rating: 4.9,
-        reviews: 142,
+        price: 259999,
+        originalPrice: 289999,
+        rating: 4.8,
+        reviews: 156,
         image: "https://images.unsplash.com/photo-1591488320449-011701bb6704?auto=format&fit=crop&w=600&q=80",
         description: "12GB GDDR6X, DLSS 3.5 AI Frame Generation, 3rd Gen Ray Tracing Cores & Axial-tech Fan Thermal System.",
         fullDescription: "Built for insane 1440p and 4K gaming performance. The ASUS GeForce RTX 4070 Super 12GB GDDR6X features military-grade capacitors, dual ball fan bearings, and auto-extreme automated manufacturing for rock-solid stability.",
         inStock: true,
-        badge: "New Arrival",
+        badge: "Best Seller",
         sku: "ETC-GPU-4070S",
         warranty: "3-Year Official Manufacturer Warranty",
         specs: {
@@ -35,120 +35,89 @@ export const products = [
     },
     {
         id: 2,
-        name: "ROG Strix G16 (2024) Gaming Laptop",
-        brand: "ASUS ROG",
-        category: "laptops",
-        price: 529999,
-        originalPrice: 579999,
-        rating: 4.9,
-        reviews: 98,
-        image: "https://images.unsplash.com/photo-1603302576837-37561b2e2302?auto=format&fit=crop&w=600&q=80",
-        description: "Intel Core i9-14900HX, NVIDIA RTX 4070 8GB, 32GB DDR5 RAM, 1TB Gen4 SSD, 16\" QHD+ 240Hz Nebula Display.",
-        fullDescription: "Draw more frames and win more games with the 2024 ROG Strix G16. Powered by an Intel Core i9 processor 14900HX and NVIDIA GeForce RTX 4070 Laptop GPU, paired with Conductonaut Extreme liquid metal for ultra-cool operation.",
-        inStock: true,
-        badge: "New Arrival",
-        sku: "ETC-LAP-ROGG16",
-        warranty: "2-Year Comprehensive Hardware Warranty",
-        specs: {
-            "Processor": "Intel Core i9-14900HX (24 Cores, 32 Threads)",
-            "Graphics": "NVIDIA GeForce RTX 4070 8GB GDDR6 (140W TGP)",
-            "Display": "16\" QHD+ (2560x1600) 240Hz 3ms ROG Nebula",
-            "Memory & Storage": "32GB DDR5 5600MHz | 1TB PCIe 4.0 NVMe SSD"
-        },
-        features: [
-            "ROG Intelligent Cooling with Tri-Fan Tech & Liquid Metal",
-            "Per-Key RGB Keyboard powered by Aura Sync",
-            "Dolby Vision HDR & Dolby Atmos Spatial Audio"
-        ]
-    },
-    {
-        id: 3,
-        name: "Intel Core i9-14900K Flagship Processor",
+        name: "Intel Core i7-14700K",
         brand: "Intel Core",
         category: "components",
-        price: 159999,
-        originalPrice: 174999,
-        rating: 4.8,
-        reviews: 185,
+        price: 179999,
+        originalPrice: 199999,
+        rating: 4.7,
+        reviews: 98,
         image: "https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?auto=format&fit=crop&w=600&q=80",
-        description: "24 Cores (8 P-cores + 16 E-cores), 32 Threads, up to 6.0 GHz Max Turbo Frequency, PCIe 5.0 & DDR5 Support.",
-        fullDescription: "Empower your rig with Intel's ultimate 14th Gen Desktop Processor. Featuring Thermal Velocity Boost up to 6.0GHz, 36MB Intel Smart Cache, and support for LGA1700 motherboards.",
+        description: "20 Cores (8 P-cores + 12 E-cores), 28 Threads, up to 5.6 GHz Max Turbo Frequency, PCIe 5.0 & DDR5 Support.",
+        fullDescription: "Power through intensive gaming and heavy creator workloads with Intel Core i7-14700K. Featuring 20 cores, 28 threads, 33MB Intel Smart Cache, and support for LGA1700 motherboards.",
         inStock: true,
-        badge: "New Arrival",
-        sku: "ETC-CPU-14900K",
+        badge: "Best Seller",
+        sku: "ETC-CPU-14700K",
         warranty: "3-Year Official Intel Warranty",
         specs: {
-            "Cores / Threads": "24 Cores (8P + 16E) / 32 Threads",
-            "Max Frequency": "6.0 GHz Thermal Velocity Boost",
-            "Cache": "36MB L3 Cache + 32MB L2 Cache",
+            "Cores / Threads": "20 Cores (8P + 12E) / 28 Threads",
+            "Max Frequency": "5.6 GHz Intel Turbo Boost Max 3.0",
+            "Cache": "33MB Intel Smart Cache",
             "Socket": "LGA1700 (Intel 600 & 700 Series Chipsets)"
         },
         features: [
             "Intel Application Optimization (APO) for enhanced gaming FPS",
-            "PCIe 5.0 Express Lanes & Dual Channel DDR5 5600MHz Memory",
+            "PCIe 5.0 & DDR5 5600MHz Memory Support",
             "Unlocked multiplier for extreme enthusiast overclocking"
         ]
     },
     {
         id: 3,
-        name: "Vortex Ultra 34\" Curved QD-OLED Monitor",
-        category: "monitors",
-        price: 899,
-        originalPrice: 1099,
+        name: "Corsair Vengeance 16GB (2x8GB) DDR5 6000MHz",
+        brand: "Corsair",
+        category: "components",
+        price: 28999,
+        originalPrice: 34999,
         rating: 4.9,
-        reviews: 67,
-        image: "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?auto=format&fit=crop&w=600&q=80",
-        description: "3440 x 1440 UltraWide, 175Hz refresh rate, 0.03ms response time, DisplayHDR True Black 400, G-Sync Ultimate.",
-        fullDescription: "Experience infinite contrast and breathtaking colors with the Vortex Ultra 34\" Quantum-Dot OLED Curved Monitor. Featuring a 175Hz refresh rate, near-instantaneous 0.03ms response time, and 1800R curvature that wraps around your field of view for total gaming immersion.",
+        reviews: 203,
+        image: "https://images.unsplash.com/photo-1562976540-1502c2145186?auto=format&fit=crop&w=600&q=80",
+        description: "16GB (2x8GB) DDR5-6000MHz, Intel XMP 3.0 compatible, solid aluminum heat spreader for low operating temperatures.",
+        fullDescription: "CORSAIR VENGEANCE DDR5 delivers higher frequencies and greater capacities of DDR5 technology in a high-quality, compact module that suits your high-performance system build.",
         inStock: true,
-        badge: "Hot Deal",
-        sku: "ETC-MON-34QDOLED",
-        warranty: "3-Year OLED Burn-In Protection & Zero Bright Pixel Guarantee",
+        badge: "Best Seller",
+        sku: "ETC-RAM-CORSDDR5",
+        warranty: "Lifetime Limited Warranty",
         specs: {
-            "Screen Size": "34-inch UltraWide 1800R Curved QD-OLED Panel",
-            "Resolution": "UWQHD (3440 x 1440) 21:9 Aspect Ratio",
-            "Refresh Rate": "175Hz Native via DisplayPort 1.4",
-            "Response Time": "0.03ms (GtG) Ultra-Fast",
-            "HDR Standard": "VESA DisplayHDR True Black 400 (1000 nits peak)",
-            "Sync Tech": "NVIDIA G-SYNC Ultimate & AMD FreeSync Premium Pro"
+            "Capacity": "16GB (2 x 8GB Modules)",
+            "Speed": "DDR5-6000MHz",
+            "Tested Latency": "CL36-36-36-76",
+            "Voltage": "1.35V"
         },
         features: [
-            "Quantum-Dot OLED technology delivering 99.3% DCI-P3 color gamut",
-            "Custom Graphene Heatsink fanless cooling system for OLED longevity",
-            "Built-in KVM Switch with 90W USB-C Power Delivery",
-            "Ergonomic stand with height, tilt, and swivel adjustment"
+            "Onboard voltage regulation for easier overclocking",
+            "Custom Intel XMP 3.0 profiles",
+            "Solid aluminum heatspreader"
         ]
     },
     {
         id: 4,
-        name: "Precision Elite Wireless Gaming Mouse",
-        category: "peripherals",
-        price: 79,
-        originalPrice: 99,
-        rating: 4.7,
-        reviews: 210,
-        image: "https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?auto=format&fit=crop&w=600&q=80",
-        description: "Ultra-lightweight 58g design, 26,000 DPI Optical Sensor, 90-hour battery life, zero-latency 2.4GHz connection.",
-        fullDescription: "Dominate twitch-shooters with the Precision Elite Wireless Gaming Mouse. Weighing just 58 grams without honeycomb holes, it houses a state-of-the-art 26,000 DPI optical sensor with 650 IPS tracking speed and 90-hour battery life.",
+        name: "Samsung 990 PRO 1TB NVMe SSD",
+        brand: "Samsung",
+        category: "components",
+        price: 42999,
+        originalPrice: 48999,
+        rating: 4.8,
+        reviews: 178,
+        image: "https://images.unsplash.com/photo-1597872200969-2b65d56bd16b?auto=format&fit=crop&w=600&q=80",
+        description: "PCIe 4.0 NVMe M.2 SSD, up to 7450 MB/s Sequential Read and 6900 MB/s Sequential Write speeds.",
+        fullDescription: "Reach max performance of PCIe 4.0. Experience longer-lasting, opponent-blasting speed. The in-house controller's smart heat control delivers supreme power efficiency while maintaining ferocious speed and performance.",
         inStock: true,
-        badge: "New Arrival",
-        sku: "ETC-MS-PRECELITE",
-        warranty: "1-Year Direct Replacement Warranty",
+        badge: "Best Seller",
+        sku: "ETC-SSD-990PRO1T",
+        warranty: "5-Year Limited Warranty",
         specs: {
-            "Weight": "58g Ultra-Lightweight Solid Shell",
-            "Sensor": "Precision 26K Optical Sensor (100 - 26,000 DPI)",
-            "Max Speed / Acceleration": "650 IPS / 50G Acceleration",
-            "Battery Life": "Up to 90 Hours (USB-C Fast Rechargeable)",
-            "Switches": "Optical Micro Switches (90 Million Click Lifetime)",
-            "Wireless Tech": "2.4GHz HyperSpeed Wireless & Bluetooth 5.2"
+            "Capacity": "1TB M.2 2280 NVMe SSD",
+            "Interface": "PCIe Gen 4.0 x4, NVMe 2.0",
+            "Seq Read": "Up to 7,450 MB/s",
+            "Seq Write": "Up to 6,900 MB/s"
         },
         features: [
-            "Pure 100% Virgin Grade PTFE Skates for smooth glide",
-            "Zero-latency sub-1ms wireless connection protocol",
-            "Onboard memory storing 5 DPI stages and custom polling rates",
-            "Includes anti-slip grip tape and braided USB-C charging cable"
+            "Samsung Pascal in-house controller",
+            "Nickel-coated controller and heat spreader label",
+            "Samsung Magician Software management support"
         ]
     },
+
     {
         id: 5,
         name: "Zenith Studio Ultrabook M3",
@@ -438,13 +407,15 @@ export function getStoredProducts() {
         }
     }
 
-    // Always ensure items 1, 2, 3 have updated hero product metadata matching reference design
-    [0, 1, 2].forEach(i => {
+    // Always ensure items 0, 1, 2, 3 have updated metadata matching reference design
+    [0, 1, 2, 3].forEach(i => {
         if (products[i] && list[i]) {
             list[i].name = products[i].name;
             list[i].category = products[i].category;
             list[i].price = products[i].price;
             list[i].originalPrice = products[i].originalPrice;
+            list[i].rating = products[i].rating;
+            list[i].reviews = products[i].reviews;
             list[i].badge = products[i].badge;
             list[i].image = products[i].image;
         }
@@ -474,11 +445,15 @@ export function getProductById(id) {
 }
 
 /**
- * Get featured products
+ * Get featured products (Best Sellers)
  */
 export function getFeaturedProducts() {
     const all = getStoredProducts();
-    return all.filter(p => p.badge !== "");
+    const bestSellers = all.filter(p => p.badge && p.badge.trim().toLowerCase() === "best seller");
+    if (bestSellers.length > 0) {
+        return bestSellers;
+    }
+    return all.slice(0, 4);
 }
 
 /**

@@ -13,7 +13,6 @@ let selectedCategorySlugs = [];
 export function getSelectedCategories() {
   return [...selectedCategorySlugs];
 }
-
 /**
  * Adds a category slug to the active filter set
  */
@@ -58,9 +57,9 @@ export function renderCategoryCombobox() {
   if (!combobox) return;
 
   const categories = getCategories();
-  
+
   let optionsHtml = `<option value="" disabled selected>+ Select category...</option>`;
-  
+
   categories.forEach(c => {
     const isSelected = selectedCategorySlugs.includes(c.slug.toLowerCase());
     const icon = c.icon ? `${c.icon} ` : '';
@@ -213,14 +212,14 @@ export function renderFilteredProducts() {
   // Apply filters
   let filtered = allProducts.filter(product => {
     // 1. Search Query
-    const matchesSearch = searchQuery === '' || 
+    const matchesSearch = searchQuery === '' ||
       (product.name && product.name.toLowerCase().includes(searchQuery)) ||
       (product.description && product.description.toLowerCase().includes(searchQuery)) ||
       (product.category && product.category.toLowerCase().includes(searchQuery));
 
     // 2. Category Filter (Multi-select)
     const productCat = (product.category || '').toLowerCase();
-    const matchesCategory = selectedCategorySlugs.length === 0 || 
+    const matchesCategory = selectedCategorySlugs.length === 0 ||
       selectedCategorySlugs.includes(productCat);
 
     // 3. Price Filter

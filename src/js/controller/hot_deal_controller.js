@@ -1,5 +1,6 @@
 // ETech Computers - Hot Deals Page Controller & Interactive System
 import { products, getStoredProducts } from '../models/data.js';
+import { getDealBundles, getHomeDealBanner } from '../models/deals_data.js';
 import { addToCart, showToast } from './cart_controller.js';
 import { viewProductDetails } from './product-details_controller.js';
 
@@ -165,11 +166,25 @@ let countdownInterval = null;
 let weekendSaleTimeSeconds = 2 * 86400 + 14 * 3600 + 38 * 60 + 21; // 2 days, 14 hrs, 38 mins, 21 secs
 const flashDealTimers = new Map();
 const wishlistDeals = new Set();
+let activeBundleIndex = 0;
+let carouselAutoPlayTimer = null;
 
 /**
  * Initializes the Hot Deals section
  */
 export function initHotDealsLogic(queryPart = '') {
+  // Sync timer from saved Home Deal Banner settings
+  const bannerConfig = getHomeDealBanner();
+  if (bannerConfig) {
+    const totalSecs = (bannerConfig.durationDays || 0) * 86400 +
+                      (bannerConfig.durationHours || 0) * 3600 +
+                      (bannerConfig.durationMins || 0) * 60 +
+                      (bannerConfig.durationSecs || 0);
+    if (totalSecs > 0) {
+      weekendSaleTimeSeconds = totalSecs;
+    }
+  }
+
   // Parse query category if provided
   if (queryPart) {
     const params = new URLSearchParams(queryPart);
@@ -188,6 +203,10 @@ export function initHotDealsLogic(queryPart = '') {
 
   // Render Category Tabs
   renderDealCategoryTabs();
+
+  // Render Featured Deal Carousel (Image 2 & 3)
+  renderFeaturedDealShowcase();
+  startCarouselAutoPlay();
 
   // Render Flash Deals Cards
   renderFlashDealsGrid();
@@ -258,6 +277,16 @@ function updateWeekendSaleTimerDisplay() {
   if (hrsEl) hrsEl.textContent = t.hours;
   if (minsEl) minsEl.textContent = t.mins;
   if (secsEl) secsEl.textContent = t.secs;
+
+  const homeDaysEl = document.getElementById('home-deal-timer-days');
+  const homeHrsEl = document.getElementById('home-deal-timer-hrs');
+  const homeMinsEl = document.getElementById('home-deal-timer-mins');
+  const homeSecsEl = document.getElementById('home-deal-timer-secs');
+
+  if (homeDaysEl) homeDaysEl.textContent = t.days;
+  if (homeHrsEl) homeHrsEl.textContent = t.hours;
+  if (homeMinsEl) homeMinsEl.textContent = t.mins;
+  if (homeSecsEl) homeSecsEl.textContent = t.secs;
 }
 
 /**
@@ -490,6 +519,205 @@ export function buyFeaturedDeal(productId = 1) {
   addToCart(productId, 1);
   window.location.hash = '#cart';
 }
+
+/**
+ * Renders the Featured Deal Carousel on the DealHot page (Images 2 & 3)
+ */
+export function renderFeaturedDealShowcase() {
+  const container = document.getElementById('featured-deal-showcase-container');
+  if (!container) return;
+
+  const bundles = getDealBundles().filter(b => b.active !== false);
+  if (bundles.length === 0) {
+    container.innerHTML = '';
+    return;
+  }
+
+  if (activeBundleIndex >= bundles.length) {
+    activeBundleIndex = 0;
+  }
+
+  const bundle = bundles[activeBundleIndex];
+  const t = formatTime(weekendSaleTimeSeconds);
+
+  container.innerHTML = `
+    <div
+      class="bg-gradient-to-r from-[#0b1329] via-[#0f2766] to-[#1d4ed8] text-white rounded-3xl p-6 sm:p-8 lg:p-10 shadow-2xl relative overflow-hidden transition-all duration-500">
+
+      <!-- Subtle Glow Orbs -->
+      <div class="absolute -right-20 -bottom-20 w-80 h-80 bg-blue-500/20 rounded-full blur-3xl pointer-events-none"></div>
+      <div class="absolute top-0 left-1/3 w-64 h-64 bg-indigo-500/20 rounded-full blur-2xl pointer-events-none"></div>
+
+      <!-- Carousel Left Navigation Button (<) -->
+      ${bundles.length > 1 ? `
+        <button onclick="prevFeaturedBundle()" 
+          title="Previous Deal Bundle"
+          class="absolute left-3 top-1/2 -translate-y-1/2 z-30 w-10 h-10 rounded-full bg-black/40 hover:bg-black/70 text-white border border-white/20 backdrop-blur-md flex items-center justify-center transition-all opacity-80 hover:opacity-100 hover:scale-110 shadow-lg cursor-pointer">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
+        </button>
+      ` : ''}
+
+      <!-- Carousel Right Navigation Button (>) -->
+      ${bundles.length > 1 ? `
+        <button onclick="nextFeaturedBundle()" 
+          title="Next Deal Bundle"
+          class="absolute right-3 top-1/2 -translate-y-1/2 z-30 w-10 h-10 rounded-full bg-black/40 hover:bg-black/70 text-white border border-white/20 backdrop-blur-md flex items-center justify-center transition-all opacity-80 hover:opacity-100 hover:scale-110 shadow-lg cursor-pointer">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+        </button>
+      ` : ''}
+
+      <!-- Top Row: Badge & Slide Index -->
+      <div class="flex items-center justify-between mb-4 relative z-10">
+        <span class="px-3.5 py-1 rounded-full ${
+          bundle.badge === 'BEST DEAL' ? 'bg-rose-600' : 'bg-blue-600'
+        } text-white font-extrabold text-[10px] uppercase tracking-widest shadow-md">
+          ${bundle.badge || 'BEST DEAL'}
+        </span>
+        ${bundles.length > 1 ? `
+          <span class="text-[11px] font-mono font-bold text-blue-200 bg-white/10 px-2.5 py-0.5 rounded-full border border-white/15">
+            Slide ${activeBundleIndex + 1} of ${bundles.length}
+          </span>
+        ` : ''}
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center relative z-10 px-2 sm:px-4">
+
+        <!-- Left: Featured Rig & Visual Showcase (col-span-5) -->
+        <div class="lg:col-span-5 flex items-center justify-center">
+          <div class="relative w-full max-w-sm aspect-[4/3] flex items-center justify-center bg-white/5 rounded-2xl border border-white/10 p-4 backdrop-blur-sm shadow-inner group">
+            <img src="${bundle.image || 'public/images/home-hero-image-1.png'}" alt="${bundle.title}"
+              class="max-h-60 sm:max-h-64 w-auto object-contain drop-shadow-2xl hover:scale-105 transition-transform duration-500">
+          </div>
+        </div>
+
+        <!-- Right: Deal Info, Specs, Progress & Countdown (col-span-7) -->
+        <div class="lg:col-span-7 space-y-4">
+          <div>
+            <p class="text-[11px] font-mono font-bold tracking-widest text-blue-300 uppercase">${bundle.eyebrow || 'FEATURED DEAL'}</p>
+            <h3 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight mt-1">
+              ${bundle.title}<br>
+              <span class="text-blue-300 font-semibold text-lg sm:text-xl">${bundle.subtitle}</span>
+            </h3>
+          </div>
+
+          <!-- Hardware Specs Badges -->
+          <div class="flex flex-wrap items-center gap-2 pt-1">
+            ${(bundle.specs || []).map(s => `
+              <span class="px-3 py-1 rounded-lg bg-white/10 border border-white/15 text-xs font-mono font-semibold flex items-center space-x-1.5 backdrop-blur-sm">
+                <span>${s.icon || '🎮'}</span><span>${s.label}</span>
+              </span>
+            `).join('')}
+          </div>
+
+          <!-- Price Row -->
+          <div class="flex flex-wrap items-baseline gap-3 pt-2">
+            <div class="flex items-baseline space-x-2">
+              <span class="text-xs text-slate-300 font-medium">Now</span>
+              <span class="text-2xl sm:text-3xl font-black font-mono text-white tracking-tight">Rs. ${Number(bundle.price).toLocaleString()}</span>
+            </div>
+            <div class="text-sm text-slate-400 font-mono">
+              Was <del class="text-slate-400">Rs. ${Number(bundle.originalPrice).toLocaleString()}</del>
+            </div>
+            <span class="text-xs font-bold text-amber-300 bg-amber-400/15 px-2.5 py-1 rounded-md border border-amber-300/30">
+              You Save Rs. ${(Number(bundle.originalPrice) - Number(bundle.price)).toLocaleString()} (${bundle.savingPercent || 10}%)
+            </span>
+          </div>
+
+          <!-- Progress & Claimed Bar -->
+          <div class="space-y-1.5 max-w-lg">
+            <div class="flex justify-between items-center text-xs font-semibold">
+              <span class="text-slate-200">${bundle.claimedPercent}% Claimed</span>
+              <span class="text-amber-300 font-bold">Only ${bundle.stockLeft} units left!</span>
+            </div>
+            <div class="w-full bg-white/20 h-2.5 rounded-full overflow-hidden">
+              <div class="bg-gradient-to-r from-amber-400 to-amber-500 h-full rounded-full transition-all duration-500" style="width: ${bundle.claimedPercent}%"></div>
+            </div>
+          </div>
+
+          <!-- Mini Countdown & Buy Now CTA -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-3 border-t border-white/10">
+            <div class="space-y-1">
+              <span class="text-[11px] text-slate-300 font-medium">Offer ends in</span>
+              <div class="flex items-center space-x-1.5 font-mono text-xs font-bold">
+                <span id="deal-featured-timer-days" class="px-2 py-1 bg-black/40 rounded border border-white/10 text-white">${t.days}</span>
+                <span class="text-slate-400">:</span>
+                <span id="deal-featured-timer-hrs" class="px-2 py-1 bg-black/40 rounded border border-white/10 text-white">${t.hours}</span>
+                <span class="text-slate-400">:</span>
+                <span id="deal-featured-timer-mins" class="px-2 py-1 bg-black/40 rounded border border-white/10 text-white">${t.mins}</span>
+                <span class="text-slate-400">:</span>
+                <span id="deal-featured-timer-secs" class="px-2 py-1 bg-black/40 rounded border border-white/10 text-rose-400 animate-pulse">${t.secs}</span>
+              </div>
+            </div>
+
+            <button onclick="buyFeaturedDeal(${bundle.productId || 1})"
+              class="px-8 py-3.5 bg-white hover:bg-slate-100 text-[#0f172a] font-extrabold text-xs sm:text-sm rounded-xl shadow-lg transition-all flex items-center justify-center space-x-2 transform hover:-translate-y-0.5 active:scale-95 cursor-pointer">
+              <span>Buy Now</span>
+              <span>→</span>
+            </button>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Carousel Pagination Indicators at Bottom (Image 3) -->
+      ${bundles.length > 1 ? `
+        <div class="flex items-center justify-center space-x-2 mt-6 relative z-20">
+          ${bundles.map((_, i) => `
+            <button onclick="goToFeaturedBundle(${i})" 
+              title="Slide ${i + 1}"
+              class="h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
+                i === activeBundleIndex 
+                  ? 'w-8 bg-white shadow-sm' 
+                  : 'w-2.5 bg-white/30 hover:bg-white/60'
+              }"></button>
+          `).join('')}
+        </div>
+      ` : ''}
+
+    </div>
+  `;
+}
+
+export function prevFeaturedBundle() {
+  const bundles = getDealBundles().filter(b => b.active !== false);
+  if (bundles.length <= 1) return;
+  activeBundleIndex = (activeBundleIndex - 1 + bundles.length) % bundles.length;
+  renderFeaturedDealShowcase();
+  resetCarouselAutoPlay();
+}
+
+export function nextFeaturedBundle() {
+  const bundles = getDealBundles().filter(b => b.active !== false);
+  if (bundles.length <= 1) return;
+  activeBundleIndex = (activeBundleIndex + 1) % bundles.length;
+  renderFeaturedDealShowcase();
+  resetCarouselAutoPlay();
+}
+
+export function goToFeaturedBundle(index) {
+  activeBundleIndex = Number(index);
+  renderFeaturedDealShowcase();
+  resetCarouselAutoPlay();
+}
+
+function startCarouselAutoPlay() {
+  if (carouselAutoPlayTimer) clearInterval(carouselAutoPlayTimer);
+  carouselAutoPlayTimer = setInterval(() => {
+    const bundles = getDealBundles().filter(b => b.active !== false);
+    if (bundles.length > 1) {
+      activeBundleIndex = (activeBundleIndex + 1) % bundles.length;
+      renderFeaturedDealShowcase();
+    }
+  }, 6000);
+}
+
+function resetCarouselAutoPlay() {
+  startCarouselAutoPlay();
+}
+
+window.prevFeaturedBundle = prevFeaturedBundle;
+window.nextFeaturedBundle = nextFeaturedBundle;
+window.goToFeaturedBundle = goToFeaturedBundle;
 
 /**
  * Handles newsletter subscription submission

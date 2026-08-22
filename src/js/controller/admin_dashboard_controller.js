@@ -13,6 +13,7 @@ import { renderAnalyticsTab } from './analytics_and_report_controller.js';
 import { getStockHealthReport, renderStockHealthTab, navigateToStockHealthWithSearch } from './stock_health_controller.js';
 import { renderTaxonomyTab } from './taxonomy_controller.js';
 import { renderPoliciesTab } from './policy_management_controller.js';
+import { renderPromotionsTab } from './promotion_management_controller.js';
 
 let activeTab = 'overview';
 let activeUser = null;
@@ -149,6 +150,7 @@ export function switchAdminTab(tabName, param = null) {
   // Render tab content
   if (tabName === 'overview') renderOverviewTab();
   else if (tabName === 'products') renderProductsTab();
+  else if (tabName === 'promotions') renderPromotionsTab();
   else if (tabName === 'orders') renderOrdersTab();
   else if (tabName === 'stock-health') renderStockHealthTab(param);
   else if (tabName === 'taxonomy') renderTaxonomyTab();
