@@ -14,6 +14,7 @@ import { getStockHealthReport, renderStockHealthTab, navigateToStockHealthWithSe
 import { renderTaxonomyTab } from './taxonomy_controller.js';
 import { renderPoliciesTab } from './policy_management_controller.js';
 import { renderPromotionsTab } from './promotion_management_controller.js';
+import { renderTransfersTab } from './transfer_management_controller.js';
 
 let activeTab = 'overview';
 let activeUser = null;
@@ -153,6 +154,7 @@ export function switchAdminTab(tabName, param = null) {
   else if (tabName === 'promotions') renderPromotionsTab();
   else if (tabName === 'orders') renderOrdersTab();
   else if (tabName === 'stock-health') renderStockHealthTab(param);
+  else if (tabName === 'transfers') renderTransfersTab();
   else if (tabName === 'taxonomy') renderTaxonomyTab();
   else if (tabName === 'branches' && activeUser && activeUser.role === 'ADMIN') renderBranchesTab();
   else if (tabName === 'users' && activeUser && activeUser.role === 'ADMIN') renderUsersTab();

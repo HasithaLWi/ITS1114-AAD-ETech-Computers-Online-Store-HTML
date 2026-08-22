@@ -3,6 +3,7 @@ import { products, getStoredProducts, deductBranchStock } from '../models/data.j
 import { autoSelectFulfillmentBranch } from './branch_controller.js';
 import { saveOrder } from './order_management_controller.js';
 import { getCurrentUser } from './login_controller.js';
+import { recordBundleSale, getDealBundles } from '../models/deals_data.js';
 
 const CART_STORAGE_KEY = 'etech_cart';
 
@@ -20,7 +21,6 @@ export function updateCartBadge() {
   const badge = document.getElementById('cart-count-badge');
   if (!badge) return;
 
-
   const cart = getCart();
   const totalCount = cart.reduce((sum, item) => sum + item.quantity, 0);
   badge.textContent = totalCount;
@@ -33,11 +33,11 @@ export function updateCartBadge() {
 
 export function addToCart(productId, quantity = 1) {
   const storedProducts = getStoredProducts();
-  const product = storedProducts.find(p => p.id === productId);
+  const product = storedProducts.find(p => p.id === Number(productId));
   if (!product) return;
 
   let cart = getCart();
-  const existingItem = cart.find(item => item.id === productId);
+  const existingItem = cart.find(item => item.id === product.id && !item.isBundle);
 
   if (existingItem) {
     existingItem.quantity += quantity;
@@ -54,6 +54,44 @@ export function addToCart(productId, quantity = 1) {
 
   saveCart(cart);
   showToast(`Added "${product.name}" to cart!`);
+}
+
+/**
+ * Add a complete deal bundle to cart with composite product linkage
+ */
+export function addBundleToCart(bundleId, quantity = 1) {
+  const bundles = getDealBundles();
+  const bundle = bundles.find(b => b.id === Number(bundleId));
+  if (!bundle) return;
+
+  if (bundle.stockLeft <= 0) {
+    showToast(`⚠️ Sorry, "${bundle.title}" is currently out of stock!`, 'error');
+    return;
+  }
+
+  let cart = getCart();
+  const cartItemId = `bundle-${bundle.id}`;
+  const existingItem = cart.find(item => item.id === cartItemId);
+
+  if (existingItem) {
+    existingItem.quantity += quantity;
+  } else {
+    cart.push({
+      id: cartItemId,
+      bundleId: bundle.id,
+      name: `[DEAL BUNDLE] ${bundle.title}`,
+      price: bundle.price,
+      originalPrice: bundle.originalPrice,
+      image: bundle.image,
+      category: 'promotions',
+      isBundle: true,
+      bundleComponents: bundle.bundleItems || [],
+      quantity: quantity
+    });
+  }
+
+  saveCart(cart);
+  showToast(`🎉 Added "${bundle.title}" Bundle to your cart!`);
 }
 
 export function showToast(message) {
@@ -378,10 +416,19 @@ export function handleCheckoutSubmit(e) {
     paymentMethod: 'card'
   });
 
-  // Deduct inventory stock from assigned branch
+  // Deduct inventory stock from assigned branch (including composite bundles)
   const branchId = fulfillment ? fulfillment.branch.id : 'BR-COL';
   cart.forEach(item => {
-    deductBranchStock(item.id, branchId, item.quantity);
+    if (item.isBundle && Array.isArray(item.bundleComponents)) {
+      item.bundleComponents.forEach(comp => {
+        deductBranchStock(comp.productId, branchId, (comp.qty || 1) * item.quantity);
+      });
+      if (item.bundleId) {
+        recordBundleSale(item.bundleId, item.quantity);
+      }
+    } else {
+      deductBranchStock(item.id, branchId, item.quantity);
+    }
   });
 
   // Clear cart

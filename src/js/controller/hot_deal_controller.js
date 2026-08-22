@@ -1,7 +1,7 @@
 // ETech Computers - Hot Deals Page Controller & Interactive System
 import { products, getStoredProducts } from '../models/data.js';
 import { getDealBundles, getHomeDealBanner } from '../models/deals_data.js';
-import { addToCart, showToast } from './cart_controller.js';
+import { addToCart, addBundleToCart, showToast } from './cart_controller.js';
 import { viewProductDetails } from './product-details_controller.js';
 
 // Curated Deals Dataset with accurate discounts, ratings, sold metrics, and categories
@@ -515,8 +515,14 @@ export function toggleDealWishlist(dealId, btnElement) {
 /**
  * Handles purchase action for the Featured Deal Banner
  */
-export function buyFeaturedDeal(productId = 1) {
-  addToCart(productId, 1);
+export function buyFeaturedDeal(bundleIdOrProductId = 1) {
+  const bundles = getDealBundles();
+  const bundle = bundles.find(b => b.id === Number(bundleIdOrProductId));
+  if (bundle) {
+    addBundleToCart(bundle.id, 1);
+  } else {
+    addToCart(Number(bundleIdOrProductId), 1);
+  }
   window.location.hash = '#cart';
 }
 
@@ -649,7 +655,7 @@ export function renderFeaturedDealShowcase() {
               </div>
             </div>
 
-            <button onclick="buyFeaturedDeal(${bundle.productId || 1})"
+            <button onclick="buyFeaturedDeal(${bundle.id})"
               class="px-8 py-3.5 bg-white hover:bg-slate-100 text-[#0f172a] font-extrabold text-xs sm:text-sm rounded-xl shadow-lg transition-all flex items-center justify-center space-x-2 transform hover:-translate-y-0.5 active:scale-95 cursor-pointer">
               <span>Buy Now</span>
               <span>→</span>

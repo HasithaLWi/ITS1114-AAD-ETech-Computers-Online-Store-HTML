@@ -112,12 +112,15 @@ RULES for actions:
     "📦 Shipping Policy"
   ],
 
-  // ── Welcome Message ─────────────────────────────────────────
   WELCOME_MESSAGE: `Hey there! 👋 I'm **E-T**, your ETech Computers assistant.
 
 I can help you find the perfect hardware, check your cart, answer questions about our store, or give you tech advice.
 
 What are you looking for today?`
 };
+
+if (typeof window !== 'undefined') {
+  window.ET_CONFIG = ET_CONFIG;
+}
 
 

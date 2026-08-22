@@ -172,17 +172,31 @@ export function autoSelectFulfillmentBranch(cartItems, customerCity, productsLis
   let minDistance = Infinity;
 
   for (const branch of branches) {
-    // Check if branch has sufficient stock for all cart items
+    // Check if branch has sufficient stock for all cart items (including composite bundles)
     let hasStockForAll = true;
     for (const item of cartItems) {
-      const product = productsList.find(p => p.id === item.id);
-      if (product && product.branchStock) {
-        const stockInBranch = product.branchStock[branch.id] || 0;
-        if (stockInBranch < item.quantity) {
-          hasStockForAll = false;
-          break;
+      if (item.isBundle && Array.isArray(item.bundleComponents)) {
+        for (const comp of item.bundleComponents) {
+          const compProduct = productsList.find(p => p.id === Number(comp.productId));
+          if (compProduct && compProduct.branchStock) {
+            const compStock = compProduct.branchStock[branch.id] || 0;
+            if (compStock < ((comp.qty || 1) * item.quantity)) {
+              hasStockForAll = false;
+              break;
+            }
+          }
+        }
+      } else {
+        const product = productsList.find(p => p.id === Number(item.id));
+        if (product && product.branchStock) {
+          const stockInBranch = product.branchStock[branch.id] || 0;
+          if (stockInBranch < item.quantity) {
+            hasStockForAll = false;
+            break;
+          }
         }
       }
+      if (!hasStockForAll) break;
     }
 
     if (hasStockForAll) {

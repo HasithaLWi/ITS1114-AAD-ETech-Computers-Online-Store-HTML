@@ -71,9 +71,35 @@
     return { productData, cartData, currentPage: hash };
   }
 
+  // ── Configuration Access Helper ───────────────────────────
+  function getCfg() {
+    if (typeof window !== "undefined" && window.ET_CONFIG) {
+      return window.ET_CONFIG;
+    }
+    if (typeof ET_CONFIG !== "undefined") {
+      return ET_CONFIG;
+    }
+    return {
+      API_KEY: "",
+      MODEL: "gemini-3.1-flash-lite",
+      BOT_NAME: "E-T",
+      BOT_TAGLINE: "ETech AI Assistant",
+      WELCOME_MESSAGE: "Hey there! ❤ I'm **E-T**, your ETech Computers assistant.\n\nI can help you find the perfect hardware, check your cart, answer questions about our store, or give you tech advice.\n\nWhat are you looking for today?",
+      QUICK_SUGGESTIONS: [
+        "🎮 Gaming Laptops",
+        "🖥️ Best Monitors",
+        "⚡ PC Build Help",
+        "🛒 View My Cart",
+        "🛡️ Warranty Info",
+        "📦 Shipping Policy"
+      ],
+      SYSTEM_PROMPT: "You are E-T, the friendly and knowledgeable AI assistant for ETech Computers."
+    };
+  }
+
   // ── Gemini API Call & Smart Fallback Engine ────────────────
   async function callGemini(userMessage) {
-    const cfg = ET_CONFIG;
+    const cfg = getCfg();
     const key = cfg.API_KEY ? cfg.API_KEY.trim() : "";
 
     const { productData, cartData, currentPage } = buildContext();
@@ -434,12 +460,13 @@ User is currently viewing: ${currentPage}
     try { sessionStorage.removeItem("et_history"); } catch (e) { }
     const list = document.getElementById("et-messages");
     if (list) list.innerHTML = "";
-    appendBotBubble(ET_CONFIG.WELCOME_MESSAGE);
+    const cfg = getCfg();
+    appendBotBubble(cfg.WELCOME_MESSAGE);
   }
 
   // ── Initialize: Bind to Existing DOM ──────────────────────
   function initUI() {
-    const cfg = ET_CONFIG;
+    const cfg = getCfg();
     const wrapper = document.getElementById("et-chatbot");
     if (!wrapper) return;
 

@@ -133,6 +133,16 @@ export function renderAdminPage(queryPart) {
               <div class="sidebar-tooltip">Store Branches</div>
             </button>
 
+            <button data-tab="transfers" onclick="switchAdminTab('transfers')" title="Inter-Branch Stock Transfers & Logistics"
+              class="sidebar-nav-btn w-full flex items-center justify-center lg:justify-start space-x-0 lg:space-x-3 px-2 lg:px-3.5 py-2.5 rounded-lg font-medium text-xs text-[#475569] hover:text-[#0f172a] hover:bg-[#f1f5f9] transition-all relative group">
+              <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+              </svg>
+              <span class="sidebar-text-label hidden lg:inline whitespace-nowrap">Stock Transfers</span>
+              <div class="sidebar-tooltip">Stock Transfers & Logistics</div>
+            </button>
+
             <button data-tab="users" onclick="switchAdminTab('users')" title="User Directory"
               class="admin-only-nav sidebar-nav-btn w-full flex items-center justify-center lg:justify-start space-x-0 lg:space-x-3 px-2 lg:px-3.5 py-2.5 rounded-lg font-medium text-xs text-[#475569] hover:text-[#0f172a] hover:bg-[#f1f5f9] transition-all relative group">
               <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -786,6 +796,15 @@ export function renderAdminPage(queryPart) {
           <!-- Tab Panel: Deals & Promotions -->
           <div id="tab-panel-promotions" class="dashboard-tab-panel hidden space-y-6">
             <div id="promotions-tab-container"></div>
+          </div>
+
+          <!-- Tab Panel: Deal Bundle Slide Editor (Dedicated Full Page Workspace) -->
+          <div id="tab-panel-bundle-form" class="dashboard-tab-panel hidden">
+            <div id="bundle-form-page-container"></div>
+          </div>
+
+          <!-- Tab Panel: Inter-Branch Stock Transfers & Logistics Control -->
+          <div id="tab-panel-transfers" class="dashboard-tab-panel hidden">
           </div>
 
         </main>

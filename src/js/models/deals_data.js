@@ -1,5 +1,8 @@
-// deals_data.js — Model & Storage layer for Promotions, Deal Banners, and Deal Bundles
+// ============================================================
+//  deals_data.js — Model & Storage layer for Promotions & Composite Deal Bundles
+// ============================================================
 import { getStoredProducts, saveStoredProducts } from './data.js';
+import { getBranches } from '../controller/branch_controller.js';
 
 export const HOME_DEAL_STORAGE_KEY = 'etech_home_deal_banner';
 export const DEAL_BUNDLES_STORAGE_KEY = 'etech_deal_bundles';
@@ -35,16 +38,16 @@ export const DEFAULT_DEAL_BUNDLES = [
       { icon: "💾", label: "1TB NVMe SSD" }
     ],
     bundleItems: [
-      "ASUS GeForce RTX 4070 Super 12GB",
-      "Corsair Vengeance 32GB DDR5-6000MHz",
-      "Samsung 990 PRO 1TB PCIe 4.0 SSD"
+      { productId: 1, qty: 1, name: "ASUS GeForce RTX 4070 Super 12GB GDDR6X" },
+      { productId: 3, qty: 2, name: "Corsair Vengeance 16GB (2x8GB) DDR5 6000MHz" },
+      { productId: 4, qty: 1, name: "Samsung 990 PRO 1TB NVMe SSD" }
     ],
     price: 259999,
-    originalPrice: 289999,
-    savingAmount: 30000,
-    savingPercent: 10,
+    originalPrice: 331997, // Sum of 259,999 + (28,999 * 2) + 42,999
+    targetQuota: 25,
+    soldCount: 8,
     claimedPercent: 62,
-    stockLeft: 38,
+    stockLeft: 3,
     durationDays: 2,
     durationHours: 14,
     durationMins: 28,
@@ -65,16 +68,16 @@ export const DEFAULT_DEAL_BUNDLES = [
       { icon: "💾", label: "2TB PCIe 4.0 SSD" }
     ],
     bundleItems: [
-      "Intel Core i7-14700K 20-Core Processor",
-      "Quantum 64GB (2x32GB) DDR5 6000MHz",
-      "Samsung 990 PRO 2TB NVMe SSD"
+      { productId: 2, qty: 1, name: "Intel Core i7-14700K" },
+      { productId: 3, qty: 2, name: "Corsair Vengeance 16GB (2x8GB) DDR5 6000MHz" },
+      { productId: 4, qty: 1, name: "Samsung 990 PRO 1TB NVMe SSD" }
     ],
-    price: 319999,
-    originalPrice: 369999,
-    savingAmount: 50000,
-    savingPercent: 14,
+    price: 269999,
+    originalPrice: 280996,
+    targetQuota: 15,
+    soldCount: 5,
     claimedPercent: 45,
-    stockLeft: 15,
+    stockLeft: 2,
     durationDays: 3,
     durationHours: 8,
     durationMins: 15,
@@ -90,29 +93,155 @@ export const DEFAULT_DEAL_BUNDLES = [
     subtitle: "Ultra-High 240Hz Competitive Performance",
     image: "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?auto=format&fit=crop&w=600&q=80",
     specs: [
-      { icon: "🖥️", label: "34\" Curved QD-OLED" },
-      { icon: "🎮", label: "RTX 4080 Super" },
-      { icon: "🎧", label: "7.1 Spatial Audio" }
+      { icon: "🎮", label: "RTX 4070 Super" },
+      { icon: "⚙️", label: "i7-14700K 20-Core" },
+      { icon: "💾", label: "Fast NVMe Storage" }
     ],
     bundleItems: [
-      "Vortex Ultra 34\" Curved QD-OLED Monitor",
-      "NVIDIA GeForce RTX 4080 Super GPU",
-      "Immerse Pro 7.1 Wireless Headset"
+      { productId: 1, qty: 1, name: "ASUS GeForce RTX 4070 Super 12GB GDDR6X" },
+      { productId: 2, qty: 1, name: "Intel Core i7-14700K" }
     ],
-    price: 489999,
-    originalPrice: 559999,
-    savingAmount: 70000,
-    savingPercent: 13,
+    price: 399999,
+    originalPrice: 439998,
+    targetQuota: 10,
+    soldCount: 4,
     claimedPercent: 80,
-    stockLeft: 6,
+    stockLeft: 2,
     durationDays: 1,
     durationHours: 19,
     durationMins: 45,
     durationSecs: 10,
-    productId: 3,
+    productId: 1,
     active: true
   }
 ];
+
+/**
+ * Normalizes bundle items to structured format [{ productId, qty, name }]
+ */
+export function normalizeBundleItems(items, productsList) {
+  if (!Array.isArray(items)) return [];
+  const products = productsList || getStoredProducts();
+
+  return items.map(item => {
+    if (typeof item === 'object' && item !== null && item.productId) {
+      const p = products.find(prod => prod.id === Number(item.productId));
+      return {
+        productId: Number(item.productId),
+        qty: Math.max(1, parseInt(item.qty) || 1),
+        name: p ? p.name : (item.name || `Product #${item.productId}`)
+      };
+    } else if (typeof item === 'string') {
+      // Find matching product by name
+      const p = products.find(prod => prod.name.toLowerCase().includes(item.toLowerCase()) || item.toLowerCase().includes(prod.name.toLowerCase()));
+      return {
+        productId: p ? p.id : 1,
+        qty: 1,
+        name: p ? p.name : item
+      };
+    }
+    return null;
+  }).filter(Boolean);
+}
+
+/**
+ * Calculates live dynamic inventory status, bottleneck available units, and branch assembly readiness for a bundle
+ */
+export function calculateBundleInventory(bundle, customProducts = null, customBranches = null) {
+  const products = customProducts || getStoredProducts();
+  const branches = customBranches || getBranches();
+  const normalizedItems = normalizeBundleItems(bundle.bundleItems, products);
+
+  if (normalizedItems.length === 0) {
+    return {
+      maxAvailableBundles: 0,
+      calculatedMSRP: Number(bundle.originalPrice) || Number(bundle.price) || 0,
+      componentsBreakdown: [],
+      branchAssembly: {},
+      totalReadyToShip: 0,
+      claimedPercent: Number(bundle.claimedPercent) || 50,
+      stockLeft: 0
+    };
+  }
+
+  let calculatedMSRP = 0;
+  let componentBottlenecks = [];
+  let branchStocksAccumulator = {};
+
+  branches.forEach(b => {
+    branchStocksAccumulator[b.id] = [];
+  });
+
+  const componentsBreakdown = normalizedItems.map(item => {
+    const product = products.find(p => p.id === item.productId);
+    const unitPrice = product ? Number(product.price) : 0;
+    calculatedMSRP += unitPrice * item.qty;
+
+    const totalStock = product ? (product.totalStock || 0) : 0;
+    const availableBundlesForThisItem = Math.floor(totalStock / item.qty);
+    componentBottlenecks.push(availableBundlesForThisItem);
+
+    // Branch breakdown
+    const branchStockMap = {};
+    branches.forEach(b => {
+      const bStock = (product && product.branchStock && product.branchStock[b.id]) || 0;
+      const bBundles = Math.floor(bStock / item.qty);
+      branchStockMap[b.id] = bStock;
+      branchStocksAccumulator[b.id].push(bBundles);
+    });
+
+    return {
+      productId: item.productId,
+      qty: item.qty,
+      name: product ? product.name : item.name,
+      sku: product ? product.sku : `ETC-${item.productId}`,
+      image: product ? product.image : '',
+      unitPrice: unitPrice,
+      totalStock: totalStock,
+      availableBundlesForThisItem: availableBundlesForThisItem,
+      branchStock: branchStockMap
+    };
+  });
+
+  // Overall bottleneck across entire network
+  const maxAvailableBundles = componentBottlenecks.length > 0 ? Math.max(0, Math.min(...componentBottlenecks)) : 0;
+
+  // Branch assembly readiness (How many complete kits each single branch can fulfill right now)
+  const branchAssembly = {};
+  let totalReadyToShip = 0;
+
+  branches.forEach(b => {
+    const branchKitLimits = branchStocksAccumulator[b.id] || [0];
+    const readyKits = branchKitLimits.length > 0 ? Math.max(0, Math.min(...branchKitLimits)) : 0;
+    branchAssembly[b.id] = {
+      branchId: b.id,
+      branchName: b.name,
+      city: b.city,
+      readyKits: readyKits
+    };
+    totalReadyToShip += readyKits;
+  });
+
+  // Dynamic Claimed Percentage based on soldCount and available stock
+  const soldCount = Math.max(0, parseInt(bundle.soldCount) || 0);
+  let claimedPercent = 0;
+  if (soldCount + maxAvailableBundles > 0) {
+    claimedPercent = Math.min(99, Math.max(5, Math.round((soldCount / (soldCount + maxAvailableBundles)) * 100)));
+  } else {
+    claimedPercent = 95; // sold out
+  }
+
+  return {
+    maxAvailableBundles,
+    calculatedMSRP,
+    componentsBreakdown,
+    branchAssembly,
+    totalReadyToShip,
+    claimedPercent,
+    stockLeft: maxAvailableBundles,
+    soldCount
+  };
+}
 
 /**
  * Retrieve Home Deal Banner Configuration
@@ -145,20 +274,49 @@ export function saveHomeDealBanner(bannerData) {
 }
 
 /**
- * Retrieve Deal Bundles for DealHot Carousel
+ * Retrieve Deal Bundles with Live Dynamic Inventory Calculations
  */
 export function getDealBundles() {
   const raw = localStorage.getItem(DEAL_BUNDLES_STORAGE_KEY);
+  let list = [];
   if (!raw) {
     localStorage.setItem(DEAL_BUNDLES_STORAGE_KEY, JSON.stringify(DEFAULT_DEAL_BUNDLES));
-    return [...DEFAULT_DEAL_BUNDLES];
+    list = [...DEFAULT_DEAL_BUNDLES];
+  } else {
+    try {
+      const parsed = JSON.parse(raw);
+      list = Array.isArray(parsed) && parsed.length > 0 ? parsed : [...DEFAULT_DEAL_BUNDLES];
+    } catch (e) {
+      list = [...DEFAULT_DEAL_BUNDLES];
+    }
   }
-  try {
-    const list = JSON.parse(raw);
-    return Array.isArray(list) && list.length > 0 ? list : [...DEFAULT_DEAL_BUNDLES];
-  } catch (e) {
-    return [...DEFAULT_DEAL_BUNDLES];
-  }
+
+  const products = getStoredProducts();
+  const branches = getBranches();
+
+  // Attach live computed inventory to each bundle
+  return list.map(b => {
+    const inv = calculateBundleInventory(b, products, branches);
+    const price = Number(b.price) || 199999;
+    const originalPrice = inv.calculatedMSRP > 0 ? inv.calculatedMSRP : (Number(b.originalPrice) || price);
+    const savingAmount = Math.max(0, originalPrice - price);
+    const savingPercent = originalPrice > 0 ? Math.round((savingAmount / originalPrice) * 100) : 0;
+
+    return {
+      ...b,
+      bundleItems: normalizeBundleItems(b.bundleItems, products),
+      price: price,
+      originalPrice: originalPrice,
+      savingAmount: savingAmount,
+      savingPercent: savingPercent,
+      stockLeft: inv.maxAvailableBundles,
+      claimedPercent: inv.claimedPercent,
+      soldCount: inv.soldCount,
+      branchAssembly: inv.branchAssembly,
+      totalReadyToShip: inv.totalReadyToShip,
+      componentsBreakdown: inv.componentsBreakdown
+    };
+  });
 }
 
 /**
@@ -173,7 +331,17 @@ export function saveDealBundles(bundlesList) {
  */
 export function addDealBundle(bundleData) {
   const list = getDealBundles();
+  const products = getStoredProducts();
   const newId = list.length > 0 ? Math.max(...list.map(b => b.id || 0)) + 1 : 1;
+
+  const normalizedItems = normalizeBundleItems(bundleData.bundleItems, products);
+  const inv = calculateBundleInventory({ ...bundleData, bundleItems: normalizedItems }, products);
+
+  const price = Number(bundleData.price) || 199999;
+  const originalPrice = inv.calculatedMSRP > 0 ? inv.calculatedMSRP : (Number(bundleData.originalPrice) || 229999);
+  const savingAmount = Math.max(0, originalPrice - price);
+  const savingPercent = originalPrice > 0 ? Math.round((savingAmount / originalPrice) * 100) : 0;
+
   const newBundle = {
     id: newId,
     badge: bundleData.badge || "HOT DEAL",
@@ -182,20 +350,23 @@ export function addDealBundle(bundleData) {
     subtitle: bundleData.subtitle || "Premium Hardware Package",
     image: bundleData.image || "public/images/home-hero-image-1.png",
     specs: bundleData.specs || [{ icon: "🎮", label: "GPU/CPU" }],
-    bundleItems: bundleData.bundleItems || [],
-    price: Number(bundleData.price) || 199999,
-    originalPrice: Number(bundleData.originalPrice) || 229999,
-    savingAmount: Math.max(0, (Number(bundleData.originalPrice) || 229999) - (Number(bundleData.price) || 199999)),
-    savingPercent: Math.round((((Number(bundleData.originalPrice) || 229999) - (Number(bundleData.price) || 199999)) / (Number(bundleData.originalPrice) || 229999)) * 100),
-    claimedPercent: Number(bundleData.claimedPercent) || 50,
-    stockLeft: Number(bundleData.stockLeft) || 20,
+    bundleItems: normalizedItems,
+    price: price,
+    originalPrice: originalPrice,
+    savingAmount: savingAmount,
+    savingPercent: savingPercent,
+    targetQuota: Number(bundleData.targetQuota) || 20,
+    soldCount: 0,
+    claimedPercent: inv.claimedPercent,
+    stockLeft: inv.maxAvailableBundles,
     durationDays: Number(bundleData.durationDays) || 2,
     durationHours: Number(bundleData.durationHours) || 14,
     durationMins: Number(bundleData.durationMins) || 30,
     durationSecs: Number(bundleData.durationSecs) || 0,
-    productId: Number(bundleData.productId) || 1,
+    productId: Number(bundleData.productId) || (normalizedItems[0] ? normalizedItems[0].productId : 1),
     active: bundleData.active !== undefined ? bundleData.active : true
   };
+
   list.push(newBundle);
   saveDealBundles(list);
   return newBundle;
@@ -209,8 +380,12 @@ export function updateDealBundle(id, bundleData) {
   const index = list.findIndex(b => b.id === Number(id));
   if (index === -1) return null;
 
+  const products = getStoredProducts();
+  const normalizedItems = normalizeBundleItems(bundleData.bundleItems || list[index].bundleItems, products);
+  const inv = calculateBundleInventory({ ...list[index], ...bundleData, bundleItems: normalizedItems }, products);
+
   const price = Number(bundleData.price) || list[index].price;
-  const originalPrice = Number(bundleData.originalPrice) || list[index].originalPrice;
+  const originalPrice = inv.calculatedMSRP > 0 ? inv.calculatedMSRP : (Number(bundleData.originalPrice) || list[index].originalPrice);
   const savingAmount = Math.max(0, originalPrice - price);
   const savingPercent = originalPrice > 0 ? Math.round(((originalPrice - price) / originalPrice) * 100) : 0;
 
@@ -218,13 +393,28 @@ export function updateDealBundle(id, bundleData) {
     ...list[index],
     ...bundleData,
     id: Number(id),
+    bundleItems: normalizedItems,
     price,
     originalPrice,
     savingAmount,
-    savingPercent
+    savingPercent,
+    stockLeft: inv.maxAvailableBundles,
+    claimedPercent: inv.claimedPercent
   };
   saveDealBundles(list);
   return list[index];
+}
+
+/**
+ * Records a purchase of a Deal Bundle and increments its sold count
+ */
+export function recordBundleSale(bundleId, qty = 1) {
+  const list = getDealBundles();
+  const index = list.findIndex(b => b.id === Number(bundleId));
+  if (index !== -1) {
+    list[index].soldCount = (list[index].soldCount || 0) + (parseInt(qty) || 1);
+    saveDealBundles(list);
+  }
 }
 
 /**

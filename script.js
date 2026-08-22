@@ -24,7 +24,7 @@ import {
 } from './src/js/controller/login_controller.js';
 import { getBranches, calculateShippingFee, autoSelectFulfillmentBranch } from './src/js/controller/branch_controller.js';
 import {
-    getCart, saveCart, updateCartBadge, addToCart, showToast,
+    getCart, saveCart, updateCartBadge, addToCart, addBundleToCart, showToast,
     initCartLogic, initCheckoutLogic,
     updateItemQuantity, removeItemFromCart
 } from './src/js/controller/cart_controller.js';
@@ -120,9 +120,56 @@ import {
     runAutoBadgeAssignment
 } from './src/js/models/taxonomy_data.js';
 
+// Promotions & Deals Controller Imports
+import {
+    renderPromotionsTab, switchPromoSubTab,
+    openBundleFormPage, closeBundleFormPage,
+    triggerBundleFormSubmit, handleSaveBundleFormPage,
+    addBundleFormSpecInput, removeBundleFormSpec, updateBundleFormSpec,
+    addBundleFormItemInput, removeBundleFormItem, updateBundleFormItem,
+    setBundleBadgeTag, setBundleFormPresetTimer, updateBundleLivePreview
+} from './src/js/controller/promotion_management_controller.js';
+import {
+    getHomeDealBanner, saveHomeDealBanner,
+    getDealBundles, saveDealBundles, addDealBundle,
+    updateDealBundle, deleteDealBundle, getAllDiscountsAndDeals,
+    updateProductDiscount, calculateBundleInventory, normalizeBundleItems
+} from './src/js/models/deals_data.js';
+
+// Inter-Branch Stock Transfers Controller & Model Imports
+import {
+    renderTransfersTab, filterTransfersByStatus, handleTransferSearch,
+    handleReceiveTransfer, handleCancelTransfer, openInitiateTransferModal,
+    updateTransferProductDetails, validateTransferSourceStock,
+    handleSaveTransferSubmit, viewTransferManifestModal
+} from './src/js/controller/transfer_management_controller.js';
+import {
+    getStockTransfers, saveStockTransfers, createStockTransfer,
+    receiveStockTransfer, cancelStockTransfer, getTransfersMetrics
+} from './src/js/models/transfers_data.js';
+
 // ── Bind everything to window in one shot ────────────────────
 Object.assign(window, {
-    // Data & Products
+    // Inter-Branch Stock Transfers & Logistics
+    renderTransfersTab, filterTransfersByStatus, handleTransferSearch,
+    handleReceiveTransfer, handleCancelTransfer, openInitiateTransferModal,
+    updateTransferProductDetails, validateTransferSourceStock,
+    handleSaveTransferSubmit, viewTransferManifestModal,
+    getStockTransfers, saveStockTransfers, createStockTransfer,
+    receiveStockTransfer, cancelStockTransfer, getTransfersMetrics,
+
+    // Promotions & Deal Bundles
+    renderPromotionsTab, switchPromoSubTab,
+    openBundleFormPage, closeBundleFormPage,
+    triggerBundleFormSubmit, handleSaveBundleFormPage,
+    addBundleFormSpecInput, removeBundleFormSpec, updateBundleFormSpec,
+    addBundleFormItemInput, removeBundleFormItem, updateBundleFormItem,
+    setBundleBadgeTag, setBundleFormPresetTimer, updateBundleLivePreview,
+    getHomeDealBanner, saveHomeDealBanner,
+    getDealBundles, saveDealBundles, addDealBundle,
+    updateDealBundle, deleteDealBundle, getAllDiscountsAndDeals,
+    updateProductDiscount, calculateBundleInventory, normalizeBundleItems,
+    addBundleToCart,
     products, getProductById, getFeaturedProducts, getNewArrivalProducts, getStoredProducts, saveProduct, deleteProduct,
     updateProductStockSettings, quickAdjustStock, transferBranchStock,
 
