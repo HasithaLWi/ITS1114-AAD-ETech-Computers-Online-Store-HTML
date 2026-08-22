@@ -1,6 +1,6 @@
 // ETech Computers - Single Page Section Toggle Router & Global App Logic
 import { products, getProductById, getFeaturedProducts, getNewArrivalProducts } from '../models/data.js';
-import { getHomeDealBanner } from '../models/deals_data.js';
+import { getHomeDealBanner, getHomeBannerRemainingTime } from '../models/deals_data.js';
 import { legalPolicies, getPolicyData, getStoredPolicies } from '../models/policy-data.js';
 import { getCurrentUser, isLoggedIn, logoutUser } from '../controller/login_controller.js';
 import { getUserOrders } from '../controller/order_management_controller.js';
@@ -140,7 +140,7 @@ function handleRoute() {
       let productId = 1;
       if (queryPart) {
         const params = new URLSearchParams(queryPart);
-        productId = parseInt(params.get('id') || 1);
+        productId = parseInt(params.get('id')) || 1;
       }
       renderProductDetailsPage(productId);
     }
@@ -416,8 +416,10 @@ export function handleLogout() {
 
 window.handleLogout = handleLogout;
 
+let homeBannerTimerInterval = null;
+
 /**
- * Renders dynamic Home Deal Banner configuration
+ * Renders dynamic Home Deal Banner configuration with persistent real-time countdown
  */
 export function renderHomeDealBannerLive() {
   const container = document.getElementById('home-weekend-deal-card');
@@ -441,15 +443,33 @@ export function renderHomeDealBannerLive() {
   const btnEl = document.getElementById('home-deal-btn');
   if (btnEl) {
     btnEl.innerHTML = `
-      <span>${banner.buttonText || 'Shop Deals'}</span>
+      <span>Shop Deals</span>
       <svg class="w-3.5 h-3.5 text-[#0f172a] group-hover:translate-x-1 transition-transform" fill="none"
         stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
           d="M14 5l7 7m0 0l-7 7m7-7H3" />
       </svg>
     `;
-    btnEl.setAttribute('href', banner.targetUrl || '#deals');
+    btnEl.setAttribute('href', '#deals');
   }
+
+  // Update timer display & start ticking
+  const updateHomeTimerDisplay = () => {
+    const t = getHomeBannerRemainingTime();
+    const daysEl = document.getElementById('home-deal-timer-days');
+    const hrsEl = document.getElementById('home-deal-timer-hrs');
+    const minsEl = document.getElementById('home-deal-timer-mins');
+    const secsEl = document.getElementById('home-deal-timer-secs');
+
+    if (daysEl) daysEl.textContent = t.days;
+    if (hrsEl) hrsEl.textContent = t.hours;
+    if (minsEl) minsEl.textContent = t.mins;
+    if (secsEl) secsEl.textContent = t.secs;
+  };
+
+  updateHomeTimerDisplay();
+  if (homeBannerTimerInterval) clearInterval(homeBannerTimerInterval);
+  homeBannerTimerInterval = setInterval(updateHomeTimerDisplay, 1000);
 }
 
 /**

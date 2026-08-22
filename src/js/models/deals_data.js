@@ -3,118 +3,83 @@
 // ============================================================
 import { getStoredProducts, saveStoredProducts } from './data.js';
 import { getBranches } from '../controller/branch_controller.js';
+import {
+  DEFAULT_HOME_DEAL_BANNER,
+  DEFAULT_DEAL_BUNDLES,
+  DEFAULT_HOT_DEALS
+} from '../../data/deals.js';
+
+export { DEFAULT_HOME_DEAL_BANNER, DEFAULT_DEAL_BUNDLES, DEFAULT_HOT_DEALS };
 
 export const HOME_DEAL_STORAGE_KEY = 'etech_home_deal_banner';
 export const DEAL_BUNDLES_STORAGE_KEY = 'etech_deal_bundles';
+export const HOT_DEALS_STORAGE_KEY = 'etech_hot_deals_list';
 
-export const DEFAULT_HOME_DEAL_BANNER = {
-  tag: "WEEKEND TECH DEAL",
-  title: "Upgrade your setup",
-  titleHighlight: "Save up to 20%",
-  subtitle: "on selected components",
-  bgImage: "public/images/WEEKEND-TECH-DEAL-cart-bg.jpeg",
-  durationType: "week", // 'week' or 'custom'
-  durationDays: 2,
-  durationHours: 14,
-  durationMins: 31,
-  durationSecs: 59,
-  targetUrl: "#deals",
-  buttonText: "Shop Deals",
-  active: true,
-  lastUpdated: new Date().toISOString()
-};
-
-export const DEFAULT_DEAL_BUNDLES = [
-  {
-    id: 1,
-    badge: "BEST DEAL",
-    eyebrow: "FEATURED DEAL",
-    title: "Ultimate Gaming Power",
-    subtitle: "Complete Your Dream Setup",
-    image: "public/images/home-hero-image-1.png",
-    specs: [
-      { icon: "🎮", label: "RTX 4070 Super" },
-      { icon: "🧠", label: "32GB DDR5 RAM" },
-      { icon: "💾", label: "1TB NVMe SSD" }
-    ],
-    bundleItems: [
-      { productId: 1, qty: 1, name: "ASUS GeForce RTX 4070 Super 12GB GDDR6X" },
-      { productId: 3, qty: 2, name: "Corsair Vengeance 16GB (2x8GB) DDR5 6000MHz" },
-      { productId: 4, qty: 1, name: "Samsung 990 PRO 1TB NVMe SSD" }
-    ],
-    price: 259999,
-    originalPrice: 331997, // Sum of 259,999 + (28,999 * 2) + 42,999
-    targetQuota: 25,
-    soldCount: 8,
-    claimedPercent: 62,
-    stockLeft: 3,
-    durationDays: 2,
-    durationHours: 14,
-    durationMins: 28,
-    durationSecs: 42,
-    productId: 1,
-    active: true
-  },
-  {
-    id: 2,
-    badge: "HOT BUNDLE",
-    eyebrow: "CREATOR WORKSTATION",
-    title: "Apex Creator Studio Rig",
-    subtitle: "Unmatched 4K Content Creation & Rendering",
-    image: "https://images.unsplash.com/photo-1587202372775-e229f172b9d7?auto=format&fit=crop&w=600&q=80",
-    specs: [
-      { icon: "⚙️", label: "i7-14700K 20-Core" },
-      { icon: "🧠", label: "64GB DDR5 6000MHz" },
-      { icon: "💾", label: "2TB PCIe 4.0 SSD" }
-    ],
-    bundleItems: [
-      { productId: 2, qty: 1, name: "Intel Core i7-14700K" },
-      { productId: 3, qty: 2, name: "Corsair Vengeance 16GB (2x8GB) DDR5 6000MHz" },
-      { productId: 4, qty: 1, name: "Samsung 990 PRO 1TB NVMe SSD" }
-    ],
-    price: 269999,
-    originalPrice: 280996,
-    targetQuota: 15,
-    soldCount: 5,
-    claimedPercent: 45,
-    stockLeft: 2,
-    durationDays: 3,
-    durationHours: 8,
-    durationMins: 15,
-    durationSecs: 20,
-    productId: 2,
-    active: true
-  },
-  {
-    id: 3,
-    badge: "FLASH COMBO",
-    eyebrow: "ESPORTS COMPETITIVE",
-    title: "Predator Cyber Battlestation",
-    subtitle: "Ultra-High 240Hz Competitive Performance",
-    image: "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?auto=format&fit=crop&w=600&q=80",
-    specs: [
-      { icon: "🎮", label: "RTX 4070 Super" },
-      { icon: "⚙️", label: "i7-14700K 20-Core" },
-      { icon: "💾", label: "Fast NVMe Storage" }
-    ],
-    bundleItems: [
-      { productId: 1, qty: 1, name: "ASUS GeForce RTX 4070 Super 12GB GDDR6X" },
-      { productId: 2, qty: 1, name: "Intel Core i7-14700K" }
-    ],
-    price: 399999,
-    originalPrice: 439998,
-    targetQuota: 10,
-    soldCount: 4,
-    claimedPercent: 80,
-    stockLeft: 2,
-    durationDays: 1,
-    durationHours: 19,
-    durationMins: 45,
-    durationSecs: 10,
-    productId: 1,
-    active: true
+/**
+ * Calculates realtime remaining countdown duration from timerUpdatedAt & total configured duration
+ * 
+ * @param {Object} item - An object containing durationDays, durationHours, durationMins, durationSecs, durationSeconds, and timerUpdatedAt
+ * @returns {Object} { totalSeconds, days, hours, mins, secs, isExpired }
+ */
+export function getRemainingTimeFromDuration(item) {
+  if (!item) {
+    return { totalSeconds: 0, days: "00", hours: "00", mins: "00", secs: "00", isExpired: true };
   }
-];
+
+  const days = Number(item.durationDays) || 0;
+  const hours = Number(item.durationHours) || 0;
+  const mins = Number(item.durationMins) || 0;
+  const secs = Number(item.durationSecs) || 0;
+  const totalDuration = Number(item.durationSeconds) || (days * 86400 + hours * 3600 + mins * 60 + secs);
+
+  if (totalDuration <= 0) {
+    return { totalSeconds: 0, days: "00", hours: "00", mins: "00", secs: "00", isExpired: true };
+  }
+
+  // Calculate elapsed time from timerUpdatedAt or lastUpdated
+  const updatedAt = item.timerUpdatedAt || item.lastUpdated;
+  let elapsedSeconds = 0;
+  if (updatedAt) {
+    const startMs = new Date(updatedAt).getTime();
+    if (!isNaN(startMs)) {
+      elapsedSeconds = Math.max(0, Math.floor((Date.now() - startMs) / 1000));
+    }
+  }
+
+  const remaining = Math.max(0, totalDuration - elapsedSeconds);
+  const isExpired = remaining <= 0;
+
+  const remDays = Math.floor(remaining / 86400);
+  const remHours = Math.floor((remaining % 86400) / 3600);
+  const remMins = Math.floor((remaining % 3600) / 60);
+  const remSecs = remaining % 60;
+
+  return {
+    totalSeconds: remaining,
+    days: String(remDays).padStart(2, '0'),
+    hours: String(remHours).padStart(2, '0'),
+    mins: String(remMins).padStart(2, '0'),
+    secs: String(remSecs).padStart(2, '0'),
+    isExpired: isExpired
+  };
+}
+
+/**
+ * Get remaining countdown for the Store-Wide Home / Hot Deals Banner (Timer Type 1)
+ */
+export function getHomeBannerRemainingTime() {
+  const banner = getHomeDealBanner();
+  return getRemainingTimeFromDuration(banner);
+}
+
+/**
+ * Get remaining countdown for a specific Deal Bundle (Timer Type 2)
+ */
+export function getBundleRemainingTime(bundleId) {
+  const bundles = getDealBundles();
+  const bundle = bundles.find(b => b.id === Number(bundleId));
+  return getRemainingTimeFromDuration(bundle);
+}
 
 /**
  * Normalizes bundle items to structured format [{ productId, qty, name }]
@@ -195,8 +160,11 @@ export function calculateBundleInventory(bundle, customProducts = null, customBr
       qty: item.qty,
       name: product ? product.name : item.name,
       sku: product ? product.sku : `ETC-${item.productId}`,
+      brand: product ? (product.brand || '') : '',
+      category: product ? (product.category || '') : '',
       image: product ? product.image : '',
       unitPrice: unitPrice,
+      specs: product ? (product.specs || {}) : {},
       totalStock: totalStock,
       availableBundlesForThisItem: availableBundlesForThisItem,
       branchStock: branchStockMap
@@ -253,7 +221,8 @@ export function getHomeDealBanner() {
     return { ...DEFAULT_HOME_DEAL_BANNER };
   }
   try {
-    return JSON.parse(raw);
+    const parsed = JSON.parse(raw);
+    return { ...DEFAULT_HOME_DEAL_BANNER, ...parsed };
   } catch (e) {
     return { ...DEFAULT_HOME_DEAL_BANNER };
   }
@@ -263,10 +232,20 @@ export function getHomeDealBanner() {
  * Save Home Deal Banner Configuration
  */
 export function saveHomeDealBanner(bannerData) {
-  const current = getHomeDealBanner();
+  const durationDays = Number(bannerData.durationDays) || 0;
+  const durationHours = Number(bannerData.durationHours) || 8;
+  const durationMins = Number(bannerData.durationMins) || 0;
+  const durationSecs = Number(bannerData.durationSecs) || 0;
+  const durationSeconds = (durationDays * 86400) + (durationHours * 3600) + (durationMins * 60) + durationSecs;
+
   const updated = {
-    ...current,
     ...bannerData,
+    durationDays,
+    durationHours,
+    durationMins,
+    durationSecs,
+    durationSeconds,
+    timerUpdatedAt: new Date().toISOString(),
     lastUpdated: new Date().toISOString()
   };
   localStorage.setItem(HOME_DEAL_STORAGE_KEY, JSON.stringify(updated));
@@ -294,7 +273,7 @@ export function getDealBundles() {
   const products = getStoredProducts();
   const branches = getBranches();
 
-  // Attach live computed inventory to each bundle
+  // Attach live computed inventory and dynamic specs to each bundle
   return list.map(b => {
     const inv = calculateBundleInventory(b, products, branches);
     const price = Number(b.price) || 199999;
@@ -302,9 +281,24 @@ export function getDealBundles() {
     const savingAmount = Math.max(0, originalPrice - price);
     const savingPercent = originalPrice > 0 ? Math.round((savingAmount / originalPrice) * 100) : 0;
 
+    // Derive specs dynamically from included products
+    const dynamicSpecs = [];
+    (inv.componentsBreakdown || []).forEach(comp => {
+      if (comp.specs && Object.keys(comp.specs).length > 0) {
+        const topSpec = Object.entries(comp.specs)[0];
+        if (topSpec) {
+          dynamicSpecs.push({
+            icon: '⚡',
+            label: `${topSpec[1]}`
+          });
+        }
+      }
+    });
+
     return {
       ...b,
       bundleItems: normalizeBundleItems(b.bundleItems, products),
+      specs: dynamicSpecs.length > 0 ? dynamicSpecs : (b.specs || []),
       price: price,
       originalPrice: originalPrice,
       savingAmount: savingAmount,
@@ -342,6 +336,12 @@ export function addDealBundle(bundleData) {
   const savingAmount = Math.max(0, originalPrice - price);
   const savingPercent = originalPrice > 0 ? Math.round((savingAmount / originalPrice) * 100) : 0;
 
+  const durationDays = Number(bundleData.durationDays) || 2;
+  const durationHours = Number(bundleData.durationHours) || 14;
+  const durationMins = Number(bundleData.durationMins) || 30;
+  const durationSecs = Number(bundleData.durationSecs) || 0;
+  const durationSeconds = (durationDays * 86400) + (durationHours * 3600) + (durationMins * 60) + durationSecs;
+
   const newBundle = {
     id: newId,
     badge: bundleData.badge || "HOT DEAL",
@@ -359,10 +359,12 @@ export function addDealBundle(bundleData) {
     soldCount: 0,
     claimedPercent: inv.claimedPercent,
     stockLeft: inv.maxAvailableBundles,
-    durationDays: Number(bundleData.durationDays) || 2,
-    durationHours: Number(bundleData.durationHours) || 14,
-    durationMins: Number(bundleData.durationMins) || 30,
-    durationSecs: Number(bundleData.durationSecs) || 0,
+    durationDays,
+    durationHours,
+    durationMins,
+    durationSecs,
+    durationSeconds,
+    timerUpdatedAt: new Date().toISOString(),
     productId: Number(bundleData.productId) || (normalizedItems[0] ? normalizedItems[0].productId : 1),
     active: bundleData.active !== undefined ? bundleData.active : true
   };
@@ -389,6 +391,12 @@ export function updateDealBundle(id, bundleData) {
   const savingAmount = Math.max(0, originalPrice - price);
   const savingPercent = originalPrice > 0 ? Math.round(((originalPrice - price) / originalPrice) * 100) : 0;
 
+  const durationDays = bundleData.durationDays !== undefined ? Number(bundleData.durationDays) : (list[index].durationDays || 2);
+  const durationHours = bundleData.durationHours !== undefined ? Number(bundleData.durationHours) : (list[index].durationHours || 14);
+  const durationMins = bundleData.durationMins !== undefined ? Number(bundleData.durationMins) : (list[index].durationMins || 30);
+  const durationSecs = bundleData.durationSecs !== undefined ? Number(bundleData.durationSecs) : (list[index].durationSecs || 0);
+  const durationSeconds = (durationDays * 86400) + (durationHours * 3600) + (durationMins * 60) + durationSecs;
+
   list[index] = {
     ...list[index],
     ...bundleData,
@@ -399,7 +407,14 @@ export function updateDealBundle(id, bundleData) {
     savingAmount,
     savingPercent,
     stockLeft: inv.maxAvailableBundles,
-    claimedPercent: inv.claimedPercent
+    claimedPercent: inv.claimedPercent,
+    durationDays,
+    durationHours,
+    durationMins,
+    durationSecs,
+    durationSeconds,
+    timerUpdatedAt: new Date().toISOString(),
+    lastUpdated: new Date().toISOString()
   };
   saveDealBundles(list);
   return list[index];
@@ -465,4 +480,207 @@ export function updateProductDiscount(productId, { price, originalPrice, badge }
 
   saveStoredProducts(products);
   return true;
+}
+
+/* ========================================================================== */
+/* 4. RELATIONAL HOT DEALS & FLASH SALES MANAGEMENT LAYER                     */
+/* ========================================================================== */
+
+/**
+ * Retrieve All Hot Deals with live Product relation join and dynamic calculations
+ */
+export function getHotDeals() {
+  const raw = localStorage.getItem(HOT_DEALS_STORAGE_KEY);
+  let list = [];
+  if (!raw) {
+    localStorage.setItem(HOT_DEALS_STORAGE_KEY, JSON.stringify(DEFAULT_HOT_DEALS));
+    list = [...DEFAULT_HOT_DEALS];
+  } else {
+    try {
+      const parsed = JSON.parse(raw);
+      list = Array.isArray(parsed) && parsed.length > 0 ? parsed : [...DEFAULT_HOT_DEALS];
+    } catch (e) {
+      list = [...DEFAULT_HOT_DEALS];
+    }
+  }
+
+  const products = getStoredProducts();
+
+  return list.map(deal => {
+    const product = products.find(p => p.id === Number(deal.productId)) || {
+      id: deal.productId,
+      name: `Hardware Product #${deal.productId}`,
+      category: 'components',
+      price: deal.dealPrice || 100000,
+      originalPrice: (deal.dealPrice || 100000) * 1.2,
+      image: 'public/images/home-hero-image-1.png',
+      rating: 4.8,
+      reviews: 50,
+      totalStock: 20
+    };
+
+    const regularCatalogPrice = Number(product.price) || Number(deal.dealPrice);
+    const originalListPrice = Number(product.originalPrice) || regularCatalogPrice;
+    const dealPrice = Number(deal.dealPrice) || regularCatalogPrice;
+
+    const remainingTime = getRemainingTimeFromDuration(deal);
+    const isExpired = remainingTime.isExpired;
+
+    // Dynamic savings vs original list price
+    const savingsAmount = Math.max(0, originalListPrice - dealPrice);
+    const discountPercent = originalListPrice > 0 ? Math.round((savingsAmount / originalListPrice) * 100) : 0;
+
+    // Target quota & sold count
+    const targetQuota = Number(deal.targetQuota) || 30;
+    const soldCount = Number(deal.soldCount) || 0;
+    const stockLeft = product.totalStock !== undefined ? product.totalStock : 15;
+    const totalAllocated = soldCount + stockLeft;
+    const soldPercent = totalAllocated > 0 ? Math.min(99, Math.max(5, Math.round((soldCount / totalAllocated) * 100))) : 75;
+
+    return {
+      ...deal,
+      id: Number(deal.id),
+      productId: Number(deal.productId),
+      productName: product.name,
+      name: product.name,
+      category: product.category,
+      image: product.image,
+      images: product.images || [product.image],
+      specs: product.specs,
+      rating: product.rating || 4.8,
+      reviews: product.reviews || 95,
+      sku: product.sku || `ETC-${deal.productId}`,
+      regularPrice: regularCatalogPrice,
+      originalPrice: originalListPrice,
+      dealPrice: dealPrice,
+      savingAmount: savingsAmount,
+      discountPercent: discountPercent,
+      badge: deal.badge || "HOT DEAL",
+      targetQuota: targetQuota,
+      soldCount: soldCount,
+      stockLeft: stockLeft,
+      totalStock: totalAllocated,
+      soldPercent: soldPercent,
+      remainingStock: stockLeft,
+      remainingTime: remainingTime,
+      isExpired: isExpired,
+      active: deal.active !== false && !isExpired
+    };
+  });
+}
+
+/**
+ * Get only Active and Unexpired Hot Deals
+ */
+export function getActiveHotDeals() {
+  return getHotDeals().filter(d => d.active !== false && !d.isExpired);
+}
+
+/**
+ * Get active Hot Deal override for a given product ID (or null if none/expired)
+ */
+export function getHotDealByProductId(productId) {
+  const activeDeals = getActiveHotDeals();
+  return activeDeals.find(d => d.productId === Number(productId)) || null;
+}
+
+/**
+ * Save Hot Deals list to localStorage
+ */
+export function saveHotDeals(dealsList) {
+  localStorage.setItem(HOT_DEALS_STORAGE_KEY, JSON.stringify(dealsList));
+}
+
+/**
+ * Add a new Hot Deal
+ */
+export function addHotDeal(dealData) {
+  const list = getHotDeals();
+  const newId = list.length > 0 ? Math.max(...list.map(d => d.id || 0)) + 1 : 101;
+
+  const durationDays = Number(dealData.durationDays) || 0;
+  const durationHours = Number(dealData.durationHours) || 8;
+  const durationMins = Number(dealData.durationMins) || 0;
+  const durationSecs = Number(dealData.durationSecs) || 0;
+  const durationSeconds = (durationDays * 86400) + (durationHours * 3600) + (durationMins * 60) + durationSecs;
+
+  const newDeal = {
+    id: newId,
+    productId: Number(dealData.productId),
+    dealPrice: Number(dealData.dealPrice),
+    badge: dealData.badge || "HOT DEAL",
+    durationDays,
+    durationHours,
+    durationMins,
+    durationSecs,
+    durationSeconds,
+    timerUpdatedAt: new Date().toISOString(),
+    targetQuota: Number(dealData.targetQuota) || 25,
+    soldCount: Number(dealData.soldCount) || 0,
+    active: dealData.active !== undefined ? dealData.active : true,
+    lastUpdated: new Date().toISOString()
+  };
+
+  const rawList = JSON.parse(localStorage.getItem(HOT_DEALS_STORAGE_KEY) || '[]');
+  rawList.push(newDeal);
+  saveHotDeals(rawList);
+  return newDeal;
+}
+
+/**
+ * Update an existing Hot Deal
+ */
+export function updateHotDeal(id, dealData) {
+  const rawList = JSON.parse(localStorage.getItem(HOT_DEALS_STORAGE_KEY) || '[]');
+  const index = rawList.findIndex(d => d.id === Number(id));
+  if (index === -1) return null;
+
+  const durationDays = dealData.durationDays !== undefined ? Number(dealData.durationDays) : (rawList[index].durationDays || 0);
+  const durationHours = dealData.durationHours !== undefined ? Number(dealData.durationHours) : (rawList[index].durationHours || 8);
+  const durationMins = dealData.durationMins !== undefined ? Number(dealData.durationMins) : (rawList[index].durationMins || 0);
+  const durationSecs = dealData.durationSecs !== undefined ? Number(dealData.durationSecs) : (rawList[index].durationSecs || 0);
+  const durationSeconds = (durationDays * 86400) + (durationHours * 3600) + (durationMins * 60) + durationSecs;
+
+  rawList[index] = {
+    ...rawList[index],
+    ...dealData,
+    id: Number(id),
+    productId: Number(dealData.productId !== undefined ? dealData.productId : rawList[index].productId),
+    dealPrice: Number(dealData.dealPrice !== undefined ? dealData.dealPrice : rawList[index].dealPrice),
+    durationDays,
+    durationHours,
+    durationMins,
+    durationSecs,
+    durationSeconds,
+    timerUpdatedAt: dealData.resetTimer ? new Date().toISOString() : (rawList[index].timerUpdatedAt || new Date().toISOString()),
+    lastUpdated: new Date().toISOString()
+  };
+
+  saveHotDeals(rawList);
+  return rawList[index];
+}
+
+/**
+ * Delete a Hot Deal
+ */
+export function deleteHotDeal(id) {
+  const rawList = JSON.parse(localStorage.getItem(HOT_DEALS_STORAGE_KEY) || '[]');
+  const filtered = rawList.filter(d => d.id !== Number(id));
+  saveHotDeals(filtered);
+  return true;
+}
+
+/**
+ * Toggle Active / Inactive status of a Hot Deal
+ */
+export function toggleHotDealStatus(id) {
+  const rawList = JSON.parse(localStorage.getItem(HOT_DEALS_STORAGE_KEY) || '[]');
+  const deal = rawList.find(d => d.id === Number(id));
+  if (deal) {
+    deal.active = !deal.active;
+    deal.lastUpdated = new Date().toISOString();
+    saveHotDeals(rawList);
+    return deal.active;
+  }
+  return false;
 }

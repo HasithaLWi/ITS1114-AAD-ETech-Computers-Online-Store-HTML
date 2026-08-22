@@ -1,4 +1,7 @@
 import { getCurrentUser } from './login_controller.js';
+import { DEFAULT_ORDERS } from '../../data/orders.js';
+
+export { DEFAULT_ORDERS };
 
 const ORDERS_STORAGE_KEY = 'etech_orders';
 
@@ -8,7 +11,16 @@ const ORDERS_STORAGE_KEY = 'etech_orders';
  */
 export function getAllOrders() {
   const raw = localStorage.getItem(ORDERS_STORAGE_KEY);
-  return raw ? JSON.parse(raw) : [];
+  if (!raw) {
+    localStorage.setItem(ORDERS_STORAGE_KEY, JSON.stringify(DEFAULT_ORDERS));
+    return [...DEFAULT_ORDERS];
+  }
+  try {
+    const list = JSON.parse(raw);
+    return Array.isArray(list) ? list : [...DEFAULT_ORDERS];
+  } catch (e) {
+    return [...DEFAULT_ORDERS];
+  }
 }
 
 /**

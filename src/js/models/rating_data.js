@@ -3,90 +3,16 @@
 // ============================================================
 import { getStoredProducts, saveStoredProducts } from './data.js';
 import { runAutoBadgeAssignment, recordProductBehaviorEvent } from './taxonomy_data.js';
+import {
+  DEFAULT_REVIEWS,
+  DEFAULT_RATINGS,
+  defaultReviews,
+  defaultRatings
+} from '../../data/ratings_reviews.js';
+
+export { DEFAULT_REVIEWS, DEFAULT_RATINGS, defaultReviews, defaultRatings };
 
 const REVIEWS_STORAGE_KEY = 'etech_product_reviews';
-
-/**
- * Default Seed Reviews Dataset (Text-only, no images, structured for SQL table 'product_reviews')
- * Schema:
- * - id: string (Primary Key, e.g. 'REV-10001')
- * - productId: number (Foreign Key -> products.id)
- * - userId: string (Foreign Key -> users.id)
- * - userName: string
- * - userEmail: string
- * - rating: number (1 to 5)
- * - comment: string (Customer text review)
- * - createdAt: string (ISO Timestamp)
- * - updatedAt: string (ISO Timestamp)
- */
-export const defaultReviews = [
-  {
-    id: 'REV-10001',
-    productId: 1,
-    userId: 'USR-100001',
-    userName: 'System Admin',
-    userEmail: 'admin@etech.com',
-    rating: 5,
-    comment: 'Exceptional build quality and thermal management. The 240Hz Mini-LED display is breathtaking for rendering and competitive gaming. Easily the best laptop in this segment.',
-    createdAt: '2026-02-10T10:30:00.000Z',
-    updatedAt: '2026-02-10T10:30:00.000Z'
-  },
-  {
-    id: 'REV-10002',
-    productId: 1,
-    userId: 'USR-100002',
-    userName: 'Galle Operations Staff',
-    userEmail: 'staff@etech.com',
-    rating: 5,
-    comment: 'Benchmarked the RTX 4090 with Cyberpunk 2077 with full ray tracing at native QHD+. Consistent 110+ FPS with whisper-quiet vapor chamber fans. Highly recommended!',
-    createdAt: '2026-02-12T14:15:00.000Z',
-    updatedAt: '2026-02-12T14:15:00.000Z'
-  },
-  {
-    id: 'REV-10003',
-    productId: 2,
-    userId: 'USR-100001',
-    userName: 'System Admin',
-    userEmail: 'admin@etech.com',
-    rating: 5,
-    comment: 'Solid aluminum frame with zero flex. The hot-swappable switches feel remarkably smooth with pre-lubed stabilizers. Fantastic tactile feedback.',
-    createdAt: '2026-02-14T09:00:00.000Z',
-    updatedAt: '2026-02-14T09:00:00.000Z'
-  },
-  {
-    id: 'REV-10004',
-    productId: 3,
-    userId: 'USR-100002',
-    userName: 'Galle Operations Staff',
-    userEmail: 'staff@etech.com',
-    rating: 4,
-    comment: 'QD-OLED panel delivers true inky blacks and vibrant color accuracy. Perfect for dual workstation setup and simulation gaming.',
-    createdAt: '2026-02-15T11:45:00.000Z',
-    updatedAt: '2026-02-15T11:45:00.000Z'
-  },
-  {
-    id: 'REV-10005',
-    productId: 4,
-    userId: 'USR-100001',
-    userName: 'System Admin',
-    userEmail: 'admin@etech.com',
-    rating: 5,
-    comment: 'Unmatched 4K rasterization performance. Thermal dissipation stays under 65C during heavy stress test benchmarks.',
-    createdAt: '2026-02-16T16:20:00.000Z',
-    updatedAt: '2026-02-16T16:20:00.000Z'
-  },
-  {
-    id: 'REV-10006',
-    productId: 5,
-    userId: 'USR-100002',
-    userName: 'Galle Operations Staff',
-    userEmail: 'staff@etech.com',
-    rating: 5,
-    comment: 'High grade memory chips with clean XMP 3.0 profile support. Rock solid stability on modern Z790 motherboards.',
-    createdAt: '2026-02-17T08:10:00.000Z',
-    updatedAt: '2026-02-17T08:10:00.000Z'
-  }
-];
 
 /**
  * Retrieve all reviews from localStorage (or seed defaults)

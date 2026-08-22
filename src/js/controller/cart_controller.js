@@ -3,7 +3,7 @@ import { products, getStoredProducts, deductBranchStock } from '../models/data.j
 import { autoSelectFulfillmentBranch } from './branch_controller.js';
 import { saveOrder } from './order_management_controller.js';
 import { getCurrentUser } from './login_controller.js';
-import { recordBundleSale, getDealBundles } from '../models/deals_data.js';
+import { recordBundleSale, getDealBundles, getHotDealByProductId } from '../models/deals_data.js';
 
 const CART_STORAGE_KEY = 'etech_cart';
 
@@ -36,16 +36,25 @@ export function addToCart(productId, quantity = 1) {
   const product = storedProducts.find(p => p.id === Number(productId));
   if (!product) return;
 
+  const hotDeal = getHotDealByProductId(product.id);
+  const effectivePrice = hotDeal ? hotDeal.dealPrice : product.price;
+  const isHotDeal = !!hotDeal;
+
   let cart = getCart();
   const existingItem = cart.find(item => item.id === product.id && !item.isBundle);
 
   if (existingItem) {
     existingItem.quantity += quantity;
+    existingItem.price = effectivePrice;
+    existingItem.isHotDeal = isHotDeal;
   } else {
     cart.push({
       id: product.id,
       name: product.name,
-      price: product.price,
+      price: effectivePrice,
+      originalPrice: product.originalPrice || product.price,
+      isHotDeal: isHotDeal,
+      dealBadge: isHotDeal ? hotDeal.badge : null,
       image: product.image,
       category: product.category,
       quantity: quantity
@@ -53,7 +62,11 @@ export function addToCart(productId, quantity = 1) {
   }
 
   saveCart(cart);
-  showToast(`Added "${product.name}" to cart!`);
+  if (isHotDeal) {
+    showToast(`🔥 Flash Deal applied! Added "${product.name}" (Rs. ${effectivePrice.toLocaleString()}) to cart!`);
+  } else {
+    showToast(`Added "${product.name}" to cart!`);
+  }
 }
 
 /**

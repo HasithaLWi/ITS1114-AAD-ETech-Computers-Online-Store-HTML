@@ -1,164 +1,16 @@
 // ETech Computers - Hot Deals Page Controller & Interactive System
 import { products, getStoredProducts } from '../models/data.js';
-import { getDealBundles, getHomeDealBanner } from '../models/deals_data.js';
+import { 
+  getDealBundles, getHomeDealBanner, 
+  getHomeBannerRemainingTime, getBundleRemainingTime, getRemainingTimeFromDuration,
+  getActiveHotDeals, getHotDeals, getHotDealByProductId
+} from '../models/deals_data.js';
 import { addToCart, addBundleToCart, showToast } from './cart_controller.js';
 import { viewProductDetails } from './product-details_controller.js';
 
-// Curated Deals Dataset with accurate discounts, ratings, sold metrics, and categories
-export const HOT_DEALS_DATA = [
-  {
-    id: 101,
-    productId: 1,
-    name: "ASUS GeForce RTX 4070 Super 12GB GDDR6X",
-    category: "gpus",
-    categoryLabel: "Graphics Cards",
-    dealPrice: 259999,
-    originalPrice: 289999,
-    discountPercent: 25,
-    savingAmount: 30000,
-    rating: 4.8,
-    reviews: 156,
-    image: "https://images.unsplash.com/photo-1591488320449-011701bb6704?auto=format&fit=crop&w=600&q=80",
-    badge: "-25%",
-    soldPercent: 78,
-    timerSeconds: 5 * 3600 + 42 * 60 + 18,
-    totalStock: 50,
-    remainingStock: 11
-  },
-  {
-    id: 102,
-    productId: 2,
-    name: "Acer Predator Helios Neo 16 i7-13700HX RTX 4060",
-    category: "laptops",
-    categoryLabel: "Laptops",
-    dealPrice: 289999,
-    originalPrice: 359999,
-    discountPercent: 20,
-    savingAmount: 70000,
-    rating: 4.7,
-    reviews: 98,
-    image: "https://images.unsplash.com/photo-1603302576837-37561b2e2302?auto=format&fit=crop&w=600&q=80",
-    badge: "-20%",
-    soldPercent: 62,
-    timerSeconds: 8 * 3600 + 15 * 60 + 2,
-    totalStock: 30,
-    remainingStock: 11
-  },
-  {
-    id: 103,
-    productId: 3,
-    name: "AMD Ryzen 7 7700X 8-Core Desktop Processor",
-    category: "cpus",
-    categoryLabel: "Processors",
-    dealPrice: 97999,
-    originalPrice: 139999,
-    discountPercent: 30,
-    savingAmount: 42000,
-    rating: 4.9,
-    reviews: 203,
-    image: "https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?auto=format&fit=crop&w=600&q=80",
-    badge: "-30%",
-    soldPercent: 45,
-    timerSeconds: 11 * 3600 + 32 * 60 + 44,
-    totalStock: 40,
-    remainingStock: 22
-  },
-  {
-    id: 104,
-    productId: 8,
-    name: "Corsair Vengeance RGB 32GB (16GBx2) DDR5 6000MHz",
-    category: "ram",
-    categoryLabel: "RAM",
-    dealPrice: 37999,
-    originalPrice: 45999,
-    discountPercent: 18,
-    savingAmount: 8000,
-    rating: 4.8,
-    reviews: 74,
-    image: "https://images.unsplash.com/photo-1562976540-1502c2145186?auto=format&fit=crop&w=600&q=80",
-    badge: "-18%",
-    soldPercent: 70,
-    timerSeconds: 15 * 3600 + 4 * 60 + 21,
-    totalStock: 60,
-    remainingStock: 18
-  },
-  {
-    id: 105,
-    productId: 3,
-    name: "Vortex Ultra 34\" Curved QD-OLED Gaming Monitor",
-    category: "monitors",
-    categoryLabel: "Monitors",
-    dealPrice: 229999,
-    originalPrice: 279999,
-    discountPercent: 18,
-    savingAmount: 50000,
-    rating: 4.9,
-    reviews: 67,
-    image: "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?auto=format&fit=crop&w=600&q=80",
-    badge: "-18%",
-    soldPercent: 82,
-    timerSeconds: 6 * 3600 + 20 * 60 + 15,
-    totalStock: 25,
-    remainingStock: 4
-  },
-  {
-    id: 106,
-    productId: 4,
-    name: "Precision Elite Wireless Gaming Mouse 26K DPI",
-    category: "accessories",
-    categoryLabel: "Accessories",
-    dealPrice: 18999,
-    originalPrice: 24999,
-    discountPercent: 24,
-    savingAmount: 6000,
-    rating: 4.7,
-    reviews: 210,
-    image: "https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?auto=format&fit=crop&w=600&q=80",
-    badge: "-24%",
-    soldPercent: 55,
-    timerSeconds: 9 * 3600 + 40 * 60 + 50,
-    totalStock: 80,
-    remainingStock: 36
-  },
-  {
-    id: 107,
-    productId: 6,
-    name: "Immerse Pro 7.1 Spatial Wireless Headset",
-    category: "accessories",
-    categoryLabel: "Accessories",
-    dealPrice: 34999,
-    originalPrice: 42999,
-    discountPercent: 19,
-    savingAmount: 8000,
-    rating: 4.6,
-    reviews: 142,
-    image: "https://images.unsplash.com/photo-1546435770-a3e426bf472b?auto=format&fit=crop&w=600&q=80",
-    badge: "-19%",
-    soldPercent: 64,
-    timerSeconds: 12 * 3600 + 10 * 60 + 30,
-    totalStock: 45,
-    remainingStock: 16
-  },
-  {
-    id: 108,
-    productId: 7,
-    name: "Samsung 990 Pro 2TB PCIe 4.0 NVMe M.2 SSD",
-    category: "storage",
-    categoryLabel: "Storage",
-    dealPrice: 48999,
-    originalPrice: 59999,
-    discountPercent: 18,
-    savingAmount: 11000,
-    rating: 4.9,
-    reviews: 189,
-    image: "https://images.unsplash.com/photo-1597872200969-2b65d56bd16b?auto=format&fit=crop&w=600&q=80",
-    badge: "-18%",
-    soldPercent: 88,
-    timerSeconds: 4 * 3600 + 15 * 60 + 10,
-    totalStock: 50,
-    remainingStock: 6
-  }
-];
+import { DEFAULT_HOT_DEALS } from '../../data/deals.js';
+
+export const HOT_DEALS_DATA = DEFAULT_HOT_DEALS;
 
 // Module State
 let activeDealCategory = 'all';
@@ -173,18 +25,6 @@ let carouselAutoPlayTimer = null;
  * Initializes the Hot Deals section
  */
 export function initHotDealsLogic(queryPart = '') {
-  // Sync timer from saved Home Deal Banner settings
-  const bannerConfig = getHomeDealBanner();
-  if (bannerConfig) {
-    const totalSecs = (bannerConfig.durationDays || 0) * 86400 +
-                      (bannerConfig.durationHours || 0) * 3600 +
-                      (bannerConfig.durationMins || 0) * 60 +
-                      (bannerConfig.durationSecs || 0);
-    if (totalSecs > 0) {
-      weekendSaleTimeSeconds = totalSecs;
-    }
-  }
-
   // Parse query category if provided
   if (queryPart) {
     const params = new URLSearchParams(queryPart);
@@ -194,17 +34,17 @@ export function initHotDealsLogic(queryPart = '') {
     activeDealCategory = 'all';
   }
 
-  // Initialize individual flash deal timers if not set
-  HOT_DEALS_DATA.forEach(deal => {
-    if (!flashDealTimers.has(deal.id)) {
-      flashDealTimers.set(deal.id, deal.timerSeconds);
-    }
+  // Initialize individual flash deal timers based on live calculated duration
+  const hotDeals = getActiveHotDeals();
+  hotDeals.forEach(deal => {
+    const totalRemaining = deal.remainingTime ? deal.remainingTime.totalSeconds : (deal.durationSeconds || (6 * 3600));
+    flashDealTimers.set(deal.id, totalRemaining);
   });
 
   // Render Category Tabs
   renderDealCategoryTabs();
 
-  // Render Featured Deal Carousel (Image 2 & 3)
+  // Render Featured Deal Carousel (Image 2 & 3 - Per-bundle timer)
   renderFeaturedDealShowcase();
   startCarouselAutoPlay();
 
@@ -222,11 +62,8 @@ function startDealCountdowns() {
   if (countdownInterval) clearInterval(countdownInterval);
 
   countdownInterval = setInterval(() => {
-    // 1. Weekend Sale Main Countdown
-    if (weekendSaleTimeSeconds > 0) {
-      weekendSaleTimeSeconds--;
-      updateWeekendSaleTimerDisplay();
-    }
+    // 1. Weekend Sale Main Countdown (Timer Type 1: Hot Deals master timer)
+    updateWeekendSaleTimerDisplay();
 
     // 2. Flash Deals Timers
     flashDealTimers.forEach((seconds, dealId) => {
@@ -236,7 +73,7 @@ function startDealCountdowns() {
       }
     });
 
-    // 3. Featured Deal Timer
+    // 3. Featured Deal Bundle Countdown (Timer Type 2: Per active bundle slide)
     updateFeaturedDealTimerDisplay();
   }, 1000);
 
@@ -263,10 +100,10 @@ function formatTime(totalSeconds) {
 }
 
 /**
- * Updates the Weekend Tech Sale countdown in the hero section
+ * Updates the Weekend Tech Sale countdown in the hero section and homepage banner (Timer Type 1)
  */
 function updateWeekendSaleTimerDisplay() {
-  const t = formatTime(weekendSaleTimeSeconds);
+  const t = getHomeBannerRemainingTime();
 
   const daysEl = document.getElementById('deal-hero-timer-days');
   const hrsEl = document.getElementById('deal-hero-timer-hrs');
@@ -290,10 +127,14 @@ function updateWeekendSaleTimerDisplay() {
 }
 
 /**
- * Updates the Featured Deal mini countdown
+ * Updates the Featured Deal mini countdown for the specific active bundle slide (Timer Type 2)
  */
 function updateFeaturedDealTimerDisplay() {
-  const t = formatTime(weekendSaleTimeSeconds);
+  const bundles = getDealBundles().filter(b => b.active !== false);
+  if (bundles.length === 0) return;
+  if (activeBundleIndex >= bundles.length) activeBundleIndex = 0;
+  const bundle = bundles[activeBundleIndex];
+  const t = getBundleRemainingTime(bundle.id);
 
   const daysEl = document.getElementById('deal-featured-timer-days');
   const hrsEl = document.getElementById('deal-featured-timer-hrs');
@@ -375,9 +216,10 @@ export function renderFlashDealsGrid() {
   const container = document.getElementById('flash-deals-grid');
   if (!container) return;
 
-  let filtered = HOT_DEALS_DATA;
+  const activeHotDeals = getActiveHotDeals();
+  let filtered = activeHotDeals;
   if (activeDealCategory !== 'all') {
-    filtered = HOT_DEALS_DATA.filter(d => d.category.toLowerCase() === activeDealCategory);
+    filtered = activeHotDeals.filter(d => (d.category || '').toLowerCase() === activeDealCategory);
   }
 
   if (filtered.length === 0) {
@@ -544,7 +386,7 @@ export function renderFeaturedDealShowcase() {
   }
 
   const bundle = bundles[activeBundleIndex];
-  const t = formatTime(weekendSaleTimeSeconds);
+  const t = getBundleRemainingTime(bundle.id);
 
   container.innerHTML = `
     <div
@@ -606,13 +448,40 @@ export function renderFeaturedDealShowcase() {
             </h3>
           </div>
 
-          <!-- Hardware Specs Badges -->
-          <div class="flex flex-wrap items-center gap-2 pt-1">
-            ${(bundle.specs || []).map(s => `
-              <span class="px-3 py-1 rounded-lg bg-white/10 border border-white/15 text-xs font-mono font-semibold flex items-center space-x-1.5 backdrop-blur-sm">
-                <span>${s.icon || '🎮'}</span><span>${s.label}</span>
-              </span>
-            `).join('')}
+          <!-- Package Included Products Breakdown (Real Name, Real Specs & Original Price) -->
+          <div class="space-y-2 pt-1">
+            <div class="flex items-center justify-between text-[11px] font-mono font-bold text-blue-200 uppercase tracking-wider">
+              <span>📦 Included in This Package (${(bundle.componentsBreakdown || []).length} Components):</span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2.5">
+              ${(bundle.componentsBreakdown || []).map(item => {
+                const specEntries = Object.entries(item.specs || {}).slice(0, 2);
+                const specText = specEntries.map(([k, v]) => v).join(' • ');
+
+                return `
+                  <div class="bg-white/10 hover:bg-white/15 border border-white/15 rounded-xl p-2.5 flex items-start space-x-2.5 backdrop-blur-md transition-all shadow-sm">
+                    ${item.image ? `
+                      <img src="${item.image}" alt="${item.name}" class="w-10 h-10 object-contain rounded-lg bg-white/10 p-1 flex-shrink-0">
+                    ` : `
+                      <div class="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center text-base flex-shrink-0">⚙️</div>
+                    `}
+                    <div class="min-w-0 flex-1">
+                      <div class="flex items-start justify-between gap-1">
+                        <h4 class="text-xs font-bold text-white line-clamp-1 leading-snug" title="${item.name}">${item.name}</h4>
+                        ${item.qty > 1 ? `<span class="text-[10px] font-mono font-extrabold bg-blue-500/40 text-blue-100 px-1.5 py-0.2 rounded border border-blue-400/30">x${item.qty}</span>` : ''}
+                      </div>
+                      ${specText ? `
+                        <p class="text-[10px] text-blue-200/90 font-mono line-clamp-1 mt-0.5" title="${specText}">⚡ ${specText}</p>
+                      ` : ''}
+                      <div class="text-[11px] font-mono font-extrabold text-amber-300 mt-1">
+                        Original: Rs. ${Number(item.unitPrice).toLocaleString()}
+                      </div>
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
           </div>
 
           <!-- Price Row -->

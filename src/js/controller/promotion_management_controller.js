@@ -1,4 +1,3 @@
-// promotion_management_controller.js — Administrator & Staff Deals & Promotions Management Controller
 import {
   getHomeDealBanner,
   saveHomeDealBanner,
@@ -10,7 +9,15 @@ import {
   getAllDiscountsAndDeals,
   updateProductDiscount,
   calculateBundleInventory,
-  normalizeBundleItems
+  normalizeBundleItems,
+  getHotDeals,
+  getActiveHotDeals,
+  getHotDealByProductId,
+  saveHotDeals,
+  addHotDeal,
+  updateHotDeal,
+  deleteHotDeal,
+  toggleHotDealStatus
 } from '../models/deals_data.js';
 import { getStoredProducts } from '../models/data.js';
 import { getBadges } from '../models/taxonomy_data.js';
@@ -32,6 +39,7 @@ export function renderPromotionsTab() {
 
   const homeBanner = getHomeDealBanner();
   const bundles = getDealBundles();
+  const hotDeals = getHotDeals();
   const discounts = getAllDiscountsAndDeals();
 
   container.innerHTML = `
@@ -86,15 +94,15 @@ export function renderPromotionsTab() {
           <span class="px-1.5 py-0.2 bg-blue-100 text-blue-800 text-[10px] rounded-full font-mono font-bold">${bundles.length}</span>
         </button>
 
-        <button onclick="switchPromoSubTab('discounts')"
+        <button onclick="switchPromoSubTab('hot-deals')"
           class="promo-subtab-btn px-4 py-2.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-2 ${
-            activePromoSubTab === 'discounts'
+            activePromoSubTab === 'hot-deals' || activePromoSubTab === 'discounts'
               ? 'bg-blue-600 text-white shadow-sm'
               : 'bg-white text-[#475569] border border-[#e2e8f0] hover:bg-[#f8fafc] hover:text-[#0f172a]'
           }">
-          <span>🏷️</span>
-          <span>All Discounts & Hot Deals</span>
-          <span class="px-1.5 py-0.2 bg-slate-100 text-slate-700 text-[10px] rounded-full font-mono font-bold">${discounts.filter(d => d.discountPercent > 0).length}</span>
+          <span>🔥</span>
+          <span>Hot Deals & Flash Sales</span>
+          <span class="px-1.5 py-0.2 bg-rose-100 text-rose-800 text-[10px] rounded-full font-mono font-bold">${hotDeals.filter(d => d.active).length}</span>
         </button>
 
         <button onclick="switchPromoSubTab('timer-presets')"
@@ -110,7 +118,7 @@ export function renderPromotionsTab() {
 
       <!-- Sub-Tab Content Containers -->
       <div id="promo-subtab-content">
-        ${renderActiveSubTabContent(homeBanner, bundles, discounts)}
+        ${renderActiveSubTabContent(homeBanner, bundles, hotDeals)}
       </div>
 
     </div>
@@ -133,13 +141,13 @@ export function switchPromoSubTab(tabName) {
 /**
  * Renders appropriate content according to active sub-tab
  */
-function renderActiveSubTabContent(homeBanner, bundles, discounts) {
+function renderActiveSubTabContent(homeBanner, bundles, hotDeals) {
   if (activePromoSubTab === 'home-banner') {
     return renderHomeBannerEditor(homeBanner);
   } else if (activePromoSubTab === 'hot-bundles') {
     return renderHotBundlesManager(bundles);
-  } else if (activePromoSubTab === 'discounts') {
-    return renderAllDiscountsTable(discounts);
+  } else if (activePromoSubTab === 'hot-deals' || activePromoSubTab === 'discounts') {
+    return renderHotDealsManager(hotDeals);
   } else if (activePromoSubTab === 'timer-presets') {
     return renderTimingPresets(homeBanner);
   }
@@ -241,26 +249,12 @@ function renderHomeBannerEditor(banner) {
             </div>
           </div>
 
-          <!-- CTA Button Text & Target Link -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label class="block text-xs font-bold text-[#0f172a] mb-1">Button Text</label>
-              <input type="text" id="hb-btn-text" value="${banner.buttonText || 'Shop Deals'}" required
-                class="w-full px-3.5 py-2.5 bg-[#f8fafc] border border-[#e2e8f0] rounded-lg text-xs font-semibold focus:border-blue-600 focus:outline-none">
-            </div>
-            <div>
-              <label class="block text-xs font-bold text-[#0f172a] mb-1">Target Link</label>
-              <input type="text" id="hb-target-url" value="${banner.targetUrl || '#deals'}" required
-                class="w-full px-3.5 py-2.5 bg-[#f8fafc] border border-[#e2e8f0] rounded-lg text-xs font-semibold focus:border-blue-600 focus:outline-none">
-            </div>
-          </div>
-
           <div class="pt-3 border-t border-[#e2e8f0] flex items-center justify-between">
             <div class="text-[11px] text-[#64748b]">
               Last updated: <span class="font-mono">${new Date(banner.lastUpdated || Date.now()).toLocaleTimeString()}</span>
             </div>
             <button type="submit" 
-              class="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-lg shadow-md transition-all flex items-center space-x-1.5">
+              class="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-lg shadow-md transition-all flex items-center space-x-1.5 cursor-pointer">
               <span>💾</span>
               <span>Save & Publish Live</span>
             </button>
@@ -289,7 +283,7 @@ function renderHomeBannerEditor(banner) {
 }
 
 function attachHomeBannerLiveListeners() {
-  const ids = ['hb-tag', 'hb-title', 'hb-title-highlight', 'hb-subtitle', 'hb-bg-image', 'hb-days', 'hb-hours', 'hb-mins', 'hb-secs', 'hb-btn-text'];
+  const ids = ['hb-tag', 'hb-title', 'hb-title-highlight', 'hb-subtitle', 'hb-bg-image', 'hb-days', 'hb-hours', 'hb-mins', 'hb-secs'];
   ids.forEach(id => {
     const el = document.getElementById(id);
     if (el) {
@@ -312,7 +306,6 @@ function updateHomeBannerLivePreview() {
   const hours = document.getElementById('hb-hours')?.value || '14';
   const mins = document.getElementById('hb-mins')?.value || '31';
   const secs = document.getElementById('hb-secs')?.value || '59';
-  const btnText = document.getElementById('hb-btn-text')?.value || 'Shop Deals';
 
   container.innerHTML = `
     <div
@@ -362,10 +355,10 @@ function updateHomeBannerLivePreview() {
         </div>
       </div>
 
-      <!-- CTA Button -->
+      <!-- CTA Button (Standardized) -->
       <div class="relative z-10">
         <span class="inline-flex items-center space-x-2 px-5 py-2.5 bg-white text-[#0f172a] font-bold text-xs rounded-lg shadow-md">
-          <span>${btnText}</span>
+          <span>Shop Deals</span>
           <svg class="w-3.5 h-3.5 text-[#0f172a]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3" />
           </svg>
@@ -388,8 +381,8 @@ window.handleSaveHomeBanner = function(event) {
     durationHours: parseInt(document.getElementById('hb-hours').value) || 0,
     durationMins: parseInt(document.getElementById('hb-mins').value) || 0,
     durationSecs: parseInt(document.getElementById('hb-secs').value) || 0,
-    buttonText: document.getElementById('hb-btn-text').value.trim(),
-    targetUrl: document.getElementById('hb-target-url').value.trim()
+    buttonText: 'Shop Deals',
+    targetUrl: '#deals'
   };
 
   saveHomeDealBanner(bannerData);
@@ -471,14 +464,20 @@ function renderHotBundlesManager(bundles) {
               <h4 class="text-sm font-extrabold text-[#0f172a] line-clamp-1">${bundle.title}</h4>
               <p class="text-xs text-[#64748b] line-clamp-1">${bundle.subtitle}</p>
 
-              <!-- Specs Pills -->
-              <div class="flex flex-wrap gap-1 pt-1">
-                ${(bundle.specs || []).map(s => `
-                  <span class="px-2 py-0.5 rounded bg-[#f1f5f9] text-[#334155] text-[10px] font-semibold flex items-center space-x-1">
-                    <span>${s.icon || '🔹'}</span>
-                    <span>${s.label}</span>
-                  </span>
-                `).join('')}
+              <!-- Included Products Breakdown -->
+              <div class="space-y-1 pt-1 border-t border-slate-100">
+                <span class="text-[10px] font-bold text-[#64748b] uppercase tracking-wider block">📦 Included Products:</span>
+                <div class="space-y-1">
+                  ${(bundle.componentsBreakdown || []).map(item => `
+                    <div class="flex items-center justify-between text-[11px] bg-slate-50 p-1.5 rounded-lg border border-slate-100">
+                      <div class="flex items-center space-x-1.5 min-w-0 flex-1">
+                        <span class="font-bold text-[#0f172a] truncate" title="${item.name}">${item.name}</span>
+                        ${item.qty > 1 ? `<span class="text-[9px] font-bold px-1 bg-blue-100 text-blue-800 rounded">x${item.qty}</span>` : ''}
+                      </div>
+                      <span class="text-[10px] font-mono text-slate-500 whitespace-nowrap ml-2">Rs. ${Number(item.unitPrice).toLocaleString()}</span>
+                    </div>
+                  `).join('')}
+                </div>
               </div>
 
               <!-- Price & Savings -->
@@ -541,88 +540,429 @@ window.handleDeleteBundle = function(id) {
 };
 
 /* ========================================================================== */
-/* 3. ALL DISCOUNTS & HOT DEALS TABLE                                          */
+/* 3. RELATIONAL HOT DEALS & FLASH SALES MANAGEMENT                            */
 /* ========================================================================== */
 
-function renderAllDiscountsTable(discounts) {
+function renderHotDealsManager(hotDeals) {
   return `
-    <div class="bg-white border border-[#e2e8f0] rounded-xl shadow-sm overflow-hidden">
+    <div class="space-y-4">
       
-      <!-- Top Filters -->
-      <div class="p-4 sm:p-5 border-b border-[#e2e8f0] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+      <!-- Top Action & Filter Header -->
+      <div class="bg-white border border-[#e2e8f0] rounded-xl p-4 sm:p-5 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h3 class="text-sm font-extrabold text-[#0f172a]">Store Catalog Discounts & Promotional Deals</h3>
-          <p class="text-xs text-[#64748b]">View, modify, and assign hot deal badges and percentage markdowns across all items.</p>
+          <div class="flex items-center space-x-2">
+            <h3 class="text-sm font-extrabold text-[#0f172a]">Active Hot Deals & Flash Sale Products</h3>
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
+              ${hotDeals.filter(d => d.active).length} Active Deals
+            </span>
+          </div>
+          <p class="text-xs text-[#64748b] mt-0.5">Link store products to promotional deal prices & countdown timers. Overrides catalog price during campaign.</p>
         </div>
-        <div class="flex items-center space-x-2">
-          <input type="text" id="discount-search-input" onkeyup="filterDiscountsTable(this.value)" placeholder="Search discounted products..."
-            class="px-3 py-1.5 bg-[#f8fafc] border border-[#e2e8f0] rounded-lg text-xs focus:border-blue-600 focus:outline-none w-56">
+
+        <div class="flex flex-wrap items-center gap-2.5 w-full sm:w-auto">
+          <input type="text" id="hot-deal-search-input" onkeyup="filterHotDealsTable(this.value)" placeholder="Search deals by product / SKU..."
+            class="px-3 py-2 bg-[#f8fafc] border border-[#e2e8f0] rounded-lg text-xs focus:border-blue-600 focus:outline-none w-full sm:w-56">
+
+          <button onclick="openHotDealModal(null)"
+            class="px-4 py-2 bg-gradient-to-r from-rose-600 to-amber-600 hover:from-rose-500 hover:to-amber-500 text-white font-bold text-xs rounded-lg shadow-md transition-all flex items-center space-x-1.5 whitespace-nowrap cursor-pointer">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            <span>+ Add Hot Deal Product</span>
+          </button>
         </div>
       </div>
 
-      <!-- Table -->
-      <div class="overflow-x-auto">
-        <table class="w-full text-left text-xs text-[#475569]">
-          <thead class="bg-[#f8fafc] border-b border-[#e2e8f0] text-[10px] font-mono uppercase text-[#64748b] tracking-wider">
-            <tr>
-              <th class="p-3.5">Product</th>
-              <th class="p-3.5">Category</th>
-              <th class="p-3.5 text-right">Original Price</th>
-              <th class="p-3.5 text-right">Deal Price</th>
-              <th class="p-3.5 text-center">Discount</th>
-              <th class="p-3.5 text-center">Promotional Badge</th>
-              <th class="p-3.5 text-center">Stock</th>
-              <th class="p-3.5 text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody id="discounts-table-body" class="divide-y divide-[#e2e8f0]">
-            ${discounts.map(p => `
-              <tr class="hover:bg-[#f8fafc] transition-colors">
-                <td class="p-3.5 flex items-center space-x-3">
-                  <img src="${p.image}" class="w-9 h-9 object-contain rounded bg-[#f1f5f9] border border-slate-200 flex-shrink-0">
-                  <div>
-                    <span class="font-bold text-[#0f172a] block line-clamp-1">${p.name}</span>
-                    <span class="text-[10px] font-mono text-[#94a3b8]">ID: #${p.id}</span>
-                  </div>
-                </td>
-                <td class="p-3.5 capitalize font-semibold">${p.category}</td>
-                <td class="p-3.5 text-right font-mono text-slate-400">Rs. ${Number(p.originalPrice || p.price).toLocaleString()}</td>
-                <td class="p-3.5 text-right font-mono font-bold text-blue-600">Rs. ${Number(p.price).toLocaleString()}</td>
-                <td class="p-3.5 text-center">
-                  <span class="px-2 py-0.5 rounded font-mono font-bold text-[10px] ${
-                    p.discountPercent > 0 ? 'bg-rose-50 text-rose-700 border border-rose-200' : 'bg-slate-50 text-slate-500'
-                  }">
-                    ${p.discountPercent > 0 ? `-${p.discountPercent}%` : 'None'}
-                  </span>
-                </td>
-                <td class="p-3.5 text-center">
-                  ${p.badge ? `<span class="px-2 py-0.5 rounded text-[9px] font-extrabold uppercase bg-amber-50 text-amber-800 border border-amber-200">${p.badge}</span>` : '<span class="text-slate-300">—</span>'}
-                </td>
-                <td class="p-3.5 text-center font-mono font-bold text-slate-700">${p.totalStock || 10}</td>
-                <td class="p-3.5 text-right">
-                  <button onclick="openEditDiscountModal(${p.id})"
-                    class="px-3 py-1 bg-white hover:bg-blue-50 text-blue-600 border border-[#e2e8f0] hover:border-blue-300 font-bold rounded text-[11px] transition-all">
-                    Edit Deal
-                  </button>
-                </td>
+      <!-- Hot Deals Table -->
+      <div class="bg-white border border-[#e2e8f0] rounded-xl shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs text-[#475569]">
+            <thead class="bg-[#f8fafc] border-b border-[#e2e8f0] text-[10px] font-mono uppercase text-[#64748b] tracking-wider">
+              <tr>
+                <th class="p-3.5">Product & SKU</th>
+                <th class="p-3.5 text-right">Catalog Price</th>
+                <th class="p-3.5 text-right">Hot Deal Price</th>
+                <th class="p-3.5 text-center">Savings & Badge</th>
+                <th class="p-3.5 text-center">Timer Remaining</th>
+                <th class="p-3.5 text-center">Sales Quota</th>
+                <th class="p-3.5 text-center">Status</th>
+                <th class="p-3.5 text-right">Actions</th>
               </tr>
-            `).join('')}
-          </tbody>
-        </table>
+            </thead>
+            <tbody id="hot-deals-table-body" class="divide-y divide-[#e2e8f0]">
+              ${hotDeals.length === 0 ? `
+                <tr>
+                  <td colspan="8" class="text-center py-10 text-slate-400">
+                    <p class="text-sm font-semibold">No Hot Deal items configured yet.</p>
+                    <button onclick="openHotDealModal(null)" class="mt-2 px-3.5 py-1.5 bg-blue-600 text-white text-xs font-bold rounded-lg">+ Create First Deal</button>
+                  </td>
+                </tr>
+              ` : hotDeals.map(d => {
+                const isLive = d.active && !d.isExpired;
+                const timeStr = `${d.remainingTime.days > 0 ? d.remainingTime.days + 'd ' : ''}${d.remainingTime.hours}h ${d.remainingTime.mins}m ${d.remainingTime.secs}s`;
+                return `
+                  <tr class="hover:bg-[#f8fafc] transition-colors">
+                    <td class="p-3.5">
+                      <div class="flex items-center space-x-3">
+                        <img src="${d.image}" class="w-10 h-10 object-contain rounded-lg bg-[#f1f5f9] border border-slate-200 flex-shrink-0">
+                        <div>
+                          <span class="font-bold text-[#0f172a] block line-clamp-1">${d.name}</span>
+                          <div class="flex items-center space-x-2 text-[10px] font-mono text-[#94a3b8]">
+                            <span>SKU: ${d.sku}</span>
+                            <span>•</span>
+                            <span class="capitalize text-blue-600 font-semibold">${d.category}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+
+                    <!-- Catalog Regular Price -->
+                    <td class="p-3.5 text-right font-mono">
+                      <div class="text-[#0f172a] font-bold">Rs. ${d.regularPrice.toLocaleString()}</div>
+                      ${d.originalPrice > d.regularPrice ? `<del class="text-[10px] text-slate-400">Rs. ${d.originalPrice.toLocaleString()}</del>` : ''}
+                    </td>
+
+                    <!-- Special Hot Deal Price -->
+                    <td class="p-3.5 text-right font-mono">
+                      <div class="text-base font-extrabold text-rose-600">Rs. ${d.dealPrice.toLocaleString()}</div>
+                      <span class="text-[10px] font-semibold text-emerald-600">Overrides Catalog</span>
+                    </td>
+
+                    <!-- Discount & Badge -->
+                    <td class="p-3.5 text-center">
+                      <div class="inline-flex flex-col items-center space-y-1">
+                        <span class="px-2 py-0.5 rounded font-mono font-black text-[10px] bg-rose-50 text-rose-700 border border-rose-200">
+                          Save Rs. ${d.savingAmount.toLocaleString()} (${d.discountPercent}%)
+                        </span>
+                        <span class="px-2 py-0.5 rounded text-[9px] font-extrabold uppercase bg-amber-100 text-amber-900 border border-amber-300">
+                          ${d.badge}
+                        </span>
+                      </div>
+                    </td>
+
+                    <!-- Countdown Timer -->
+                    <td class="p-3.5 text-center">
+                      ${isLive ? `
+                        <div class="inline-flex items-center space-x-1 px-2.5 py-1 rounded-md bg-slate-900 text-amber-300 font-mono text-xs font-bold border border-slate-700 shadow-sm">
+                          <span>⏱️</span>
+                          <span>${timeStr}</span>
+                        </div>
+                      ` : `
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-300">
+                          ⏱️ Deal Expired
+                        </span>
+                      `}
+                    </td>
+
+                    <!-- Sales Quota -->
+                    <td class="p-3.5 text-center">
+                      <div class="space-y-1 max-w-[120px] mx-auto">
+                        <div class="flex items-center justify-between text-[10px] font-mono">
+                          <span class="font-bold text-slate-700">${d.soldCount} sold</span>
+                          <span class="text-slate-400">${d.stockLeft} left</span>
+                        </div>
+                        <div class="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
+                          <div class="bg-rose-500 h-1.5 rounded-full" style="width: ${d.soldPercent}%"></div>
+                        </div>
+                      </div>
+                    </td>
+
+                    <!-- Status Toggle -->
+                    <td class="p-3.5 text-center">
+                      <button onclick="handleToggleHotDealStatus(${d.id})" title="Toggle Active Status"
+                        class="px-2.5 py-1 rounded-full text-[10px] font-bold transition-all border cursor-pointer ${
+                          isLive 
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-300 hover:bg-emerald-100' 
+                            : 'bg-slate-100 text-slate-500 border-slate-300 hover:bg-slate-200'
+                        }">
+                        ${isLive ? '● Live' : (d.isExpired ? '○ Expired' : '○ Paused')}
+                      </button>
+                    </td>
+
+                    <!-- Actions -->
+                    <td class="p-3.5 text-right">
+                      <div class="flex items-center justify-end space-x-1.5">
+                        <button onclick="openHotDealModal(${d.id})"
+                          class="px-2.5 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 font-bold rounded text-xs transition-all flex items-center space-x-1 cursor-pointer"
+                          title="Edit Deal">
+                          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                          <span>Edit</span>
+                        </button>
+                        <button onclick="handleDeleteHotDeal(${d.id})"
+                          class="p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded transition-all cursor-pointer"
+                          title="Delete Hot Deal">
+                          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
       </div>
 
     </div>
   `;
 }
 
-window.filterDiscountsTable = function(query) {
+window.filterHotDealsTable = function(query) {
   const q = (query || '').toLowerCase();
-  const rows = document.querySelectorAll('#discounts-table-body tr');
+  const rows = document.querySelectorAll('#hot-deals-table-body tr');
   rows.forEach(row => {
     const text = row.textContent.toLowerCase();
     row.style.display = text.includes(q) ? '' : 'none';
   });
 };
+
+export function openHotDealModal(dealId = null) {
+  const deals = getHotDeals();
+  const products = getStoredProducts();
+  const deal = dealId ? deals.find(d => d.id === Number(dealId)) : null;
+
+  const isEdit = !!deal;
+  const initialProductId = deal ? deal.productId : (products[0] ? products[0].id : 1);
+  const initialProduct = products.find(p => p.id === initialProductId) || products[0];
+
+  let modalEl = document.getElementById('hot-deal-modal-overlay');
+  if (!modalEl) {
+    modalEl = document.createElement('div');
+    modalEl.id = 'hot-deal-modal-overlay';
+    document.body.appendChild(modalEl);
+  }
+
+  modalEl.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto';
+  modalEl.innerHTML = `
+    <div class="bg-white rounded-2xl max-w-xl w-full p-6 shadow-2xl border border-slate-200 relative my-8 animate-in fade-in zoom-in-95 duration-200">
+      
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between pb-3 border-b border-slate-200 mb-4">
+        <div>
+          <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200 uppercase font-mono">
+            ${isEdit ? 'EDIT HOT DEAL' : 'NEW HOT DEAL CAMPAIGN'}
+          </span>
+          <h3 class="text-base font-extrabold text-[#0f172a] mt-1">${isEdit ? 'Configure Hot Deal Product' : 'Add Product to Hot Deals'}</h3>
+        </div>
+        <button type="button" onclick="closeHotDealModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 hover:text-slate-800 transition-colors cursor-pointer">
+          ✕
+        </button>
+      </div>
+
+      <form id="hot-deal-modal-form" onsubmit="handleSaveHotDealSubmit(event, ${deal ? deal.id : 'null'})" class="space-y-4">
+        
+        <!-- 1. Select Product -->
+        <div>
+          <label class="block text-xs font-bold text-[#0f172a] mb-1">Select Hardware Product *</label>
+          <select id="hdm-product-id" onchange="updateHotDealModalProductDetails()" required
+            class="w-full px-3.5 py-2.5 bg-[#f8fafc] border border-[#e2e8f0] rounded-lg text-xs font-semibold focus:border-blue-600 focus:outline-none">
+            ${products.map(p => `
+              <option value="${p.id}" ${p.id === initialProductId ? 'selected' : ''}>
+                ${p.name} — Catalog Price: Rs. ${Number(p.price).toLocaleString()} (${p.totalStock} in stock)
+              </option>
+            `).join('')}
+          </select>
+        </div>
+
+        <!-- Product Preview Card -->
+        <div id="hdm-product-preview-box" class="bg-blue-50/60 border border-blue-200 rounded-xl p-3 flex items-center justify-between text-xs">
+          <div class="flex items-center space-x-3">
+            <img id="hdm-prev-img" src="${initialProduct?.image || ''}" class="w-10 h-10 object-contain rounded bg-white border border-blue-200">
+            <div>
+              <span id="hdm-prev-name" class="font-bold text-[#0f172a] block line-clamp-1">${initialProduct?.name || ''}</span>
+              <span class="text-[11px] text-[#64748b]">Regular Price: <strong id="hdm-prev-catalog-price" class="text-blue-700 font-mono">Rs. ${Number(initialProduct?.price || 0).toLocaleString()}</strong> | List: <span id="hdm-prev-orig-price" class="line-through font-mono">Rs. ${Number(initialProduct?.originalPrice || initialProduct?.price || 0).toLocaleString()}</span></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. Pricing & Savings -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-[#0f172a] mb-1">Hot Deal Promo Price (Rs.) *</label>
+            <input type="number" id="hdm-deal-price" min="100" step="100" value="${deal ? deal.dealPrice : Math.round((initialProduct?.price || 100000) * 0.85)}" required oninput="calculateHotDealModalSavings()"
+              class="w-full px-3.5 py-2.5 bg-white border border-[#e2e8f0] rounded-lg text-xs font-mono font-bold text-rose-600 focus:border-rose-500 focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-[#0f172a] mb-1">Deal Badge Label</label>
+            <div class="relative">
+              <input type="text" id="hdm-badge" value="HOT DEAL" readonly
+                class="w-full px-3.5 py-2.5 bg-slate-100 border border-[#e2e8f0] rounded-lg text-xs font-extrabold text-rose-700 cursor-not-allowed uppercase font-mono shadow-inner">
+              <span class="absolute right-2.5 top-2.5 text-[9px] bg-rose-100 text-rose-800 border border-rose-300 px-1.5 py-0.5 rounded font-black tracking-wider">DEFAULT SYSTEM BADGE</span>
+            </div>
+            <p class="text-[10px] text-[#64748b] mt-1">Locked default badge: promotional hot deals automatically display <strong>HOT DEAL</strong>.</p>
+          </div>
+        </div>
+
+        <!-- Dynamic Live Savings Indicator -->
+        <div id="hdm-savings-indicator" class="p-2.5 bg-emerald-50 border border-emerald-200 rounded-lg text-xs text-emerald-800 font-bold flex items-center justify-between">
+          <span>Customer Savings:</span>
+          <span id="hdm-savings-text" class="font-mono">Save Rs. 40,000 (15% Off)</span>
+        </div>
+
+        <!-- 3. Countdown Timer Settings -->
+        <div class="bg-[#f8fafc] border border-[#e2e8f0] rounded-xl p-3.5 space-y-2">
+          <span class="text-xs font-bold text-[#0f172a] uppercase tracking-wider block">⏱️ Deal Countdown Duration</span>
+          <div class="grid grid-cols-4 gap-2">
+            <div>
+              <label class="block text-[10px] font-bold text-[#64748b] uppercase">Days</label>
+              <input type="number" id="hdm-days" min="0" max="30" value="${deal ? (deal.durationDays || 0) : 0}" class="w-full px-2 py-1.5 bg-white border border-[#e2e8f0] rounded text-center text-xs font-mono font-bold">
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-[#64748b] uppercase">Hours</label>
+              <input type="number" id="hdm-hours" min="0" max="23" value="${deal ? (deal.durationHours !== undefined ? deal.durationHours : 8) : 8}" class="w-full px-2 py-1.5 bg-white border border-[#e2e8f0] rounded text-center text-xs font-mono font-bold">
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-[#64748b] uppercase">Mins</label>
+              <input type="number" id="hdm-mins" min="0" max="59" value="${deal ? (deal.durationMins || 0) : 0}" class="w-full px-2 py-1.5 bg-white border border-[#e2e8f0] rounded text-center text-xs font-mono font-bold">
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-[#64748b] uppercase">Secs</label>
+              <input type="number" id="hdm-secs" min="0" max="59" value="${deal ? (deal.durationSecs || 0) : 0}" class="w-full px-2 py-1.5 bg-white border border-[#e2e8f0] rounded text-center text-xs font-mono font-bold">
+            </div>
+          </div>
+          <!-- Timer Presets -->
+          <div class="flex items-center space-x-2 pt-1 text-[10px]">
+            <span class="text-[#64748b] font-bold">Presets:</span>
+            <button type="button" onclick="setHotDealModalTimer(0, 24, 0, 0)" class="px-2 py-0.5 bg-white border border-slate-200 rounded font-bold hover:text-blue-600 cursor-pointer">24-Hour Flash</button>
+            <button type="button" onclick="setHotDealModalTimer(3, 0, 0, 0)" class="px-2 py-0.5 bg-white border border-slate-200 rounded font-bold hover:text-blue-600 cursor-pointer">3-Day Weekend</button>
+            <button type="button" onclick="setHotDealModalTimer(7, 0, 0, 0)" class="px-2 py-0.5 bg-white border border-slate-200 rounded font-bold hover:text-blue-600 cursor-pointer">1-Week Mega</button>
+          </div>
+        </div>
+
+        <!-- 4. Sales Quota & Active Switch -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
+          <div>
+            <label class="block text-xs font-bold text-[#0f172a] mb-1">Target Sales Quota</label>
+            <input type="number" id="hdm-quota" min="1" max="500" value="${deal ? deal.targetQuota : 30}" class="w-full px-3 py-2 bg-white border border-[#e2e8f0] rounded-lg text-xs font-mono font-bold">
+          </div>
+          <div class="pt-4 flex items-center space-x-3">
+            <input type="checkbox" id="hdm-active" ${deal && deal.active === false ? '' : 'checked'} class="w-4 h-4 text-blue-600 rounded cursor-pointer">
+            <label for="hdm-active" class="text-xs font-bold text-[#0f172a] cursor-pointer">Live on Store Hot Deals</label>
+          </div>
+        </div>
+
+        <!-- Submit & Cancel -->
+        <div class="pt-3 border-t border-slate-200 flex items-center justify-end space-x-2.5">
+          <button type="button" onclick="closeHotDealModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold transition-all cursor-pointer">Cancel</button>
+          <button type="submit" class="px-5 py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-lg text-xs font-bold shadow-md transition-all cursor-pointer">
+            ${isEdit ? 'Save Changes' : 'Create Hot Deal'}
+          </button>
+        </div>
+
+      </form>
+    </div>
+  `;
+
+  calculateHotDealModalSavings();
+}
+
+export function closeHotDealModal() {
+  const modalEl = document.getElementById('hot-deal-modal-overlay');
+  if (modalEl) modalEl.remove();
+}
+
+export function updateHotDealModalProductDetails() {
+  const select = document.getElementById('hdm-product-id');
+  if (!select) return;
+  const products = getStoredProducts();
+  const prod = products.find(p => p.id === Number(select.value));
+  if (!prod) return;
+
+  const imgEl = document.getElementById('hdm-prev-img');
+  const nameEl = document.getElementById('hdm-prev-name');
+  const catPriceEl = document.getElementById('hdm-prev-catalog-price');
+  const origPriceEl = document.getElementById('hdm-prev-orig-price');
+
+  if (imgEl) imgEl.src = prod.image;
+  if (nameEl) nameEl.textContent = prod.name;
+  if (catPriceEl) catPriceEl.textContent = `Rs. ${Number(prod.price).toLocaleString()}`;
+  if (origPriceEl) origPriceEl.textContent = `Rs. ${Number(prod.originalPrice || prod.price).toLocaleString()}`;
+
+  // Default suggested price (15% below catalog price)
+  const dealPriceInput = document.getElementById('hdm-deal-price');
+  if (dealPriceInput) {
+    dealPriceInput.value = Math.round(Number(prod.price) * 0.85);
+  }
+  calculateHotDealModalSavings();
+}
+
+export function calculateHotDealModalSavings() {
+  const select = document.getElementById('hdm-product-id');
+  const priceInput = document.getElementById('hdm-deal-price');
+  const textEl = document.getElementById('hdm-savings-text');
+  if (!select || !priceInput || !textEl) return;
+
+  const products = getStoredProducts();
+  const prod = products.find(p => p.id === Number(select.value));
+  if (!prod) return;
+
+  const originalPrice = Number(prod.originalPrice || prod.price);
+  const dealPrice = Number(priceInput.value) || Number(prod.price);
+  const savings = Math.max(0, originalPrice - dealPrice);
+  const discountPercent = originalPrice > 0 ? Math.round((savings / originalPrice) * 100) : 0;
+
+  textEl.textContent = `Save Rs. ${savings.toLocaleString()} (${discountPercent}% Off vs List Rs. ${originalPrice.toLocaleString()})`;
+}
+
+export function setHotDealModalTimer(days, hours, mins, secs) {
+  if (document.getElementById('hdm-days')) document.getElementById('hdm-days').value = days;
+  if (document.getElementById('hdm-hours')) document.getElementById('hdm-hours').value = hours;
+  if (document.getElementById('hdm-mins')) document.getElementById('hdm-mins').value = mins;
+  if (document.getElementById('hdm-secs')) document.getElementById('hdm-secs').value = secs;
+}
+
+export function handleSaveHotDealSubmit(event, dealId = null) {
+  if (event) event.preventDefault();
+
+  const productId = Number(document.getElementById('hdm-product-id').value);
+  const dealPrice = Number(document.getElementById('hdm-deal-price').value);
+  const badge = document.getElementById('hdm-badge').value.trim();
+  const durationDays = Number(document.getElementById('hdm-days').value) || 0;
+  const durationHours = Number(document.getElementById('hdm-hours').value) || 0;
+  const durationMins = Number(document.getElementById('hdm-mins').value) || 0;
+  const durationSecs = Number(document.getElementById('hdm-secs').value) || 0;
+  const targetQuota = Number(document.getElementById('hdm-quota').value) || 30;
+  const active = document.getElementById('hdm-active').checked;
+
+  const dealData = {
+    productId,
+    dealPrice,
+    badge: badge || 'HOT DEAL',
+    durationDays,
+    durationHours,
+    durationMins,
+    durationSecs,
+    targetQuota,
+    active,
+    resetTimer: true
+  };
+
+  if (dealId) {
+    updateHotDeal(dealId, dealData);
+    showToast('✅ Hot Deal updated successfully!');
+  } else {
+    addHotDeal(dealData);
+    showToast('🎉 New Hot Deal created and live on store!');
+  }
+
+  closeHotDealModal();
+  renderPromotionsTab();
+  window.dispatchEvent(new Event('productsUpdated'));
+}
+
+export function handleDeleteHotDeal(id) {
+  if (confirm('Are you sure you want to remove this product from Hot Deals? The product will automatically revert to its standard catalog price.')) {
+    deleteHotDeal(id);
+    showToast('Hot Deal removed. Product reverted to catalog price.');
+    renderPromotionsTab();
+    window.dispatchEvent(new Event('productsUpdated'));
+  }
+}
+
+export function handleToggleHotDealStatus(id) {
+  const isNowActive = toggleHotDealStatus(id);
+  showToast(isNowActive ? '● Hot Deal activated!' : '○ Hot Deal paused.');
+  renderPromotionsTab();
+  window.dispatchEvent(new Event('productsUpdated'));
+}
 
 /* ========================================================================== */
 /* 4. DEAL TIMING & PRESETS                                                    */
@@ -747,18 +1087,6 @@ export function openBundleFormPage(bundleId = null) {
   currentEditingBundleId = bundle ? bundle.id : null;
 
   // Specs state array: [{ icon: '🎮', label: 'RTX 4070 Super' }, ...]
-  let specsState = [];
-  if (bundle && Array.isArray(bundle.specs) && bundle.specs.length > 0) {
-    specsState = bundle.specs.map(s => ({ icon: s.icon || '🎮', label: s.label || '' }));
-  } else {
-    specsState = [
-      { icon: '🎮', label: 'RTX 4070 Super' },
-      { icon: '🧠', label: '32GB DDR5 RAM' },
-      { icon: '💾', label: '1TB NVMe SSD' }
-    ];
-  }
-  window.bundleFormSpecsState = specsState;
-
   // Included Items state array: [{ productId: 1, qty: 1, name: '...' }, ...]
   let itemsState = [];
   if (bundle && Array.isArray(bundle.bundleItems) && bundle.bundleItems.length > 0) {
@@ -948,37 +1276,15 @@ export function openBundleFormPage(bundleId = null) {
               </div>
             </div>
 
-            <!-- Section 3: Hardware Specifications Badges Builder -->
-            <div class="bg-white border border-[#e2e8f0] rounded-2xl p-5 sm:p-6 shadow-sm space-y-4">
-              <div class="border-b border-[#e2e8f0] pb-3 flex items-center justify-between">
-                <div>
-                  <h3 class="text-xs font-extrabold text-[#0f172a] uppercase tracking-wider flex items-center space-x-2">
-                    <span class="w-2 h-2 rounded-full bg-sky-600"></span>
-                    <span>3. Hardware Specifications Badges</span>
-                  </h3>
-                  <p class="text-[11px] text-[#64748b] mt-0.5">High-impact highlight tags shown on the carousel banner slide.</p>
-                </div>
-                <button type="button" onclick="addBundleFormSpecInput()"
-                  class="px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs border border-blue-200 transition-colors flex items-center space-x-1 shadow-sm">
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                  <span>+ Add Spec Badge</span>
-                </button>
-              </div>
-
-              <div id="bundle-specs-inputs-container" class="space-y-2.5">
-                <!-- Dynamically populated by renderBundleSpecsInputs() -->
-              </div>
-            </div>
-
-            <!-- Section 4: Package Included Real Hardware Products (Composite Inventory) -->
+            <!-- Section 3: Package Included Real Hardware Products (Composite Inventory) -->
             <div class="bg-white border border-[#e2e8f0] rounded-2xl p-5 sm:p-6 shadow-sm space-y-4">
               <div class="border-b border-[#e2e8f0] pb-3 flex items-center justify-between">
                 <div>
                   <h3 class="text-xs font-extrabold text-[#0f172a] uppercase tracking-wider flex items-center space-x-2">
                     <span class="w-2 h-2 rounded-full bg-emerald-600"></span>
-                    <span>4. Included Components Package Breakdown (Live Store Products)</span>
+                    <span>3. Included Components Package Breakdown (Live Store Products)</span>
                   </h3>
-                  <p class="text-[11px] text-[#64748b] mt-0.5">Select actual catalog items. Stock bottleneck and regular bundle price calculate automatically.</p>
+                  <p class="text-[11px] text-[#64748b] mt-0.5">Select store catalog items. Specifications, stock bottlenecks and regular bundle price calculate automatically from product data.</p>
                 </div>
                 <button type="button" onclick="addBundleFormProductItem()"
                   class="px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold text-xs border border-emerald-200 transition-colors flex items-center space-x-1 shadow-sm">
@@ -992,13 +1298,13 @@ export function openBundleFormPage(bundleId = null) {
               </div>
             </div>
 
-            <!-- Section 4.5: Live Branch Assembly & Transfer Logistics Matrix -->
+            <!-- Section 4: Live Branch Assembly & Transfer Logistics Matrix -->
             <div class="bg-white border border-[#e2e8f0] rounded-2xl p-5 sm:p-6 shadow-sm space-y-4">
               <div class="border-b border-[#e2e8f0] pb-3 flex items-center justify-between">
                 <div>
                   <h3 class="text-xs font-extrabold text-[#0f172a] uppercase tracking-wider flex items-center space-x-2">
                     <span class="w-2 h-2 rounded-full bg-purple-600"></span>
-                    <span>5. Multi-Branch Assembly & Stock Logistics</span>
+                    <span>4. Multi-Branch Assembly & Stock Logistics</span>
                   </h3>
                   <p class="text-[11px] text-[#64748b] mt-0.5">Live branch readiness matrix and 1-click inter-branch balancing.</p>
                 </div>
@@ -1013,12 +1319,12 @@ export function openBundleFormPage(bundleId = null) {
               </div>
             </div>
 
-            <!-- Section 6: Pricing, Savings & Auto Discount Calculation -->
+            <!-- Section 5: Pricing, Savings & Auto Discount Calculation -->
             <div class="bg-white border border-[#e2e8f0] rounded-2xl p-5 sm:p-6 shadow-sm space-y-4">
               <div class="border-b border-[#e2e8f0] pb-3 flex items-center justify-between">
                 <h3 class="text-xs font-extrabold text-[#0f172a] uppercase tracking-wider flex items-center space-x-2">
                   <span class="w-2 h-2 rounded-full bg-rose-600"></span>
-                  <span>6. Pricing, Savings & Auto Calculation</span>
+                  <span>5. Pricing, Savings & Auto Calculation</span>
                 </h3>
                 <span id="bundle-savings-indicator-tag" class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
                   Save Rs. ${initialSavings.toLocaleString()} (${initialSavingPercent}%)
@@ -1172,7 +1478,6 @@ export function openBundleFormPage(bundleId = null) {
   `;
 
   // Render sub-sections & initial live preview
-  renderBundleSpecsInputs();
   renderBundleItemsInputs();
   updateBundleBranchMatrix();
   updateBundleLivePreview();
@@ -1236,58 +1541,6 @@ export function setBundleFormPresetTimer(days, hours, mins, secs) {
 }
 
 /**
- * Render dynamic Spec Badges inputs
- */
-export function renderBundleSpecsInputs() {
-  const container = document.getElementById('bundle-specs-inputs-container');
-  if (!container) return;
-
-  const specs = window.bundleFormSpecsState || [];
-
-  if (specs.length === 0) {
-    container.innerHTML = `
-      <div class="text-center py-4 bg-[#f8fafc] rounded-xl border border-dashed border-[#e2e8f0] text-xs text-[#64748b]">
-        No specification badges added yet. Click "+ Add Spec Badge" above.
-      </div>
-    `;
-    return;
-  }
-
-  container.innerHTML = specs.map((s, idx) => `
-    <div class="flex items-center space-x-2 bg-[#f8fafc] p-2 rounded-xl border border-[#e2e8f0]">
-      <input type="text" value="${s.icon || '🎮'}" placeholder="🎮" oninput="updateBundleFormSpec(${idx}, 'icon', this.value)"
-        class="w-12 px-2 py-1.5 text-center rounded-lg bg-white border border-[#e2e8f0] text-xs font-bold focus:border-blue-600 focus:outline-none">
-      <input type="text" value="${s.label || ''}" placeholder="e.g. RTX 4070 Super or 32GB RAM" oninput="updateBundleFormSpec(${idx}, 'label', this.value)"
-        class="flex-1 px-3 py-1.5 rounded-lg bg-white border border-[#e2e8f0] text-[#0f172a] text-xs font-semibold focus:border-blue-600 focus:outline-none">
-      <button type="button" onclick="removeBundleFormSpec(${idx})"
-        class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors border border-transparent hover:border-rose-200" title="Remove spec">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-      </button>
-    </div>
-  `).join('');
-}
-
-export function addBundleFormSpecInput() {
-  if (!window.bundleFormSpecsState) window.bundleFormSpecsState = [];
-  window.bundleFormSpecsState.push({ icon: '🔹', label: '' });
-  renderBundleSpecsInputs();
-  updateBundleLivePreview();
-}
-
-export function removeBundleFormSpec(index) {
-  if (!window.bundleFormSpecsState) return;
-  window.bundleFormSpecsState.splice(index, 1);
-  renderBundleSpecsInputs();
-  updateBundleLivePreview();
-}
-
-export function updateBundleFormSpec(index, field, value) {
-  if (!window.bundleFormSpecsState || !window.bundleFormSpecsState[index]) return;
-  window.bundleFormSpecsState[index][field] = value;
-  updateBundleLivePreview();
-}
-
-/**
  * Render dynamic Package Included Product Items with Search/Selector
  */
 export function renderBundleItemsInputs() {
@@ -1311,6 +1564,8 @@ export function renderBundleItemsInputs() {
     const unitPrice = product ? Number(product.price) : 0;
     const lineTotal = unitPrice * (item.qty || 1);
     const stockAvailable = product ? product.totalStock : 0;
+    const specEntries = Object.entries(product ? (product.specs || {}) : {}).slice(0, 2);
+    const specText = specEntries.map(([k, v]) => v).join(' • ');
 
     return `
       <div class="p-3.5 bg-[#f8fafc] rounded-2xl border border-[#e2e8f0] space-y-2.5">
@@ -1359,8 +1614,8 @@ export function renderBundleItemsInputs() {
 
         </div>
 
-        <!-- Live Stock & Branch Availability Pill -->
-        <div class="flex flex-wrap items-center justify-between pt-2 border-t border-slate-200/80 text-[11px]">
+        <!-- Live Product Specs & Stock Availability Pill -->
+        <div class="flex flex-wrap items-center justify-between pt-2 border-t border-slate-200/80 text-[11px] gap-2">
           <div class="flex items-center space-x-2">
             <span class="font-bold text-[#64748b]">Available in Store:</span>
             <span class="font-mono font-extrabold ${stockAvailable > 0 ? 'text-emerald-600' : 'text-rose-600'}">
@@ -1372,9 +1627,11 @@ export function renderBundleItemsInputs() {
             </span>
           </div>
 
-          <div class="text-[10px] text-slate-400 font-mono">
-            SKU: ${product ? product.sku : 'N/A'}
-          </div>
+          ${specText ? `
+            <div class="text-[10px] text-blue-600 font-mono font-bold bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
+              ⚡ ${specText}
+            </div>
+          ` : ''}
         </div>
 
       </div>
@@ -1558,8 +1815,7 @@ export function updateBundleLivePreview() {
   const image = document.getElementById('bf-image')?.value || 'public/images/home-hero-image-1.png';
   const price = Number(document.getElementById('bf-price')?.value) || 259999;
   const origPrice = Number(document.getElementById('bf-orig-price')?.value) || (inv.calculatedMSRP > 0 ? inv.calculatedMSRP : 289999);
-  
-  const soldCount = Number(document.getElementById('bf-sold-count')?.value) || (bundle ? (bundle.soldCount || 0) : 0);
+  const soldCount = Number(document.getElementById('bf-sold-count')?.value) || 0;
   const targetQuota = Number(document.getElementById('bf-target-quota')?.value) || 20;
   
   const stockLeft = inv.maxAvailableBundles;
@@ -1597,9 +1853,6 @@ export function updateBundleLivePreview() {
     savingsIndicator.textContent = `Save Rs. ${savings.toLocaleString()} (${savingPercent}%)`;
   }
 
-  const specs = window.bundleFormSpecsState || [];
-  const validSpecs = specs.filter(s => s.label && s.label.trim() !== '');
-
   previewContainer.innerHTML = `
     <div class="bg-gradient-to-r from-[#0b1329] via-[#0f2766] to-[#1d4ed8] text-white rounded-2xl p-4 sm:p-5 shadow-xl relative overflow-hidden transition-all duration-300">
       
@@ -1632,14 +1885,28 @@ export function updateBundleLivePreview() {
         <p class="text-xs text-blue-200 line-clamp-1">${subtitle}</p>
       </div>
 
-      <!-- Specs Badges -->
-      ${validSpecs.length > 0 ? `
-        <div class="flex flex-wrap items-center gap-1.5 mb-3 relative z-10">
-          ${validSpecs.map(s => `
-            <span class="px-2 py-0.5 rounded-md bg-white/10 border border-white/15 text-[10px] font-mono font-semibold flex items-center space-x-1 backdrop-blur-sm">
-              <span>${s.icon || '🔹'}</span><span>${s.label}</span>
-            </span>
-          `).join('')}
+      <!-- Package Included Products Breakdown (Real Name, Real Specs & Original Price) -->
+      ${(inv.componentsBreakdown || []).length > 0 ? `
+        <div class="space-y-1.5 mb-3 relative z-10">
+          <span class="text-[9px] font-mono font-bold text-blue-300 uppercase tracking-wider block">📦 Included Package (${inv.componentsBreakdown.length} Products):</span>
+          <div class="space-y-1">
+            ${inv.componentsBreakdown.map(item => {
+              const specEntries = Object.entries(item.specs || {}).slice(0, 2);
+              const specText = specEntries.map(([k, v]) => v).join(' • ');
+              return `
+                <div class="bg-white/10 border border-white/15 rounded-lg p-1.5 flex items-center justify-between text-[10px]">
+                  <div class="min-w-0 flex-1 pr-2">
+                    <div class="flex items-center space-x-1">
+                      <span class="font-bold text-white truncate">${item.name}</span>
+                      ${item.qty > 1 ? `<span class="px-1 bg-blue-500/40 text-blue-200 rounded font-mono font-bold text-[8px]">x${item.qty}</span>` : ''}
+                    </div>
+                    ${specText ? `<span class="text-[8.5px] text-blue-200/80 block truncate">⚡ ${specText}</span>` : ''}
+                  </div>
+                  <span class="font-mono font-extrabold text-amber-300 whitespace-nowrap">Rs. ${Number(item.unitPrice).toLocaleString()}</span>
+                </div>
+              `;
+            }).join('')}
+          </div>
         </div>
       ` : ''}
 
@@ -1690,10 +1957,10 @@ export function updateBundleLivePreview() {
             <span class="text-[10px] font-mono text-blue-600 bg-blue-50 px-2 py-0.5 rounded border border-blue-200 font-bold">${items.length} Products</span>
           </div>
           <ul class="space-y-1.5 text-xs text-[#475569]">
-            ${items.map((item, idx) => `
-              <li class="flex items-start space-x-2">
-                <span class="text-emerald-600 font-bold text-xs mt-0.5">✓</span>
+            ${inv.componentsBreakdown.map((item, idx) => `
+              <li class="flex items-start justify-between space-x-2 border-b border-slate-100 pb-1">
                 <span class="line-clamp-1"><strong>${item.qty}x</strong> ${item.name}</span>
+                <span class="font-mono text-[11px] font-bold text-[#0f172a] whitespace-nowrap">Rs. ${Number(item.unitPrice).toLocaleString()}</span>
               </li>
             `).join('')}
           </ul>
@@ -1711,8 +1978,23 @@ export function updateBundleLivePreview() {
 export function handleSaveBundleFormPage(event) {
   if (event) event.preventDefault();
 
-  const specs = (window.bundleFormSpecsState || []).filter(s => s.label && s.label.trim() !== '');
   const bundleItems = window.bundleFormItemsState || [];
+  const products = getStoredProducts();
+
+  // Derive specs automatically from selected products
+  const autoSpecs = [];
+  bundleItems.forEach(item => {
+    const prod = products.find(p => p.id === Number(item.productId));
+    if (prod && prod.specs) {
+      const topSpec = Object.entries(prod.specs)[0];
+      if (topSpec) {
+        autoSpecs.push({
+          icon: '⚡',
+          label: `${topSpec[1]}`
+        });
+      }
+    }
+  });
 
   const price = Number(document.getElementById('bf-price').value) || 259999;
   const originalPrice = Number(document.getElementById('bf-orig-price').value) || 289999;
@@ -1727,7 +2009,7 @@ export function handleSaveBundleFormPage(event) {
     title: document.getElementById('bf-title').value.trim() || 'Ultimate Gaming Power',
     subtitle: document.getElementById('bf-subtitle').value.trim() || 'Complete Your Dream Setup',
     image: document.getElementById('bf-image').value.trim() || 'public/images/home-hero-image-1.png',
-    specs: specs.length > 0 ? specs : [{ icon: '🎮', label: 'Hardware Bundle' }],
+    specs: autoSpecs.length > 0 ? autoSpecs : [{ icon: '⚡', label: 'Complete Rig Package' }],
     bundleItems: bundleItems,
     price: price,
     originalPrice: originalPrice,
@@ -1767,9 +2049,6 @@ window.triggerBundleFormSubmit = triggerBundleFormSubmit;
 window.handleSaveBundleFormPage = handleSaveBundleFormPage;
 window.setBundleBadgeTag = setBundleBadgeTag;
 window.setBundleFormPresetTimer = setBundleFormPresetTimer;
-window.addBundleFormSpecInput = addBundleFormSpecInput;
-window.removeBundleFormSpec = removeBundleFormSpec;
-window.updateBundleFormSpec = updateBundleFormSpec;
 window.addBundleFormProductItem = addBundleFormProductItem;
 window.addBundleFormItemInput = addBundleFormProductItem;
 window.removeBundleFormItem = removeBundleFormItem;

@@ -2,178 +2,18 @@
 //  taxonomy_data.js — Categories, Badges & Product Behavior History Data Model
 // ============================================================
 import { getStoredProducts, saveStoredProducts } from './data.js';
+import {
+  DEFAULT_CATEGORIES,
+  DEFAULT_BADGES,
+  defaultCategories,
+  defaultBadges
+} from '../../data/taxonomy.js';
+
+export { DEFAULT_CATEGORIES, DEFAULT_BADGES, defaultCategories, defaultBadges };
 
 const CATEGORIES_STORAGE_KEY = 'etech_categories_data';
 const BADGES_STORAGE_KEY = 'etech_badges_data';
 const BEHAVIOR_HISTORY_STORAGE_KEY = 'etech_product_behavior_history';
-
-// ── Default Categories Preset ───────────────────────────────
-export const defaultCategories = [
-  {
-    id: 'cat-laptops',
-    name: 'Laptops & Notebooks',
-    slug: 'laptops',
-    icon: '💻',
-    description: 'Flagship portable gaming laptops, thin-and-lights & mobile creator workstations.',
-    featured: true,
-    displayOrder: 1
-  },
-  {
-    id: 'cat-peripherals',
-    name: 'Gaming Peripherals',
-    slug: 'peripherals',
-    icon: '⌨️',
-    description: 'Hot-swappable mechanical keyboards, ultra-lightweight mice & spatial audio headsets.',
-    featured: true,
-    displayOrder: 2
-  },
-  {
-    id: 'cat-monitors',
-    name: 'Displays & Monitors',
-    slug: 'monitors',
-    icon: '🖥️',
-    description: 'Curved QD-OLED, 4K UHD, high-refresh 240Hz+ gaming & professional grade displays.',
-    featured: true,
-    displayOrder: 3
-  },
-  {
-    id: 'cat-components',
-    name: 'PC Components',
-    slug: 'components',
-    icon: '⚙️',
-    description: 'Cutting-edge RTX 40-series GPUs, AIO liquid coolers, DDR5 memory & ATX 3.0 power units.',
-    featured: true,
-    displayOrder: 4
-  },
-  {
-    id: 'cat-accessories',
-    name: 'Accessories & Tech',
-    slug: 'accessories',
-    icon: '🎧',
-    description: 'Studio boom arms, RGB desk mats, GaN fast chargers, Thunderbolt docks & cables.',
-    featured: false,
-    displayOrder: 5
-  }
-];
-
-// ── Default Badges Preset (with automated standard triggers & customizable thresholds) ─
-export const defaultBadges = [
-  {
-    id: 'bdg-bestseller',
-    name: 'Bestseller',
-    slug: 'bestseller',
-    color: 'blue', // blue, rose, emerald, amber, purple, cyan, orange
-    purpose: 'Highlights undisputed customer favorites and top sales volume leaders.',
-    standardDescription: 'Automated: High sales volume & customer review count benchmark.',
-    ruleType: 'automatic', // 'automatic' | 'manual'
-    criteria: 'bestseller',
-    thresholds: {
-      minReviews: 80
-    },
-    priority: 10,
-    isActive: true
-  },
-  {
-    id: 'bdg-hotdeal',
-    name: 'Hot Deal',
-    slug: 'hot-deal',
-    color: 'rose',
-    purpose: 'Draws attention to limited-time steep promotional discounts.',
-    standardDescription: 'Automated: Active price markdown reaches required discount percentage.',
-    ruleType: 'automatic',
-    criteria: 'discount_gte_10',
-    thresholds: {
-      discountPct: 10
-    },
-    priority: 20,
-    isActive: true
-  },
-  {
-    id: 'bdg-newarrival',
-    name: 'New Arrival',
-    slug: 'new-arrival',
-    color: 'emerald',
-    purpose: 'Spotlights newly cataloged hardware and latest generation releases.',
-    standardDescription: 'Automated: Inventory item introduced within recent catalog batch.',
-    ruleType: 'automatic',
-    criteria: 'new_arrival',
-    thresholds: {},
-    priority: 15,
-    isActive: true
-  },
-  {
-    id: 'bdg-toprated',
-    name: 'Top Rated',
-    slug: 'top-rated',
-    color: 'amber',
-    purpose: 'Showcases elite customer satisfaction and 5-star verified feedback.',
-    standardDescription: 'Automated: Verified rating score and customer review count satisfy benchmark.',
-    ruleType: 'automatic',
-    criteria: 'rating_gte_48',
-    thresholds: {
-      minRating: 4.8,
-      minReviews: 50
-    },
-    priority: 18,
-    isActive: true
-  },
-  {
-    id: 'bdg-popular',
-    name: 'Popular',
-    slug: 'popular',
-    color: 'cyan',
-    purpose: 'Highlights items with high daily traffic and trending interest.',
-    standardDescription: 'Automated: Customer review count reaches popularity benchmark.',
-    ruleType: 'automatic',
-    criteria: 'reviews_gte_40',
-    thresholds: {
-      minReviews: 40
-    },
-    priority: 12,
-    isActive: true
-  },
-  {
-    id: 'bdg-lowstock',
-    name: 'Low Stock Alert',
-    slug: 'low-stock-alert',
-    color: 'rose',
-    purpose: 'Signals urgency to customers and staff due to warehouse inventory scarcity.',
-    standardDescription: 'Automated: Total inventory stock ≤ product low-stock threshold margin.',
-    ruleType: 'automatic',
-    criteria: 'low_stock_scarcity',
-    thresholds: {
-      maxStock: 5
-    },
-    priority: 25,
-    isActive: true
-  },
-  {
-    id: 'bdg-staffpick',
-    name: 'Staff Pick',
-    slug: 'staff-pick',
-    color: 'purple',
-    purpose: 'Curated technical recommendations endorsed by ETech certified engineers.',
-    standardDescription: 'Manual: Hand-picked by warehouse technicians and branch administrators.',
-    ruleType: 'manual',
-    criteria: 'manual_curated',
-    thresholds: {},
-    priority: 5,
-    isActive: true
-  },
-  {
-    id: 'bdg-clearance',
-    name: 'Clearance',
-    slug: 'clearance',
-    color: 'orange',
-    purpose: 'Final liquidation inventory at heavily reduced clearance rates.',
-    standardDescription: 'Manual: Liquidation batches, open-box or end-of-life catalog lines.',
-    ruleType: 'manual',
-    criteria: 'manual_clearance',
-    thresholds: {},
-    priority: 8,
-    isActive: true
-  }
-];
 
 // ============================================================
 //  1. CATEGORIES MANAGEMENT MODEL
@@ -206,7 +46,7 @@ export function getCategoryBySlug(slug) {
 export function saveCategory(categoryData, isEdit = false) {
   const categories = getCategories();
   const slug = (categoryData.slug || categoryData.name || '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-');
-  
+
   if (isEdit) {
     const index = categories.findIndex(c => c.id === categoryData.id || c.slug === categoryData.slug);
     if (index !== -1) {
@@ -255,11 +95,26 @@ export function getBadges() {
   }
   try {
     const parsed = JSON.parse(stored);
-    // Ensure all badges have thresholds object
-    return parsed.map(b => ({
-      ...b,
-      thresholds: b.thresholds || {}
-    }));
+    // Ensure all badges have thresholds object and system protection flags
+    return parsed.map(b => {
+      const def = defaultBadges.find(d => d.id === b.id || d.slug === b.slug) || {};
+      const isSystemDefault = def.isSystemDefault !== undefined ? def.isSystemDefault : (b.id === 'bdg-hotdeal' || b.id === 'bdg-toprated' || b.id === 'bdg-newarrival' || b.id === 'bdg-bestseller');
+      const canEdit = def.canEdit !== undefined ? def.canEdit : (b.id !== 'bdg-hotdeal');
+      const canDelete = def.canDelete !== undefined ? def.canDelete : !isSystemDefault;
+      return {
+        ...b,
+        color: b.color || def.color || 'blue',
+        bgClass: b.bgClass || def.bgClass || `bg-${b.color || 'blue'}-50`,
+        textClass: b.textClass || def.textClass || `text-${b.color || 'blue'}-700`,
+        borderClass: b.borderClass || def.borderClass || `border-${b.color || 'blue'}-200`,
+        colorHex: b.colorHex || def.colorHex || '#2563eb',
+        ruleType: def.ruleType || b.ruleType || 'automatic',
+        isSystemDefault,
+        canEdit,
+        canDelete,
+        thresholds: b.thresholds || {}
+      };
+    });
   } catch (e) {
     console.error('Failed to parse badges data:', e);
     return defaultBadges;
@@ -280,17 +135,31 @@ export function saveBadge(badgeData, isEdit = false) {
   const slug = (badgeData.slug || badgeData.name || '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-');
   const thresholds = badgeData.thresholds || {};
 
+  // Protect Hot Deal from being modified
+  if ((badgeData.id === 'bdg-hotdeal' || slug === 'hot-deal' || badgeData.canEdit === false) && isEdit) {
+    console.warn('Hot Deal is a protected system badge and cannot be modified.');
+    return badges.find(b => b.id === 'bdg-hotdeal') || badgeData;
+  }
+
   if (isEdit) {
     const index = badges.findIndex(b => b.id === badgeData.id || b.slug === badgeData.slug);
     if (index !== -1) {
+      if (badges[index].canEdit === false || badges[index].id === 'bdg-hotdeal') {
+        console.warn('Attempted to edit a non-editable system badge.');
+        return badges[index];
+      }
+      const existing = badges[index];
       badges[index] = {
-        ...badges[index],
+        ...existing,
         ...badgeData,
+        isSystemDefault: existing.isSystemDefault,
+        canDelete: existing.canDelete,
+        canEdit: existing.canEdit,
         thresholds: {
-          ...(badges[index].thresholds || {}),
+          ...(existing.thresholds || {}),
           ...thresholds
         },
-        slug: slug || badges[index].slug
+        slug: slug || existing.slug
       };
       saveBadges(badges);
       return badges[index];
@@ -303,13 +172,19 @@ export function saveBadge(badgeData, isEdit = false) {
     name: badgeData.name || 'New Badge',
     slug: slug || `badge-${Math.floor(1000 + Math.random() * 9000)}`,
     color: badgeData.color || 'blue',
+    bgClass: badgeData.bgClass || `bg-${badgeData.color || 'blue'}-50`,
+    textClass: badgeData.textClass || `text-${badgeData.color || 'blue'}-700`,
+    borderClass: badgeData.borderClass || `border-${badgeData.color || 'blue'}-200`,
     purpose: badgeData.purpose || '',
     standardDescription: badgeData.standardDescription || 'Custom standard criterion',
     ruleType: badgeData.ruleType || 'manual',
     criteria: badgeData.criteria || 'custom',
     thresholds: thresholds,
     priority: parseInt(badgeData.priority) || 10,
-    isActive: badgeData.isActive !== undefined ? Boolean(badgeData.isActive) : true
+    isActive: badgeData.isActive !== undefined ? Boolean(badgeData.isActive) : true,
+    isSystemDefault: false,
+    canEdit: true,
+    canDelete: true
   };
 
   badges.push(newBadge);
@@ -319,6 +194,11 @@ export function saveBadge(badgeData, isEdit = false) {
 
 export function deleteBadge(badgeId) {
   let badges = getBadges();
+  const target = badges.find(b => b.id === badgeId || b.slug === badgeId);
+  if (target && (target.canDelete === false || target.isSystemDefault || target.id === 'bdg-hotdeal' || target.id === 'bdg-toprated' || target.id === 'bdg-newarrival' || target.id === 'bdg-bestseller')) {
+    console.warn('Cannot delete core system default badge:', target.name);
+    return false;
+  }
   badges = badges.filter(b => b.id !== badgeId && b.slug !== badgeId);
   saveBadges(badges);
   return true;
@@ -329,6 +209,9 @@ export function deleteBadge(badgeId) {
  */
 export function getBadgeThresholdSummary(badge) {
   if (!badge) return 'No criteria specified';
+  if (badge.id === 'bdg-hotdeal' || badge.ruleType === 'system' || badge.criteria === 'system_hot_deal') {
+    return 'Managed via Hot Deals & Promotions Module';
+  }
   if (badge.ruleType !== 'automatic') {
     return badge.standardDescription || 'Manual Staff Assignment';
   }
@@ -604,20 +487,20 @@ export function runAutoBadgeAssignment() {
 export function getBadgeColorClass(color) {
   switch (color) {
     case 'blue':
-      return 'bg-blue-600/20 text-blue-300 border-blue-500/40';
+      return 'bg-blue-50 text-blue-700 border-blue-200';
     case 'rose':
-      return 'bg-rose-500/20 text-rose-300 border-rose-500/40';
+      return 'bg-rose-50 text-rose-700 border-rose-200';
     case 'emerald':
-      return 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40';
+      return 'bg-emerald-50 text-emerald-700 border-emerald-200';
     case 'amber':
-      return 'bg-amber-500/20 text-amber-300 border-amber-500/40';
+      return 'bg-amber-50 text-amber-700 border-amber-200';
     case 'purple':
-      return 'bg-purple-500/20 text-purple-300 border-purple-500/40';
+      return 'bg-purple-50 text-purple-700 border-purple-200';
     case 'cyan':
-      return 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40';
+      return 'bg-cyan-50 text-cyan-700 border-cyan-200';
     case 'orange':
-      return 'bg-orange-500/20 text-orange-300 border-orange-500/40';
+      return 'bg-orange-50 text-orange-700 border-orange-200';
     default:
-      return 'bg-blue-600/20 text-blue-300 border-blue-500/40';
+      return 'bg-blue-50 text-blue-700 border-blue-200';
   }
 }

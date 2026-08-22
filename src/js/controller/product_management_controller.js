@@ -182,15 +182,15 @@ export function openProductFormPage(productId = null) {
     categorySelect.value = product ? product.category : (allCategories[0]?.slug || 'laptops');
   }
 
-  // Populate dynamic badge options
+  // Populate dynamic badge options (Excluding "Hot Deal" which is managed solely via Hot Deals promotions)
   const badgeSelect = document.getElementById('form-p-badge');
   if (badgeSelect) {
-    const allBadges = getBadges().filter(b => b.isActive);
+    const allBadges = getBadges().filter(b => b.isActive && b.slug !== 'hot-deal' && !b.name.toLowerCase().includes('hot deal'));
     badgeSelect.innerHTML = `
       ${allBadges.map(b => `<option value="${b.name}">${b.name}</option>`).join('')}
       <option value="">None (No Badge)</option>
     `;
-    badgeSelect.value = product && product.badge ? product.badge : (allBadges[0]?.name || '');
+    badgeSelect.value = product && product.badge && !product.badge.toLowerCase().includes('hot deal') ? product.badge : '';
   }
 
   document.getElementById('form-p-sku').value = product ? product.sku : `ETC-LAP-${Math.floor(1000 + Math.random() * 9000)}`;

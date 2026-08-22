@@ -257,9 +257,11 @@ export function renderTaxonomyTab() {
                       </div>
                     </td>
                     <td class="py-3 px-4 text-center">
-                      ${b.ruleType === 'automatic'
-                        ? `<span class="px-2 py-0.5 rounded text-[9px] font-extrabold uppercase bg-emerald-50 text-emerald-700 border border-emerald-200">⚡ Automatic</span>`
-                        : `<span class="px-2 py-0.5 rounded text-[9px] font-extrabold uppercase bg-purple-50 text-purple-700 border border-purple-200">✋ Manual</span>`}
+                      ${(b.ruleType === 'system' || b.id === 'bdg-hotdeal')
+                        ? `<span class="px-2 py-0.5 rounded text-[9px] font-extrabold uppercase bg-amber-50 text-amber-800 border border-amber-200">🔒 System Default</span>`
+                        : (b.ruleType === 'automatic'
+                            ? `<span class="px-2 py-0.5 rounded text-[9px] font-extrabold uppercase bg-emerald-50 text-emerald-700 border border-emerald-200">⚡ Automatic</span>`
+                            : `<span class="px-2 py-0.5 rounded text-[9px] font-extrabold uppercase bg-purple-50 text-purple-700 border border-purple-200">✋ Manual</span>`)}
                     </td>
                     <td class="py-3 px-4 text-center">
                       <span class="px-2.5 py-1 rounded-full text-xs font-mono font-extrabold ${count > 0 ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'bg-[#f8fafc] text-[#64748b] border border-[#e2e8f0]'}">
@@ -272,14 +274,26 @@ export function renderTaxonomyTab() {
                         : `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">Disabled</span>`}
                     </td>
                     <td class="py-3 px-4 text-right space-x-1.5 whitespace-nowrap">
-                      <button onclick="openBadgeModal('${b.id}')" title="Edit Badge Rule & Thresholds"
-                        class="px-2.5 py-1 bg-[#f8fafc] hover:bg-[#f1f5f9] text-blue-600 hover:text-blue-800 rounded text-xs font-bold border border-[#e2e8f0] transition-colors shadow-sm">
-                        Edit
-                      </button>
-                      <button onclick="confirmDeleteBadge('${b.id}')" title="Delete Badge"
-                        class="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded text-xs font-bold border border-rose-200 transition-colors shadow-sm">
-                        Delete
-                      </button>
+                      ${(b.id === 'bdg-hotdeal' || b.canEdit === false) ? `
+                        <span class="px-2.5 py-1 bg-slate-100 text-slate-600 rounded text-[11px] font-bold border border-slate-200 inline-flex items-center space-x-1" title="Protected System Default Badge (Managed exclusively by Hot Deals module)">
+                          <span>🔒 Locked (Default)</span>
+                        </span>
+                      ` : (b.canDelete === false || b.isSystemDefault) ? `
+                        <button onclick="openBadgeModal('${b.id}')" title="Edit Badge Rule & Thresholds"
+                          class="px-2.5 py-1 bg-[#f8fafc] hover:bg-[#f1f5f9] text-blue-600 hover:text-blue-800 rounded text-xs font-bold border border-[#e2e8f0] transition-colors shadow-sm cursor-pointer">
+                          Edit
+                        </button>
+                        <span class="px-2 py-1 text-[10px] text-slate-400 font-semibold italic select-none" title="Permanent Core Default Badge (Cannot be deleted)">Default</span>
+                      ` : `
+                        <button onclick="openBadgeModal('${b.id}')" title="Edit Badge Rule & Thresholds"
+                          class="px-2.5 py-1 bg-[#f8fafc] hover:bg-[#f1f5f9] text-blue-600 hover:text-blue-800 rounded text-xs font-bold border border-[#e2e8f0] transition-colors shadow-sm cursor-pointer">
+                          Edit
+                        </button>
+                        <button onclick="confirmDeleteBadge('${b.id}')" title="Delete Badge"
+                          class="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded text-xs font-bold border border-rose-200 transition-colors shadow-sm cursor-pointer">
+                          Delete
+                        </button>
+                      `}
                     </td>
                   </tr>
                 `;
@@ -447,6 +461,10 @@ export function openBadgeModal(badgeId = null) {
   if (!modal) return;
 
   const badge = badgeId ? getBadgeById(badgeId) : null;
+  if (badge && (badge.canEdit === false || badge.id === 'bdg-hotdeal')) {
+    showToast('⚠️ "Hot Deal" is a protected system badge and cannot be modified.');
+    return;
+  }
   const isEdit = Boolean(badge);
   currentEditingBadge = badge;
 
@@ -814,6 +832,11 @@ export function handleSaveBadgeSubmit(event, isEdit = false) {
 export function confirmDeleteBadge(badgeId) {
   const badge = getBadgeById(badgeId);
   if (!badge) return;
+
+  if (badge.canDelete === false || badge.isSystemDefault || badge.id === 'bdg-hotdeal' || badge.id === 'bdg-toprated' || badge.id === 'bdg-newarrival' || badge.id === 'bdg-bestseller') {
+    showToast(`⚠️ "${badge.name}" is a permanent system default badge and cannot be deleted.`);
+    return;
+  }
 
   if (confirm(`Are you sure you want to delete the badge "${badge.name}"?`)) {
     deleteBadge(badgeId);

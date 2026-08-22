@@ -125,15 +125,20 @@ import {
     renderPromotionsTab, switchPromoSubTab,
     openBundleFormPage, closeBundleFormPage,
     triggerBundleFormSubmit, handleSaveBundleFormPage,
-    addBundleFormSpecInput, removeBundleFormSpec, updateBundleFormSpec,
-    addBundleFormItemInput, removeBundleFormItem, updateBundleFormItem,
-    setBundleBadgeTag, setBundleFormPresetTimer, updateBundleLivePreview
+    addBundleFormProductItem, addBundleFormItemInput, removeBundleFormItem, updateBundleFormItem,
+    setBundleBadgeTag, setBundleFormPresetTimer, updateBundleLivePreview,
+    openHotDealModal, closeHotDealModal, updateHotDealModalProductDetails,
+    calculateHotDealModalSavings, setHotDealModalTimer, handleSaveHotDealSubmit,
+    handleDeleteHotDeal, handleToggleHotDealStatus
 } from './src/js/controller/promotion_management_controller.js';
 import {
     getHomeDealBanner, saveHomeDealBanner,
     getDealBundles, saveDealBundles, addDealBundle,
     updateDealBundle, deleteDealBundle, getAllDiscountsAndDeals,
-    updateProductDiscount, calculateBundleInventory, normalizeBundleItems
+    updateProductDiscount, calculateBundleInventory, normalizeBundleItems,
+    getHomeBannerRemainingTime, getBundleRemainingTime, getRemainingTimeFromDuration,
+    getHotDeals, getActiveHotDeals, getHotDealByProductId, saveHotDeals,
+    addHotDeal, updateHotDeal, deleteHotDeal, toggleHotDealStatus
 } from './src/js/models/deals_data.js';
 
 // Inter-Branch Stock Transfers Controller & Model Imports
@@ -158,17 +163,22 @@ Object.assign(window, {
     getStockTransfers, saveStockTransfers, createStockTransfer,
     receiveStockTransfer, cancelStockTransfer, getTransfersMetrics,
 
-    // Promotions & Deal Bundles
+    // Promotions, Deal Bundles & Hot Deals
     renderPromotionsTab, switchPromoSubTab,
     openBundleFormPage, closeBundleFormPage,
     triggerBundleFormSubmit, handleSaveBundleFormPage,
-    addBundleFormSpecInput, removeBundleFormSpec, updateBundleFormSpec,
-    addBundleFormItemInput, removeBundleFormItem, updateBundleFormItem,
+    addBundleFormProductItem, addBundleFormItemInput, removeBundleFormItem, updateBundleFormItem,
     setBundleBadgeTag, setBundleFormPresetTimer, updateBundleLivePreview,
+    openHotDealModal, closeHotDealModal, updateHotDealModalProductDetails,
+    calculateHotDealModalSavings, setHotDealModalTimer, handleSaveHotDealSubmit,
+    handleDeleteHotDeal, handleToggleHotDealStatus,
     getHomeDealBanner, saveHomeDealBanner,
     getDealBundles, saveDealBundles, addDealBundle,
     updateDealBundle, deleteDealBundle, getAllDiscountsAndDeals,
     updateProductDiscount, calculateBundleInventory, normalizeBundleItems,
+    getHomeBannerRemainingTime, getBundleRemainingTime, getRemainingTimeFromDuration,
+    getHotDeals, getActiveHotDeals, getHotDealByProductId, saveHotDeals,
+    addHotDeal, updateHotDeal, deleteHotDeal, toggleHotDealStatus,
     addBundleToCart,
     products, getProductById, getFeaturedProducts, getNewArrivalProducts, getStoredProducts, saveProduct, deleteProduct,
     updateProductStockSettings, quickAdjustStock, transferBranchStock,
