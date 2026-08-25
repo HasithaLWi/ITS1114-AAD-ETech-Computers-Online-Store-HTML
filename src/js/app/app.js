@@ -50,7 +50,7 @@ function handleRoute() {
       return;
     }
     const user = getCurrentUser();
-    if (!user || (user.role !== 'ADMIN' && user.role !== 'STAFF')) {
+    if (!user || (user.role !== 'SUPERADMIN' && user.role !== 'ADMIN' && user.role !== 'STAFF')) {
       alert('Access Denied: You do not have administrative privileges.');
       window.location.hash = '#home';
       return;
@@ -80,7 +80,7 @@ function handleRoute() {
   if (pageName === 'login') {
     if (isLoggedIn()) {
       const user = getCurrentUser();
-      window.location.hash = (user && (user.role === 'ADMIN' || user.role === 'STAFF')) ? '#admin' : '#home';
+      window.location.hash = (user && (user.role === 'SUPERADMIN' || user.role === 'ADMIN' || user.role === 'STAFF')) ? '#admin' : '#home';
       return;
     }
     const loginSection = document.getElementById('login-page');
@@ -193,10 +193,127 @@ function triggerPageHooks(pageName, queryPart) {
   }
 }
 
+// ============================================================
+// Mobile Navigation Menu State & Controls
+// ============================================================
+let mobileMenuListenersInitialized = false;
+
+export function toggleMobileMenu() {
+  const menu = document.getElementById('mobile-menu');
+  if (!menu) return;
+
+  const isHidden = menu.classList.contains('hidden');
+  if (isHidden) {
+    openMobileMenu();
+  } else {
+    closeMobileMenu();
+  }
+}
+
+export function openMobileMenu() {
+  const menu = document.getElementById('mobile-menu');
+  const backdrop = document.getElementById('mobile-menu-backdrop');
+  const openIcon = document.getElementById('mobile-menu-icon-open');
+  const closeIcon = document.getElementById('mobile-menu-icon-close');
+  if (!menu) return;
+
+  menu.classList.remove('hidden');
+  if (backdrop) {
+    backdrop.classList.remove('hidden');
+    requestAnimationFrame(() => {
+      backdrop.classList.remove('opacity-0');
+      backdrop.classList.add('opacity-100');
+    });
+  }
+  if (openIcon) openIcon.classList.add('hidden');
+  if (closeIcon) closeIcon.classList.remove('hidden');
+}
+
+export function closeMobileMenu() {
+  const menu = document.getElementById('mobile-menu');
+  const backdrop = document.getElementById('mobile-menu-backdrop');
+  const openIcon = document.getElementById('mobile-menu-icon-open');
+  const closeIcon = document.getElementById('mobile-menu-icon-close');
+  if (!menu) return;
+
+  menu.classList.add('hidden');
+  if (backdrop) {
+    backdrop.classList.remove('opacity-100');
+    backdrop.classList.add('opacity-0');
+    setTimeout(() => {
+      if (menu.classList.contains('hidden')) {
+        backdrop.classList.add('hidden');
+      }
+    }, 200);
+  }
+  if (openIcon) openIcon.classList.remove('hidden');
+  if (closeIcon) closeIcon.classList.add('hidden');
+}
+
+export function handleMobileSearchSubmit() {
+  const input = document.getElementById('mobile-search-input');
+  const query = (input?.value || '').trim();
+  closeMobileMenu();
+  if (query) {
+    window.location.hash = `#shop?search=${encodeURIComponent(query)}`;
+  } else {
+    window.location.hash = '#shop';
+  }
+}
+
+export function handleHeaderSearchSubmit() {
+  const input = document.getElementById('header-search-input');
+  const catSelect = document.getElementById('header-category-select');
+  const query = (input?.value || '').trim();
+  const cat = catSelect?.value || '';
+
+  const params = [];
+  if (cat) params.push(`cat=${encodeURIComponent(cat)}`);
+  if (query) params.push(`search=${encodeURIComponent(query)}`);
+
+  const hash = params.length > 0 ? `#shop?${params.join('&')}` : '#shop';
+  if (window.location.hash === hash) {
+    initShopLogic(params.join('&'));
+  } else {
+    window.location.hash = hash;
+  }
+}
+
+function setupMobileMenuEventListeners() {
+  if (mobileMenuListenersInitialized) return;
+  mobileMenuListenersInitialized = true;
+
+  // Click outside to close mobile menu
+  document.addEventListener('click', (e) => {
+    const menu = document.getElementById('mobile-menu');
+    const toggleBtn = document.getElementById('mobile-menu-btn');
+    if (!menu || menu.classList.contains('hidden')) return;
+
+    if (!menu.contains(e.target) && (!toggleBtn || !toggleBtn.contains(e.target))) {
+      closeMobileMenu();
+    }
+  });
+
+  // ESC key to close mobile menu
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      closeMobileMenu();
+    }
+  });
+
+  // Resize window: close mobile menu when expanded to desktop
+  window.addEventListener('resize', () => {
+    if (window.innerWidth >= 768) {
+      closeMobileMenu();
+    }
+  });
+}
+
 /**
- * Updates top navigation bar to reflect active authentication state
+ * Update Header Authentication Buttons & Mobile Account Drawer
  */
 export function updateHeaderAuthUI() {
+  setupMobileMenuEventListeners();
   const authContainer = document.getElementById('header-auth-btn-container');
   const mobileDrawer = document.getElementById('mobile-auth-drawer');
 
@@ -206,30 +323,34 @@ export function updateHeaderAuthUI() {
 
   if (authContainer) {
     if (user) {
-      const isAdminOrStaff = user.role === 'ADMIN' || user.role === 'STAFF';
+      const isAdminOrStaff = user.role === 'SUPERADMIN' || user.role === 'ADMIN' || user.role === 'STAFF';
+      const isSuperAdmin = user.role === 'SUPERADMIN';
+      const avatarBg = isSuperAdmin ? 'bg-purple-600' : 'bg-blue-600';
 
       authContainer.innerHTML = `
-          <div class="flex items-center space-x-2 hidden md:flex">
+          <div class="flex items-center space-x-1.5 sm:space-x-2">
             ${isAdminOrStaff ? `
-              <a href="#admin" class="flex items-center space-x-2 bg-[#f1f5f9] hover:bg-[#e2e8f0] border border-[#e2e8f0] hover:border-[#cbd5e1] px-3.5 py-2 rounded-md transition-all group shadow-sm">
-                <span class="text-xs font-semibold text-[#475569] group-hover:text-[#0f172a] max-w-[100px] truncate">Admin Console</span>
+              <a href="#admin" class="flex items-center space-x-1.5 bg-[#f1f5f9] hover:bg-[#e2e8f0] border border-[#e2e8f0] hover:border-[#cbd5e1] px-2 lg:px-3 py-1.5 rounded-md transition-all group shadow-sm" title="Admin Console">
+                <svg class="w-3.5 h-3.5 text-blue-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                <span class="text-xs font-semibold text-[#475569] group-hover:text-[#0f172a] hidden lg:inline">Console</span>
               </a>
             ` : ''}
-            <a href="#account" class="flex items-center space-x-2 bg-[#f1f5f9] hover:bg-[#e2e8f0] border border-[#e2e8f0] hover:border-[#cbd5e1] px-3 py-1.5 rounded-md transition-all group shadow-sm">
-              <div class="w-6 h-6 rounded bg-blue-600 text-white font-extrabold text-[11px] flex items-center justify-center">
+            <a href="#account" class="flex items-center space-x-1.5 bg-[#f1f5f9] hover:bg-[#e2e8f0] border border-[#e2e8f0] hover:border-[#cbd5e1] p-1.5 lg:px-2.5 lg:py-1.5 rounded-md transition-all group shadow-sm" title="My Account (${user.name})">
+              <div class="w-6 h-6 rounded ${avatarBg} text-white font-extrabold text-[11px] flex items-center justify-center shadow-xs flex-shrink-0">
                 ${user.name.charAt(0).toUpperCase()}
               </div>
-              <span class="text-xs font-semibold text-[#0f172a] max-w-[100px] truncate">${user.name.split(' ')[0]}</span>
+              <span class="text-xs font-semibold text-[#0f172a] max-w-[90px] truncate hidden lg:inline">${user.name.split(' ')[0]}</span>
             </a>
           </div>
         `;
     } else {
       authContainer.innerHTML = `
-          <a href="#login" class="px-4 py-2 rounded-md bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-all flex items-center space-x-1.5 shadow-sm">
+          <a href="#login" class="px-3 sm:px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-all flex items-center space-x-1.5 shadow-sm">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/>
             </svg>
-            <span>Sign In</span>
+            <span class="hidden sm:inline">Sign In</span>
+            <span class="inline sm:hidden">Login</span>
           </a>
         `;
     }
@@ -237,25 +358,44 @@ export function updateHeaderAuthUI() {
 
   if (mobileDrawer) {
     if (user) {
-      const isAdminOrStaff = user.role === 'ADMIN' || user.role === 'STAFF';
+      const isAdminOrStaff = user.role === 'SUPERADMIN' || user.role === 'ADMIN' || user.role === 'STAFF';
+      const isSuperAdmin = user.role === 'SUPERADMIN';
+      const avatarBg = isSuperAdmin ? 'bg-purple-600' : 'bg-blue-600';
+      const roleBadge = isSuperAdmin 
+        ? '<span class="px-2 py-0.5 rounded text-[9px] font-mono font-extrabold uppercase bg-purple-50 text-purple-700 border border-purple-200">SUPERADMIN</span>'
+        : user.role === 'ADMIN'
+          ? '<span class="px-2 py-0.5 rounded text-[9px] font-mono font-bold uppercase bg-blue-50 text-blue-700 border border-blue-200">ADMIN</span>'
+          : user.role === 'STAFF'
+            ? '<span class="px-2 py-0.5 rounded text-[9px] font-mono font-bold uppercase bg-sky-50 text-sky-700 border border-sky-200">STAFF</span>'
+            : '<span class="px-2 py-0.5 rounded text-[9px] font-mono font-medium uppercase bg-white text-[#475569] border border-[#e2e8f0]">CUSTOMER</span>';
+
       mobileDrawer.innerHTML = `
-        <div class="p-3 bg-[#f8fafc] border border-[#e2e8f0] rounded-md space-y-2 text-xs">
-          <div class="flex items-center space-x-2">
-            <div class="w-7 h-7 rounded bg-blue-600 text-white font-bold flex items-center justify-center">${user.name.charAt(0).toUpperCase()}</div>
-            <div>
-              <p class="font-bold text-[#0f172a]">${user.name}</p>
-              <p class="text-[10px] text-[#64748b]">${user.email}</p>
+        <div class="p-3 bg-white border border-[#e2e8f0] rounded-xl space-y-3 shadow-xs">
+          <div class="flex items-center space-x-3">
+            <div class="w-9 h-9 rounded-lg ${avatarBg} text-white font-bold flex items-center justify-center text-sm shadow-xs">${user.name.charAt(0).toUpperCase()}</div>
+            <div class="min-w-0 flex-1">
+              <p class="font-bold text-[#0f172a] text-xs truncate">${user.name}</p>
+              <p class="text-[10px] text-[#64748b] truncate">${user.email}</p>
             </div>
+            ${roleBadge}
           </div>
-          ${isAdminOrStaff ? `
-            <a href="#admin" class="block w-full text-center py-2 bg-white border border-[#e2e8f0] text-[#0f172a] rounded-md text-xs font-bold shadow-sm">Open Admin Console</a>
-          ` : ''}
-          <button onclick="handleLogout()" class="w-full py-2 bg-rose-50 border border-rose-200 text-rose-700 rounded-md text-xs font-bold shadow-sm">Sign Out</button>
+          <div class="grid grid-cols-2 gap-2 pt-1 border-t border-[#e2e8f0]">
+            <a href="#account" onclick="closeMobileMenu()" class="text-center py-2 bg-[#f8fafc] hover:bg-[#f1f5f9] border border-[#e2e8f0] text-[#0f172a] rounded-lg text-xs font-bold transition-colors">My Profile</a>
+            ${isAdminOrStaff ? `
+              <a href="#admin" onclick="closeMobileMenu()" class="text-center py-2 bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700 rounded-lg text-xs font-bold transition-colors">Admin Console</a>
+            ` : `
+              <a href="#account" onclick="closeMobileMenu()" class="text-center py-2 bg-[#f8fafc] hover:bg-[#f1f5f9] border border-[#e2e8f0] text-[#0f172a] rounded-lg text-xs font-bold transition-colors">My Orders</a>
+            `}
+          </div>
+          <button onclick="handleLogout(); closeMobileMenu();" class="w-full py-2 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 rounded-lg text-xs font-bold transition-colors">Sign Out Session</button>
         </div>
       `;
     } else {
       mobileDrawer.innerHTML = `
-        <a href="#login" class="block w-full text-center py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-md font-bold text-xs shadow-sm">Sign In / Create Account</a>
+        <div class="space-y-2">
+          <a href="#login" onclick="closeMobileMenu()" class="block w-full text-center py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-bold text-xs shadow-sm transition-colors">Sign In to Your Account</a>
+          <a href="#login?tab=signup" onclick="closeMobileMenu()" class="block w-full text-center py-2.5 bg-white hover:bg-[#f8fafc] border border-[#e2e8f0] text-[#0f172a] rounded-lg font-bold text-xs transition-colors">Create Free Account</a>
+        </div>
       `;
     }
   }
@@ -283,9 +423,11 @@ function updateActiveNavLinks(pageName) {
     const isActive = href && (href === `#${pageName}` || href.startsWith(`#${pageName}?`));
 
     if (isActive) {
-      link.className = 'nav-link block px-4 py-2.5 rounded-md text-sm font-bold text-blue-600 bg-blue-50 border-l-2 border-blue-600 transition-all duration-150';
+      link.classList.add('text-blue-600', 'bg-blue-50', 'font-bold');
+      link.classList.remove('text-[#475569]');
     } else {
-      link.className = 'nav-link block px-4 py-2.5 rounded-md text-sm font-medium text-[#475569] hover:bg-[#f8fafc] hover:text-blue-600 transition-all duration-150';
+      link.classList.remove('text-blue-600', 'bg-blue-50', 'font-bold');
+      link.classList.add('text-[#475569]');
     }
   });
 }

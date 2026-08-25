@@ -123,7 +123,7 @@ Route Protection & Security Guards:
    - Checked via `isLoggedIn()`.
    - Unauthenticated access redirects automatically to `#login?redirect=<target_route>`.
 2. Protected Admin Console Routes (`#admin`, `#administrator`):
-   - Checked via `isLoggedIn()` and role check (`user.role === 'ADMIN' || user.role === 'STAFF'`).
+   - Checked via `isLoggedIn()` and role check (`user.role === 'SUPERADMIN' || user.role === 'ADMIN' || user.role === 'STAFF'`).
    - Unauthorized customers receive an "Access Denied" alert and are returned to `#home`.
 3. Dynamic Shell Visibility:
    - When transitioning to `#admin`, the global header, store footer, and chatbot FAB are hidden (`classList.add('hidden')`) to provide a dedicated desktop workspace.
@@ -325,13 +325,19 @@ The dynamic 3-card 3D product carousel presents hardware in an overlapping depth
 3. COMPONENT & STOREFRONT LOGIC
 ================================================================================
 
-3.1 Dynamic Header Navigation & Mobile Drawer (Auth UI Sync)
+3.1 Dynamic Header Navigation & Responsive Mobile Drawer (Auth UI Sync)
 --------------------------------------------------------------------------------
-Function: `updateHeaderAuthUI()` (in `src/js/app/app.js`)
-- Checks `getCurrentUser()`.
-- Unauthenticated User: Displays "Sign In" button leading to `#login`.
-- Authenticated Customer: Displays user avatar pill (user's first initial, e.g. "H") and first name linked to `#account`.
-- Authenticated Admin/Staff: Adds a quick "Admin Console" link to `#admin` in both desktop header and mobile drawer.
+Function: `updateHeaderAuthUI()`, `toggleMobileMenu()`, `handleHeaderSearchSubmit()` (in `src/js/app/app.js`)
+- Checks `getCurrentUser()` and updates both desktop header and mobile drawer.
+- Unauthenticated User: Displays "Sign In" button leading to `#login` (compact "Login" on small mobile viewports).
+- Authenticated Customer: Displays user avatar pill (user's initial, e.g. "C") with first name linked to `#account`.
+- Authenticated Admin / Staff / Super Admin:
+  * Adds quick "Console" link to `#admin` with tooltips.
+  * Role Themes: Super Admin (Purple initial badge), Admin (Blue initial badge), Staff (Sky badge).
+- Responsive Breakpoints & Viewport Optimization:
+  * Width < 1024px: User first name and "Console" text are hidden (`hidden lg:inline`), rendering only compact avatar and settings icon badges to prevent horizontal header overflow.
+  * Width < 1024px: Search bar category select dropdown is hidden (`hidden lg:block`), maximizing input text field area.
+  * Mobile Screens (< 768px): Desktop horizontal tab strip is hidden (`hidden md:block`); mobile hamburger button triggers the enhanced `#mobile-menu` drawer with backdrop overlay (`#mobile-menu-backdrop`), mobile category search bar, and full mobile auth drawer.
 
 3.2 Hero Section & 3D Layered New Arrivals Product Carousel Engine
 --------------------------------------------------------------------------------
@@ -344,11 +350,13 @@ Function: `renderHomeNewArrivalsCarousel()` (in `src/js/app/app.js`)
 --------------------------------------------------------------------------------
 Module: `src/js/controller/shop_controller.js`
 Logic Flow:
-1. State Management: Tracks search keyword, selected category filters (set/array), selected brand, price range filter (min/max), sorting option, and current pagination page.
-2. Multi-Parametric Filter Chain (`getFilteredProducts()`):
+1. URL Hash Query Parser (`initShopLogic(queryPart)`):
+   Parses `cat`, `brand`, and search keywords `search` / `q` from URL hash (e.g. `#shop?cat=laptops&search=rtx4080&brand=asus`), synchronizing header search inputs and active filter tag chips.
+2. State Management: Tracks search keyword, selected category filters (set/array), selected brand filters (set/array), price range filter (min/max), sorting option, and current pagination page.
+3. Multi-Parametric Filter Chain (`renderFilteredProducts()`):
    - Step 1: Category Filter - Matches product category against selected category tags.
-   - Step 2: Search Filter - Performs case-insensitive matching on product name, description, category, and technical specs.
-   - Step 3: Brand Filter - Filters products matching selected brand.
+   - Step 2: Search Filter - Performs case-insensitive matching across product name, description, category, and brand.
+   - Step 3: Brand Filter - Filters products matching selected brand slug/name.
    - Step 4: Price Range Filter - Enforces min & max price bounds.
    - Step 5: Sorting:
      * `featured`: Default priority ordering.
@@ -356,7 +364,7 @@ Logic Flow:
      * `price-high`: Descending price order.
      * `newest`: Sorted by product ID / creation timestamp descending.
      * `rating`: Sorted by customer review rating average.
-3. Pagination: Calculates total pages (`Math.ceil(total / itemsPerPage)`) and slices result array for current page view.
+4. Active Filter Tags: Renders dynamic removable pill chips with count badge.
 
 3.4 Product Details View, Image Gallery & Rating System
 --------------------------------------------------------------------------------
@@ -400,13 +408,27 @@ Features:
 - Automated Fulfillment Branch Selection Algorithm (`autoSelectFulfillmentBranch(deliveryCity, orderItems)`):
   Iterates through branches to locate the nearest branch that has full stock available for all items in the cart.
 
-3.7 User Authentication, Access Control & Roles
+3.7 User Authentication, Access Control & 4-Tier RBAC Architecture
 --------------------------------------------------------------------------------
-Module: `src/js/controller/login_controller.js`
+Module: `src/js/controller/login_controller.js` & `src/js/controller/user_management_controller.js`
 Roles & Permissions Matrix:
-- `ADMIN`: Full access to storefront, product management, order updates, stock health restock/transfers, branch configuration, user management, analytics, taxonomy rules, and policy editing.
-- `STAFF`: Access to storefront, product creation/editing, order status management, and stock monitoring. Restricted from deleting users or altering taxonomy rules.
-- `CUSTOMER`: Access to storefront, shop catalog, cart, checkout, customer account portal, review submission, and order history tracking.
+1. `SUPERADMIN` (System Owner):
+   - Scope: Global cross-branch scope (`assignedBranch: null`, displayed as `Global (Owner)`).
+   - Authority: Full management authority across all console tabs (Products, Orders, Stock, Branches, Transfers, Users, Analytics, Policies).
+   - User Management: Can create, edit, delete, and change roles between `ADMIN`, `STAFF`, and `CUSTOMER`.
+   - Constraints: Single owner account (`superadmin` / `USR-100000`). It cannot be deleted, downgraded, or duplicated.
+2. `ADMIN` (Store Administrator):
+   - Scope: Store-wide console management (Products, Orders, Stock Health, Branches, Transfers, Analytics, Policies, Taxonomy, Brands).
+   - User Management: Full authority to create, edit, delete, and assign roles for `STAFF` and `CUSTOMER` accounts.
+   - Restrictions:
+     * Cannot see, access, or modify `SUPERADMIN` (Super Admin is completely filtered out from directory views).
+     * Cannot manage other `ADMIN` accounts (displayed as "Admin Protected" / read-only).
+     * Cannot assign or promote anyone to `ADMIN` or `SUPERADMIN`.
+3. `STAFF` (Branch Operator):
+   - Scope: Scoped to their `assignedBranch` for inventory, orders, and stock transfers.
+   - Restrictions: Restricted from User Directory, Branches, Analytics, and Policies tabs.
+4. `CUSTOMER` (Storefront Member):
+   - Scope: Storefront catalog, shopping cart, checkout, profile portal, review submission, and order history tracking.
 
 3.8 Customer Account Portal & Order History Tracking
 --------------------------------------------------------------------------------
@@ -424,11 +446,16 @@ Function: `initAccountLogic()`, `renderUserOrderHistory()` (in `app.js`)
 Module: `src/js/controller/admin_dashboard_controller.js` & `src/js/app/administrator/administrator.js`
 Features:
 - Full-Screen Desktop Shell: Hides storefront header/footer/chatbot.
+- Distinctive Role Theming & Badges:
+  * `SUPERADMIN`: Purple badge (`bg-purple-50 text-purple-700 border-purple-200`) and purple avatar badge.
+  * `ADMIN`: Blue badge (`bg-blue-50 text-blue-700 border-blue-200`) and blue avatar badge.
+  * `STAFF`: Sky blue badge (`bg-sky-50 text-sky-700 border-sky-200`).
 - Responsive Collapsible Sidebar:
   * Expanded Mode (`.sidebar-force-expanded`): 256px (`16rem`) displaying icons and text labels.
   * Collapsed Mode (`.sidebar-force-collapsed`): 72px (`4.5rem`) displaying icons only with floating tooltips.
 - Tab Router (`switchAdminTab(tabId)`):
-  Supported Tabs: `#dashboard-overview`, `#products-tab`, `#orders-tab`, `#stock-health-tab`, `#branches-tab`, `#users-tab`, `#taxonomy-tab`, `#analytics-tab`, `#policies-tab`.
+  Supported Tabs: `#dashboard-overview`, `#products-tab`, `#orders-tab`, `#stock-health-tab`, `#branches-tab`, `#users-tab`, `#taxonomy-tab`, `#brands-tab`, `#transfers-tab`, `#analytics-tab`, `#policies-tab`.
+  * Role Guards: `SUPERADMIN` & `ADMIN` have full tab access. `STAFF` is restricted from `#branches-tab`, `#users-tab`, `#analytics-tab`, and `#policies-tab`.
 
 4.2 Product Management Module
 --------------------------------------------------------------------------------
@@ -474,7 +501,16 @@ Module: `src/js/controller/branch_management_controller.js`
 4.6 User Account Management Module
 --------------------------------------------------------------------------------
 Module: `src/js/controller/user_management_controller.js`
-- Displays registered users table, changes roles (`ADMIN`, `STAFF`, `CUSTOMER`), suspends/activates accounts, or removes users.
+Capabilities & Role Permissions:
+- Directory View:
+  * When logged in as `SUPERADMIN`: Displays all users (`SUPERADMIN`, `ADMIN`, `STAFF`, `CUSTOMER`) across all branches with full management tools.
+  * When logged in as `ADMIN`: `SUPERADMIN` records are stripped out completely (invisible). Other `ADMIN` accounts are displayed with an "Admin Protected" badge (read-only; edit, delete, and quick role dropdowns are disabled). Full management is available for `STAFF` and `CUSTOMER` accounts.
+- Account Creation:
+  * `SUPERADMIN`: Can create `ADMIN`, `STAFF`, `CUSTOMER` accounts.
+  * `ADMIN`: Can only create `STAFF` and `CUSTOMER` accounts (`ADMIN` option is omitted from creation modal).
+- Account Editing & Role Updates:
+  * `SUPERADMIN`: Full edit authority; Superadmin account cannot be downgraded or deleted.
+  * `ADMIN`: Can edit details and change roles between `STAFF` and `CUSTOMER` only. Attempts to modify other Admins or assign Admin privileges are strictly blocked.
 
 4.7 Taxonomy, Automated Badge System & Product Behavior Analytics
 --------------------------------------------------------------------------------
@@ -557,13 +593,44 @@ Features:
 ```json
 [
   {
-    "id": "USR-1001",
-    "name": "Hasitha Admin",
-    "username": "hasitha",
-    "email": "admin@etech.com",
-    "password": "hashed_or_plain_password",
-    "role": "ADMIN",
+    "id": "USR-100000",
+    "name": "System Owner & Super Admin",
+    "username": "superadmin",
+    "email": "superadmin@etech.com",
+    "password": "superadmin123",
+    "role": "SUPERADMIN",
+    "assignedBranch": null,
     "createdAt": "2026-01-01"
+  },
+  {
+    "id": "USR-100001",
+    "name": "Hasitha Admin",
+    "username": "admin",
+    "email": "admin@etech.com",
+    "password": "admin123",
+    "role": "ADMIN",
+    "assignedBranch": "BR-COL",
+    "createdAt": "2026-01-01"
+  },
+  {
+    "id": "USR-100002",
+    "name": "Kasun Staff",
+    "username": "staff",
+    "email": "staff@etech.com",
+    "password": "staff123",
+    "role": "STAFF",
+    "assignedBranch": "BR-GAL",
+    "createdAt": "2026-01-15"
+  },
+  {
+    "id": "USR-100003",
+    "name": "Nimal Customer",
+    "username": "customer",
+    "email": "customer@gmail.com",
+    "password": "customer123",
+    "role": "CUSTOMER",
+    "assignedBranch": null,
+    "createdAt": "2026-02-01"
   }
 ]
 ```
@@ -701,11 +768,17 @@ root/
     │   ├── variables.css                       Design System Tokens (Colors, Typography, Radius)
     │   └── global.css                          Base Resets, Keyframe Animations, Scrollbar
     │
-    ├── data/
-    │   └── products.json                       Placeholder Data Seed
-    │
-    ├── pages/
-    │   └── chatbot.html                        Standalone Chatbot View
+    ├── data/                                   Centralized Mock Data Seeds (Single Source of Truth)
+    │   ├── products.js                         Product Master Catalog Seeds
+    │   ├── brands.js                           Hardware Partner Brands Seeds
+    │   ├── deals.js                            Deal Bundles & Hot Deals Seeds
+    │   ├── transfers.js                        Stock Transfers & Logistics Seeds
+    │   ├── taxonomy.js                         Categories, Badges & History Seeds
+    │   ├── branches.js                         Regional Warehouse Hubs Seeds
+    │   ├── users.js                            4-Tier User Accounts Seeds (Superadmin, Admin, Staff, Customer)
+    │   ├── orders.js                           Sample Placed Orders Seeds
+    │   ├── policies.js                         Corporate Profile & Legal Policies Seeds
+    │   └── ratings_reviews.js                  Product Customer Reviews Seeds
     │
     └── js/
         ├── app.js                              SPA Hash Router & Global Header Hooks
@@ -713,38 +786,44 @@ root/
         ├── app/
         │   ├── about/
         │   │   └── about.js                    About Us Page Renderer
+        │   │
         │   ├── administrator/
         │   │   └── administrator.js            Admin Dashboard Page Shell Renderer
+        │   │
         │   └── login/
         │       └── login.js                    Authentication Page Renderer
         │
-        ├── components/
-        │   └── product_detail_cart.js          Product Details Component Builder
-        │
         ├── controller/
-        │   ├── admin_dashboard_controller.js   Admin Shell Navigation & Sidebar Handler
-        │   ├── analytics_and_report_controller.js Analytics Tab Data Summarizer
-        │   ├── branch_controller.js            Branch Network & Shipping Fee Calculator
+        │   ├── admin_dashboard_controller.js   Admin Shell Navigation, Role Theming & Sidebar Handler
+        │   ├── analytics_and_report_controller.js Financial Analytics & Sales Report Summarizer
+        │   ├── badge_management_controller.js  Custom & Automated Badge Assignment Controller
+        │   ├── branch_controller.js            Branch Network & Geo-Distance Shipping Calculator
         │   ├── branch_management_controller.js Admin Branch CRUD Management
+        │   ├── brand_management_controller.js  Hardware Partner Brands Management
         │   ├── cart_controller.js              Cart Engine & Checkout Pipeline
         │   ├── chatbot_controller.js           Gemini AI Chatbot Engine & Fallback Logic
-        │   ├── login_controller.js             Auth Controller (Login/Signup/Roles)
+        │   ├── hot_deal_controller.js          Hot Deals, Flash Sales & Category Filters
+        │   ├── login_controller.js             Auth & Profile Controller (Superadmin/Admin/Staff/Customer)
         │   ├── order_management_controller.js  Admin Order Processing Lifecycle
         │   ├── policy_management_controller.js Legal Policy Editor & Corporate Profile
         │   ├── product-details_controller.js   Product Details & Reviews Renderer
-        │   ├── product_management_controller.js Admin Product CRUD & Live Preview
-        │   ├── shop_controller.js              Catalog Filter, Search & Pagination Engine
-        │   ├── stock_health_controller.js      Stock Alert Center & Branch Transfers
+        │   ├── product_management_controller.js Admin Product CRUD, Specs Builder & Live Preview
+        │   ├── promotion_management_controller.js Deal Bundles & Promotional Campaign Engine
+        │   ├── shop_controller.js              Catalog Multi-Filter, Search & Pagination Engine
+        │   ├── stock_health_controller.js      Stock Health Matrix, Alerts & Quick Restock
         │   ├── taxonomy_controller.js          Taxonomy Rules & Auto-Badge Engine
-        │   └── user_management_controller.js   Admin User Access & Role Controller
+        │   ├── transfer_management_controller.js Inter-Branch Stock Transfers & Kit Assembly
+        │   └── user_management_controller.js   Admin User Access & 4-Tier Role Controller
         │
         └── models/
-            ├── data.js                         Product Mock Model & LocalStorage Data Engine
-            ├── et-training.js                  Gemini AI Chatbot Context Prompt System
+            ├── brand_data.js                   Hardware Brands Data Model & Filters
+            ├── data.js                         Product Master Data Model & LocalStorage Engine
+            ├── deals_data.js                   Deal Bundles & Bottleneck Inventory Engine
+            ├── et-training.js                  Gemini AI Chatbot Context Training System
             ├── policy-data.js                  Legal Policies & Corporate Profile Model
-            ├── product_model.js                Product Data Structures & Schema Helper
             ├── rating_data.js                  Ratings & Reviews Data Model
-            └── taxonomy_data.js                Categories, Badges & Behavior Analytics Model
+            ├── taxonomy_data.js                Categories, Badges & Behavior Analytics Model
+            └── transfers_data.js               Stock Movement & Logistics Data Model
 ```
 
 ================================================================================

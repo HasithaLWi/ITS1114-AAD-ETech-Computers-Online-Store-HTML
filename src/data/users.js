@@ -4,9 +4,19 @@
 
 export const DEFAULT_USERS = [
   {
+    id: 'USR-100000',
+    username: 'superadmin',
+    name: 'System Owner & Super Admin',
+    email: 'superadmin@etech.com',
+    password: 'superadmin123',
+    role: 'SUPERADMIN',
+    assignedBranch: null, // System Owner - Cross-branch Global Access
+    createdAt: 'Jan 01, 2026'
+  },
+  {
     id: 'USR-100001',
     username: 'admin',
-    name: 'System Admin',
+    name: 'Store Administrator',
     email: 'admin@etech.com',
     password: 'admin123',
     role: 'ADMIN',

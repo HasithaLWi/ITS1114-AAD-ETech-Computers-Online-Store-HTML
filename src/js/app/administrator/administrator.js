@@ -490,7 +490,7 @@ export function renderAdminPage(queryPart) {
               <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div>
                   <h3 class="text-lg font-bold text-[#0f172a]">System User Directory & Roles</h3>
-                  <p class="text-xs text-[#64748b] mt-0.5">Assign worker roles (STAFF / ADMIN), create staff accounts, and manage system access.</p>
+                  <p class="text-xs text-[#64748b] mt-0.5">Manage system access, roles, and branch staff assignments.</p>
                 </div>
                 <button onclick="openUserModal()"
                   class="px-3.5 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-md shadow-sm transition-all flex items-center space-x-1.5">
@@ -498,7 +498,7 @@ export function renderAdminPage(queryPart) {
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                       d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
                   </svg>
-                  <span>Create Admin / Staff</span>
+                  <span>Create User Account</span>
                 </button>
               </div>
 

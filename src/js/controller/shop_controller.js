@@ -219,13 +219,15 @@ export function initShopLogic(queryPart = '') {
   const catCombobox = document.getElementById('shop-category-combobox');
   const brandCombobox = document.getElementById('shop-brand-combobox');
 
-  // Parse query string (e.g. cat=laptops&brand=asus or brand=corsair,razer)
+  // Parse query string (e.g. cat=laptops&brand=asus&search=rtx or brand=corsair,razer)
   let initialCategory = '';
   let initialBrand = '';
+  let initialSearch = '';
   if (queryPart) {
     const params = new URLSearchParams(queryPart);
     initialCategory = params.get('cat') || params.get('category') || '';
     initialBrand = params.get('brand') || params.get('b') || '';
+    initialSearch = params.get('search') || params.get('q') || params.get('keyword') || '';
   }
 
   if (initialCategory) {
@@ -242,6 +244,14 @@ export function initShopLogic(queryPart = '') {
       .filter(Boolean);
   } else {
     selectedBrandSlugs = [];
+  }
+
+  if (searchInput) {
+    searchInput.value = initialSearch;
+  }
+  const headerSearchInput = document.getElementById('header-search-input');
+  if (headerSearchInput && initialSearch) {
+    headerSearchInput.value = initialSearch;
   }
 
   // Populate comboboxes and active tags

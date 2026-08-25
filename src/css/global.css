@@ -136,6 +136,22 @@ textarea:focus {
     }
 }
 
+/* ── Mobile Navigation Drawer Animation ────────────────────── */
+#mobile-menu:not(.hidden) {
+    animation: et-slide-down 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes et-slide-down {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 /* ── E-T AI Chatbot Panel & FAB ─────────────────────────────── */
 .et-panel-hidden {
     opacity: 0;

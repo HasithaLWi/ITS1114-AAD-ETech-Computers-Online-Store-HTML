@@ -49,7 +49,10 @@ import {
     renderFlashDealsGrid, toggleDealWishlist, buyFeaturedDeal,
     handleDealsNewsletter, HOT_DEALS_DATA
 } from './src/js/controller/hot_deal_controller.js';
-import { handleLogout, updateHeaderAuthUI, renderHomeNewArrivalsGrid, renderHomeBrandsShowcase, scrollHomeBrands } from './src/js/app/app.js';
+import { 
+    handleLogout, updateHeaderAuthUI, renderHomeNewArrivalsGrid, renderHomeBrandsShowcase, scrollHomeBrands,
+    toggleMobileMenu, openMobileMenu, closeMobileMenu, handleMobileSearchSubmit, handleHeaderSearchSubmit
+} from './src/js/app/app.js';
 import { renderLoginPage, initLoginPage } from './src/js/app/login/login.js';
 import { renderAdminPage, initAdminPage } from './src/js/app/administrator/administrator.js';
 import { renderAboutPage } from './src/js/app/about/about.js';
@@ -213,6 +216,7 @@ Object.assign(window, {
     // Authentication & User Profile Management
     getUsers, registerUser, loginUser, setCurrentUser,
     getCurrentUser, isLoggedIn, logoutUser, handleLogout, updateHeaderAuthUI, renderHomeNewArrivalsGrid,
+    toggleMobileMenu, openMobileMenu, closeMobileMenu, handleMobileSearchSubmit, handleHeaderSearchSubmit,
     switchTab, togglePasswordVisibility, showAlert, handleLoginSubmit, handleSignupSubmit,
     updateUserProfile, changeUserPassword, openEditProfileModal, closeEditProfileModal,
     switchProfileModalTab, toggleModalPasswordVisibility, handleSaveProfileDetailsSubmit,

@@ -32,8 +32,8 @@ export function initAdminDashboard() {
 
   activeUser = getCurrentUser();
 
-  // Security Role Guard: Only STAFF and ADMIN allowed
-  if (!activeUser || (activeUser.role !== 'ADMIN' && activeUser.role !== 'STAFF')) {
+  // Security Role Guard: Only STAFF, ADMIN, and SUPERADMIN allowed
+  if (!activeUser || (!['SUPERADMIN', 'ADMIN', 'STAFF'].includes(activeUser.role))) {
     alert('Access Denied: You do not have administrative privileges.');
     window.location.hash = '#home';
     return;
@@ -89,22 +89,32 @@ function updateUserInfoHeader() {
   if (nameEl) nameEl.textContent = activeUser.name;
   if (roleEl) {
     roleEl.textContent = activeUser.role;
-    if (activeUser.role === 'ADMIN') {
+    if (activeUser.role === 'SUPERADMIN') {
+      roleEl.className = 'px-2 py-0.5 rounded text-[9px] font-extrabold uppercase bg-purple-50 text-purple-700 border border-purple-200';
+    } else if (activeUser.role === 'ADMIN') {
       roleEl.className = 'px-2 py-0.5 rounded text-[9px] font-extrabold uppercase bg-blue-50 text-blue-700 border border-blue-200';
     } else {
       roleEl.className = 'px-2 py-0.5 rounded text-[9px] font-extrabold uppercase bg-sky-50 text-sky-700 border border-sky-200';
     }
   }
-  if (avatarEl) avatarEl.textContent = activeUser.name.charAt(0).toUpperCase();
+  if (avatarEl) {
+    avatarEl.textContent = activeUser.name.charAt(0).toUpperCase();
+    if (activeUser.role === 'SUPERADMIN') {
+      avatarEl.className = 'w-8 h-8 rounded-md bg-purple-600 text-white font-extrabold text-xs flex items-center justify-center shadow-sm';
+    } else {
+      avatarEl.className = 'w-8 h-8 rounded-md bg-blue-600 text-white font-extrabold text-xs flex items-center justify-center shadow-sm';
+    }
+  }
 }
 
 /**
  * Configure Side Navbar items based on user role (Hide Admin-only tabs for Staff)
  */
 function setupRoleBasedNavigation() {
+  const isSuperOrAdmin = activeUser && (activeUser.role === 'SUPERADMIN' || activeUser.role === 'ADMIN');
   const adminOnlyNavItems = document.querySelectorAll('.admin-only-nav');
   adminOnlyNavItems.forEach(item => {
-    if (activeUser.role !== 'ADMIN') {
+    if (!isSuperOrAdmin) {
       item.classList.add('hidden');
     } else {
       item.classList.remove('hidden');
@@ -116,8 +126,10 @@ function setupRoleBasedNavigation() {
  * Tab Switching Handler
  */
 export function switchAdminTab(tabName, param = null) {
+  const isSuperOrAdmin = activeUser && (activeUser.role === 'SUPERADMIN' || activeUser.role === 'ADMIN');
+
   // Prevent Staff from accessing Admin-only tabs
-  if (activeUser && activeUser.role !== 'ADMIN' && ['branches', 'users', 'analytics', 'policies'].includes(tabName)) {
+  if (!isSuperOrAdmin && ['branches', 'users', 'analytics', 'policies'].includes(tabName)) {
     tabName = 'overview';
   }
 
@@ -158,10 +170,10 @@ export function switchAdminTab(tabName, param = null) {
   else if (tabName === 'transfers') renderTransfersTab();
   else if (tabName === 'taxonomy') renderTaxonomyTab();
   else if (tabName === 'brands') renderBrandsTab();
-  else if (tabName === 'branches' && activeUser && activeUser.role === 'ADMIN') renderBranchesTab();
-  else if (tabName === 'users' && activeUser && activeUser.role === 'ADMIN') renderUsersTab();
-  else if (tabName === 'analytics' && activeUser && activeUser.role === 'ADMIN') renderAnalyticsTab();
-  else if (tabName === 'policies' && activeUser && activeUser.role === 'ADMIN') renderPoliciesTab();
+  else if (tabName === 'branches' && isSuperOrAdmin) renderBranchesTab();
+  else if (tabName === 'users' && isSuperOrAdmin) renderUsersTab();
+  else if (tabName === 'analytics' && isSuperOrAdmin) renderAnalyticsTab();
+  else if (tabName === 'policies' && isSuperOrAdmin) renderPoliciesTab();
 }
 
 /**
@@ -277,7 +289,10 @@ function renderOverviewTab() {
 
   const registeredUsersEl = document.getElementById('overview-registered-users');
   if (registeredUsersEl) {
-    registeredUsersEl.textContent = users.length;
+    const visibleUsersCount = (activeUser && activeUser.role === 'ADMIN') 
+      ? users.filter(u => u.role !== 'SUPERADMIN').length 
+      : users.length;
+    registeredUsersEl.textContent = visibleUsersCount;
   }
 
   const activeBranchesEl = document.getElementById('overview-active-branches');

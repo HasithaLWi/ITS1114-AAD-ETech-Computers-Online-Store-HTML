@@ -89,8 +89,8 @@ All mock data is centralized under `src/data/` as the single source of truth:
 | `etech_product_reviews` | `src/data/ratings_reviews.js`<br>`src/js/models/rating_data.js` | Stores 1–5 star customer text reviews, updating average ratings and review counts | `GET /api/v1/products/{id}/reviews`<br>`POST /api/v1/products/{id}/reviews`<br>`DELETE /api/v1/reviews/{id}` | **Replace completely** with database table. |
 | `etech_branches` | `src/data/branches.js`<br>`src/js/controller/branch_controller.js` | Stores regional warehouse hubs (Colombo, Galle, Matara, Kandy) with geo coordinates & base rates | `GET /api/v1/branches`<br>`POST /api/v1/branches`<br>`PUT /api/v1/branches/{id}`<br>`DELETE /api/v1/branches/{id}` | **Replace completely** with API fetch calls. |
 | `etech_orders` | `src/data/orders.js`<br>`src/js/controller/order_management_controller.js` | Stores customer orders, delivery distances, fulfillment branch, item arrays, and status | `GET /api/v1/orders`<br>`GET /api/v1/orders/my-orders`<br>`POST /api/v1/orders`<br>`PATCH /api/v1/orders/{id}/status` | **Replace completely** with API fetch calls. |
-| `etech_users` | `src/data/users.js`<br>`src/js/controller/login_controller.js` | Stores user directory with unique username, role (`ADMIN`, `STAFF`, `CUSTOMER`), and branch assignments | `GET /api/v1/users`<br>`POST /api/v1/auth/register`<br>`POST /api/v1/users`<br>`PATCH /api/v1/users/{id}/role` | **Replace completely**. Spring Security manages BCrypt passwords. |
-| `etech_current_user` | `src/js/controller/login_controller.js` | Stores current logged-in user profile & role session | `POST /api/v1/auth/login`<br>`GET /api/v1/auth/me` | **Keep minimal**: Store only the **JWT Bearer Token** and user profile. |
+| `etech_users` | `src/data/users.js`<br>`src/js/controller/login_controller.js` | Stores user directory with unique username, 4-tier role (`SUPERADMIN`, `ADMIN`, `STAFF`, `CUSTOMER`), and branch assignments | `GET /api/v1/users`<br>`POST /api/v1/auth/register`<br>`POST /api/v1/users`<br>`PATCH /api/v1/users/{id}/role` | **Replace completely**. Spring Security manages BCrypt passwords & RBAC authorization. |
+| `etech_current_user` | `src/js/controller/login_controller.js` | Stores current logged-in user profile & role session (`SUPERADMIN`, `ADMIN`, `STAFF`, `CUSTOMER`) | `POST /api/v1/auth/login`<br>`GET /api/v1/auth/me` | **Keep minimal**: Store only the **JWT Bearer Token** and user profile. |
 | `etech_cart` | `src/js/controller/cart_controller.js` | Stores active shopping cart items and quantities | Optional: `GET/POST /api/v1/cart` (or keep in `localStorage` for guest sessions) | Can **remain in `localStorage`** for guest carts, syncing on checkout. |
 | `etech_business_info` | `src/data/policies.js`<br>`src/js/models/policy-data.js` | Corporate business details, registration no, tax ID, ISO credentials, and hotline | `GET /api/v1/business-profile`<br>`PUT /api/v1/business-profile` | **Replace completely** with database table. |
 | `etech_policies` | `src/data/policies.js`<br>`src/js/models/policy-data.js` | Legal compliance policies (Privacy Policy, Terms of Service, Guarantee & Warranty) | `GET /api/v1/policies`<br>`GET /api/v1/policies/{slug}`<br>`PUT /api/v1/policies/{slug}` | **Replace completely** with database table. |
@@ -146,7 +146,7 @@ erDiagram
         varchar name
         varchar email UK
         varchar password_hash
-        enum role "ADMIN, STAFF, CUSTOMER"
+        enum role "SUPERADMIN, ADMIN, STAFF, CUSTOMER"
         varchar assigned_branch_id FK
         timestamp created_at
     }
@@ -368,15 +368,15 @@ CREATE TABLE branches (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
--- 2. Users Table (Administrators, Branch Staff, & Customers)
+-- 2. Users Table (Super Admin, Administrators, Branch Staff, & Customers)
 CREATE TABLE users (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(50) NOT NULL UNIQUE,
     name VARCHAR(100) NOT NULL,
     email VARCHAR(150) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
-    role ENUM('ADMIN', 'STAFF', 'CUSTOMER') NOT NULL DEFAULT 'CUSTOMER',
-    assigned_branch_id VARCHAR(20) NULL,
+    role ENUM('SUPERADMIN', 'ADMIN', 'STAFF', 'CUSTOMER') NOT NULL DEFAULT 'CUSTOMER',
+    assigned_branch_id VARCHAR(20) NULL, -- NULL indicates Global / Cross-Branch Scope (e.g. Super Admin Owner)
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (assigned_branch_id) REFERENCES branches(id) ON DELETE SET NULL,
@@ -697,16 +697,16 @@ All endpoints are prefixed with `/api/v1`.
 
 | Method | Endpoint | Access | Description | Request Payload | Response Payload |
 |---|---|---|---|---|---|
-| `POST` | `/api/v1/auth/login` | Public | Authenticate user via username/password & issue JWT | `{ "username": "admin", "password": "..." }` | `{ "token": "jwt.token...", "user": { "id": 1, "username": "admin", "name": "System Admin", "email": "admin@etech.com", "role": "ADMIN" } }` |
-| `POST` | `/api/v1/auth/register` | Public | Register new customer account | `{ "name": "...", "username": "...", "email": "...", "password": "..." }` | `{ "token": "jwt.token...", "user": { "id": 4, "username": "...", "name": "...", "email": "...", "role": "CUSTOMER" } }` |
-| `GET` | `/api/v1/auth/me` | Authenticated | Retrieve current session profile | Headers: `Authorization: Bearer <token>` | `{ "id": 1, "username": "admin", "name": "System Admin", "email": "admin@etech.com", "role": "ADMIN", "assignedBranch": null }` |
-| `PUT` | `/api/v1/users/me/profile` | Authenticated | Update current user profile | `{ "name": "Kasun Perera", "username": "kasun_p", "email": "kasun@gmail.com" }` | Updated User Profile DTO |
+| `POST` | `/api/v1/auth/login` | Public | Authenticate user via username/password & issue JWT with role claims (`SUPERADMIN`, `ADMIN`, `STAFF`, `CUSTOMER`) | `{ "username": "superadmin", "password": "..." }` | `{ "token": "jwt.token...", "user": { "id": "USR-100000", "username": "superadmin", "name": "System Owner & Super Admin", "email": "superadmin@etech.com", "role": "SUPERADMIN", "assignedBranch": null } }` |
+| `POST` | `/api/v1/auth/register` | Public | Register new customer account | `{ "name": "...", "username": "...", "email": "...", "password": "..." }` | `{ "token": "jwt.token...", "user": { "id": "USR-100004", "username": "...", "name": "...", "email": "...", "role": "CUSTOMER", "assignedBranch": null } }` |
+| `GET` | `/api/v1/auth/me` | Authenticated | Retrieve current session profile & role | Headers: `Authorization: Bearer <token>` | Current User Profile DTO |
+| `PUT` | `/api/v1/users/me/profile` | Authenticated | Update current user personal profile | `{ "name": "...", "username": "...", "email": "..." }` | Updated User Profile DTO |
 | `PUT` | `/api/v1/users/me/password` | Authenticated | Change current user password | `{ "currentPassword": "...", "newPassword": "..." }` | `{ "success": true, "message": "Password changed" }` |
-| `GET` | `/api/v1/users` | `ADMIN` | List all system users | Query: `?role=STAFF&branch=BR-COL` | `[ { "id": 1, "username": "admin", "name": "System Admin", "email": "admin@etech.com", "role": "STAFF", "assignedBranch": "BR-GAL", "createdAt": "..." } ]` |
-| `POST` | `/api/v1/users` | `ADMIN` | Create new Admin / Staff account | `{ "name": "...", "username": "...", "email": "...", "password": "...", "role": "STAFF", "assignedBranch": "BR-GAL" }` | Created User DTO |
-| `PUT` | `/api/v1/users/{id}` | `ADMIN` | Update user details & branch | User Form DTO | Updated User DTO |
-| `PATCH` | `/api/v1/users/{id}/role` | `ADMIN` | Fast role/branch update | `{ "role": "ADMIN", "assignedBranch": null }` | Updated User DTO |
-| `DELETE` | `/api/v1/users/{id}` | `ADMIN` | Delete user account | None | `{ "success": true, "message": "User deleted" }` |
+| `GET` | `/api/v1/users` | `SUPERADMIN, ADMIN` | List system users.<br>- **Superadmin**: Returns all users across all roles.<br>- **Admin**: Returns other Admins (marked `canManage: false`), Staff, and Customers. **`SUPERADMIN` records are stripped out completely** (invisible to Admin). | Query: `?role=STAFF&branch=BR-COL` | List of User DTOs |
+| `POST` | `/api/v1/users` | `SUPERADMIN, ADMIN` | Create user account.<br>- **Superadmin**: Can create `ADMIN`, `STAFF`, `CUSTOMER`.<br>- **Admin**: Can only create `STAFF`, `CUSTOMER`. Attempt to create `ADMIN` or `SUPERADMIN` yields `403 Forbidden`. | `{ "name": "...", "username": "...", "email": "...", "password": "...", "role": "STAFF", "assignedBranch": "BR-GAL" }` | Created User DTO |
+| `PUT` | `/api/v1/users/{id}` | `SUPERADMIN, ADMIN` | Update user details & branch.<br>- **Superadmin**: Full update authority.<br>- **Admin**: Can only update `STAFF` and `CUSTOMER`. Modifying an `ADMIN` or `SUPERADMIN` yields `403 Forbidden`. | User Form DTO | Updated User DTO |
+| `PATCH` | `/api/v1/users/{id}/role` | `SUPERADMIN, ADMIN` | Change user role.<br>- **Superadmin**: Can switch between `ADMIN`, `STAFF`, `CUSTOMER`. (Superadmin account is immutable).<br>- **Admin**: Can only switch between `CUSTOMER` and `STAFF`. Promoting to or altering an `ADMIN` yields `403 Forbidden`. | `{ "role": "STAFF", "assignedBranch": "BR-COL" }` | Updated User DTO |
+| `DELETE` | `/api/v1/users/{id}` | `SUPERADMIN, ADMIN` | Delete user account.<br>- **Superadmin account (`USR-100000`) cannot be deleted by anyone** (`400 Bad Request`).<br>- **Admin cannot delete other Admin accounts** (`403 Forbidden`). Can only delete `STAFF` and `CUSTOMER`. | None | `{ "success": true, "message": "User account removed" }` |
 
 ### Product Catalog & Gallery
 
@@ -1021,10 +1021,29 @@ com.etech.store/
 
 ## 7. Client-Side Simplifications & Role-Based UI Security (RBAC)
 
-### Role-Based Access & Header Visibility Rules
-- 👑 **`ADMIN` Role**: Full access to Admin Console navigation and all management tabs (Products, Orders, Stock Health, Categories & Badges, Promotions & Deals, Inter-Branch Transfers, Branches, Users, Financial Reports). Header displays `[Admin Console]` and account profile.
-- 🧑‍💼 **`STAFF` Role**: Scoped access to operational tabs (Products, Orders, Stock Health, Promotions, Transfers). System configuration tabs (Branches, Users, Financials) are hidden. Stock edits are scoped to their `assignedBranch`. Header displays `[Admin Console]` and account profile.
-- 👤 **`CUSTOMER` / Guest**: `Admin Console` button is **completely hidden** from both desktop header and mobile drawer. Direct URL navigation to `#admin` is blocked by route guards and redirects to `#home` or `#login`. On the backend, Spring Security enforces `@PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")` returning `403 Forbidden`.
+### Role-Based Access & Header Visibility Rules (4-Tier RBAC)
+- 👑👑 **`SUPERADMIN` Role (System Owner)**:
+  - **Global Scope**: Cross-branch access (`assignedBranch: null`, displayed as `Global (Owner)`).
+  - **Full Authority**: Full authority over all console tabs (Products, Orders, Stock Health, Categories, Brands, Promotions, Transfers, Branches, Users, Financials, Policies).
+  - **User Management Authority**: Can create, edit, update, delete, and assign roles for `ADMIN`, `STAFF`, and `CUSTOMER` accounts.
+  - **Immutability**: Only **one** unique Superadmin account exists (`superadmin` / `USR-100000`). It cannot be deleted, renamed, or downgraded.
+  - **Header & Badge**: Styled with a distinctive purple avatar and purple badge (`bg-purple-50 text-purple-700 border-purple-200`).
+- 👑 **`ADMIN` Role (Store Administrator)**:
+  - **Full Console Access**: Access to all management tabs (Products, Orders, Stock Health, Categories & Badges, Promotions & Deals, Transfers, Branches, Users, Analytics, Policies).
+  - **Staff & Customer Management**: Full management authority (create, edit, delete, role assignment) over `STAFF` and `CUSTOMER` accounts.
+  - **Admin-Admin & Superadmin Restrictions**:
+    - **Cannot see or access `SUPERADMIN`**: Superadmin is completely filtered out from API query results and directory views.
+    - **Cannot manage other `ADMIN` accounts**: Cannot edit, delete, or change roles of other Admin accounts (rendered as "Admin Protected" / read-only).
+    - **Cannot assign Admin/Superadmin privileges**: Cannot create new `ADMIN` accounts or promote anyone to `ADMIN` or `SUPERADMIN`.
+  - **Header & Badge**: Styled with a blue avatar and blue badge (`bg-blue-50 text-blue-700 border-blue-200`).
+- 🧑‍💼 **`STAFF` Role (Branch Operations)**:
+  - **Scoped Access**: Scoped to operational tabs (Products, Orders, Stock Health, Promotions, Transfers).
+  - **Restricted**: System configuration tabs (Branches, Users, Financials, Policies) are hidden and guarded. Stock updates are scoped to their `assignedBranch`.
+  - **Header & Badge**: Styled with a sky blue badge (`bg-sky-50 text-sky-700 border-sky-200`).
+- 👤 **`CUSTOMER` / Guest**:
+  - Storefront catalog, cart, checkout, profile portal, review submission, and order history tracking.
+  - `Admin Console` button is **completely hidden** from both desktop header and mobile drawer. Direct URL navigation to `#admin` is blocked by route guards and redirects to `#home` or `#login`.
+  - Backend Spring Security enforces `@PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'STAFF')")` returning `403 Forbidden`.
 
 ### What to Strip Out Upon Backend Integration
 When connecting the frontend to Spring Boot, the following complex client-side logic should be **stripped out** and left to the backend:

@@ -21,7 +21,8 @@ export function getUsers() {
   // Migrate existing users to have username if missing
   parsed.forEach((u, index) => {
     if (!u.username) {
-      if (u.email && u.email.toLowerCase() === 'admin@etech.com') u.username = 'admin';
+      if (u.email && u.email.toLowerCase() === 'superadmin@etech.com') u.username = 'superadmin';
+      else if (u.email && u.email.toLowerCase() === 'admin@etech.com') u.username = 'admin';
       else if (u.email && u.email.toLowerCase() === 'staff@etech.com') u.username = 'staff';
       else if (u.email && u.email.toLowerCase() === 'customer@etech.com') u.username = 'customer';
       else u.username = u.email ? u.email.split('@')[0].replace(/[^a-zA-Z0-9_]/g, '') : `user_${index + 1}`;
@@ -29,9 +30,16 @@ export function getUsers() {
     }
   });
 
-  // Ensure default admin always exists if missing
-  if (!parsed.some(u => (u.username && u.username.toLowerCase() === 'admin') || u.email.toLowerCase() === 'admin@etech.com')) {
+  // Ensure default superadmin always exists if missing
+  if (!parsed.some(u => (u.username && u.username.toLowerCase() === 'superadmin') || (u.email && u.email.toLowerCase() === 'superadmin@etech.com') || u.role === 'SUPERADMIN')) {
     parsed.unshift(DEFAULT_USERS[0]);
+    updated = true;
+  }
+
+  // Ensure default admin always exists if missing
+  if (!parsed.some(u => (u.username && u.username.toLowerCase() === 'admin') || (u.email && u.email.toLowerCase() === 'admin@etech.com'))) {
+    const adminSeed = DEFAULT_USERS.find(u => u.username === 'admin') || DEFAULT_USERS[1];
+    parsed.splice(1, 0, adminSeed);
     updated = true;
   }
 
@@ -240,7 +248,7 @@ export function showAlert(message, isError = true) {
 }
 
 function getRedirectTarget(user) {
-  if (user && (user.role === 'ADMIN' || user.role === 'STAFF')) {
+  if (user && (user.role === 'SUPERADMIN' || user.role === 'ADMIN' || user.role === 'STAFF')) {
     return '#admin';
   }
   
