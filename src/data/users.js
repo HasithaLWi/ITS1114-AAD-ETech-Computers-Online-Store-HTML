@@ -1,44 +1,40 @@
 // ============================================================
-//  src/data/users.js — Central Authentication & Seed User Accounts
+//  src/data/users.js — Central User Reference Data
 // ============================================================
 
 export const DEFAULT_USERS = [
   {
-    id: 'USR-100000',
+    id: 1,
     username: 'superadmin',
     name: 'System Owner & Super Admin',
     email: 'superadmin@etech.com',
-    password: 'superadmin123',
     role: 'SUPERADMIN',
-    assignedBranch: null, // System Owner - Cross-branch Global Access
+    assignedBranch: null,
     createdAt: 'Jan 01, 2026'
   },
   {
-    id: 'USR-100001',
+    id: 2,
     username: 'admin',
     name: 'Store Administrator',
     email: 'admin@etech.com',
-    password: 'admin123',
     role: 'ADMIN',
-    assignedBranch: 'BR-COL',
+    assignedBranch: null,
     createdAt: 'Jan 15, 2026'
   },
   {
-    id: 'USR-100002',
-    username: 'staff',
-    name: 'Galle Operations Staff',
-    email: 'staff@etech.com',
-    password: 'staff123',
+    id: 3,
+    username: 'staff_colombo',
+    name: 'Colombo Branch Operations',
+    email: 'staff.colombo@etech.com',
     role: 'STAFF',
-    assignedBranch: 'BR-GAL',
+    assignedBranch: 'BR-COL',
     createdAt: 'Feb 01, 2026'
   },
   {
-    id: 'USR-100003',
-    username: 'customer',
-    name: 'John Doe',
-    email: 'customer@etech.com',
-    password: 'customer123',
+    id: 4,
+    username: 'kasun',
+    name: 'Kasun Perera',
+    email: 'kasun.p@gmail.com',
     role: 'CUSTOMER',
     assignedBranch: null,
     createdAt: 'Mar 10, 2026'

@@ -1,5 +1,6 @@
 // ETech Computers - Administrator & Staff Management Dashboard Controller
-import { getCurrentUser, isLoggedIn, logoutUser, getUsers } from './login_controller.js';
+import { getCurrentUser, isLoggedIn, logoutUser } from './login_controller.js';
+import { UserApi } from '../api/userApi.js';
 import { getBranches } from './branch_controller.js';
 import { getAllOrders } from './order_management_controller.js';
 import { getStoredProducts } from '../models/data.js';
@@ -253,7 +254,6 @@ function renderOverviewTab() {
   if (!container) return;
 
   const orders = getAllOrders();
-  const users = getUsers();
   const branches = getBranches();
   const healthReport = getStockHealthReport();
 
@@ -288,11 +288,14 @@ function renderOverviewTab() {
   }
 
   const registeredUsersEl = document.getElementById('overview-registered-users');
-  if (registeredUsersEl) {
-    const visibleUsersCount = (activeUser && activeUser.role === 'ADMIN') 
-      ? users.filter(u => u.role !== 'SUPERADMIN').length 
-      : users.length;
-    registeredUsersEl.textContent = visibleUsersCount;
+  if (registeredUsersEl && (activeUser.role === 'SUPERADMIN' || activeUser.role === 'ADMIN')) {
+    UserApi.getUsers().then(users => {
+      if (registeredUsersEl && users) {
+        registeredUsersEl.textContent = users.length;
+      }
+    }).catch(() => {
+      if (registeredUsersEl) registeredUsersEl.textContent = '-';
+    });
   }
 
   const activeBranchesEl = document.getElementById('overview-active-branches');

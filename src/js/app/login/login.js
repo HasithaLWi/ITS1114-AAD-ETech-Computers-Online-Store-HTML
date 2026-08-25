@@ -84,8 +84,7 @@ export function renderLoginPage(queryPart) {
             <div>
               <div class="flex items-center justify-between mb-1">
                 <label class="block text-xs font-semibold text-[#475569] uppercase tracking-wider">Password</label>
-                <a href="javascript:void(0)" onclick="alert('Demo Credentials:\n• Super Admin: superadmin / superadmin123\n• Admin: admin / admin123\n• Staff: staff / staff123\n• Customer: customer / customer123')"
-                  class="text-xs text-blue-600 hover:underline">Demo Accounts?</a>
+                <span class="text-[11px] text-[#64748b]">Secure Authentication</span>
               </div>
               <div class="relative">
                 <input type="password" id="login-password" required placeholder="••••••••"

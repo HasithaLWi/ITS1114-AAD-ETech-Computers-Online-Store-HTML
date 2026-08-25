@@ -14,9 +14,11 @@ import {
     DEFAULT_BUSINESS_INFO, DEFAULT_LEGAL_POLICIES
 } from './src/js/models/policy-data.js';
 import { ET_CONFIG } from './src/js/models/et-training.js';
+import { AuthApi, UserApi } from './src/js/api/userApi.js';
 import {
-    getUsers, registerUser, loginUser, setCurrentUser,
-    getCurrentUser, isLoggedIn, logoutUser,
+    getToken, setToken, removeToken,
+    registerUser, loginUser, setCurrentUser,
+    getCurrentUser, isLoggedIn, logoutUser, refreshCurrentUserSession,
     switchTab, togglePasswordVisibility, showAlert, handleLoginSubmit, handleSignupSubmit,
     updateUserProfile, changeUserPassword, openEditProfileModal, closeEditProfileModal,
     switchProfileModalTab, toggleModalPasswordVisibility, handleSaveProfileDetailsSubmit,
@@ -214,8 +216,9 @@ Object.assign(window, {
     ET_CONFIG,
 
     // Authentication & User Profile Management
-    getUsers, registerUser, loginUser, setCurrentUser,
-    getCurrentUser, isLoggedIn, logoutUser, handleLogout, updateHeaderAuthUI, renderHomeNewArrivalsGrid,
+    AuthApi, UserApi, getToken, setToken, removeToken,
+    registerUser, loginUser, setCurrentUser,
+    getCurrentUser, isLoggedIn, logoutUser, refreshCurrentUserSession, handleLogout, updateHeaderAuthUI, renderHomeNewArrivalsGrid,
     toggleMobileMenu, openMobileMenu, closeMobileMenu, handleMobileSearchSubmit, handleHeaderSearchSubmit,
     switchTab, togglePasswordVisibility, showAlert, handleLoginSubmit, handleSignupSubmit,
     updateUserProfile, changeUserPassword, openEditProfileModal, closeEditProfileModal,
