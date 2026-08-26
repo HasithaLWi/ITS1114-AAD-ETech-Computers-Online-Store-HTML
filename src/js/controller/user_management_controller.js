@@ -4,40 +4,9 @@
 import { UserApi } from '../api/userApi.js';
 import { getCurrentUser } from './login_controller.js';
 import { getBranches } from './branch_controller.js';
-import { getRoleBadge, extractUniqueRoles } from '../models/user_model.js';
+import { getRoleBadge, buildRoleOptionsHtml, USER_ROLE, User } from '../models/user_model.js';
 
 let cachedUsers = [];
-let availableRoles = ['CUSTOMER', 'STAFF', 'ADMIN', 'SUPERADMIN'];
-
-/**
- * Fetch authoritative roles from backend or derive dynamically from user list
- */
-async function loadAvailableRoles() {
-  try {
-    const roles = await UserApi.getRoles();
-    if (Array.isArray(roles) && roles.length > 0) {
-      availableRoles = roles.map(r => typeof r === 'string' ? r : (r.name || r.role || r.id));
-      return availableRoles;
-    }
-  } catch (e) {
-    // Graceful fallback: dynamically derive from cached users
-  }
-  availableRoles = extractUniqueRoles(cachedUsers);
-  return availableRoles;
-}
-
-/**
- * Generate role <select> option markup dynamically from database roles
- * @param {string} selectedRole
- * @returns {string}
- */
-function buildRoleOptionsHtml(selectedRole = '') {
-  const roles = availableRoles.length > 0 ? availableRoles : extractUniqueRoles(cachedUsers);
-  return roles.map(role => {
-    const isSelected = String(role).toUpperCase() === String(selectedRole).toUpperCase();
-    return `<option value="${role}" ${isSelected ? 'selected' : ''}>${role}</option>`;
-  }).join('');
-}
 
 /**
  * Renders the User Directory Table inside Admin Dashboard
@@ -67,8 +36,7 @@ export async function renderUsersTab() {
 
   try {
     const users = await UserApi.getUsers();
-    cachedUsers = users || [];
-    await loadAvailableRoles();
+    cachedUsers = (users || []).map(u => u instanceof User ? u : new User(u));
     const branches = getBranches();
 
     if (cachedUsers.length === 0) {
@@ -98,7 +66,7 @@ export async function renderUsersTab() {
           <td class="py-3 px-3.5">
             <div class="flex items-center space-x-2.5">
               <div class="w-7 h-7 rounded font-bold text-xs flex items-center justify-center border shadow-sm bg-blue-50 text-blue-600 border-blue-200">
-                ${(u.name || 'U').charAt(0).toUpperCase()}
+                ${u.getInitial()}
               </div>
               <div>
                 <p class="font-bold text-[#0f172a] text-xs">${u.name || 'Unnamed'}</p>
@@ -200,7 +168,8 @@ export async function openUserModal(userId = null) {
 
   if (userId && !targetUser) {
     try {
-      targetUser = await UserApi.getUserById(userId);
+      const fetched = await UserApi.getUserById(userId);
+      targetUser = fetched ? new User(fetched) : null;
     } catch (e) {
       alert('Could not fetch user details.');
       return;
@@ -291,12 +260,20 @@ export async function handleSaveUserSubmit(e, userId) {
     return;
   }
 
-  const payload = {
+  const userPayload = new User({
     name,
     username,
     email,
     role,
     assignedBranch: branch
+  });
+
+  const payload = {
+    name: userPayload.name,
+    username: userPayload.username,
+    email: userPayload.email,
+    role: userPayload.role,
+    assignedBranch: userPayload.assignedBranch
   };
 
   if (password) {

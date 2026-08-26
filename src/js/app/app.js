@@ -1,8 +1,9 @@
 // ETech Computers - Single Page Section Toggle Router & Global App Logic
 import { products, getProductById, getFeaturedProducts, getNewArrivalProducts } from '../models/data.js';
-import { getHomeDealBanner, getHomeBannerRemainingTime } from '../models/deals_data.js';
+import { getHomeDealBanner, getHomeBannerRemainingTime, isHomeDealBannerActive } from '../models/deals_data.js';
 import { legalPolicies, getPolicyData, getStoredPolicies } from '../models/policy-data.js';
 import { getCurrentUser, isLoggedIn, logoutUser } from '../controller/login_controller.js';
+import { getRoleBadge } from '../models/user_model.js';
 import { 
   getUserOrders, getOrderById, renderCustomerOrderDetailPage, 
   openOrderSupportEmail, handleCustomerCancelOrder, getStatusStyle 
@@ -53,7 +54,7 @@ function handleRoute() {
       return;
     }
     const user = getCurrentUser();
-    if (!user || (user.role !== 'SUPERADMIN' && user.role !== 'ADMIN' && user.role !== 'STAFF')) {
+    if (!user || (!user.isAdmin() && !user.isStaff())) {
       alert('Access Denied: You do not have administrative privileges.');
       window.location.hash = '#home';
       return;
@@ -83,7 +84,7 @@ function handleRoute() {
   if (pageName === 'login') {
     if (isLoggedIn()) {
       const user = getCurrentUser();
-      window.location.hash = (user && (user.role === 'SUPERADMIN' || user.role === 'ADMIN' || user.role === 'STAFF')) ? '#admin' : '#home';
+      window.location.hash = (user && (user.isAdmin() || user.isStaff())) ? '#admin' : '#home';
       return;
     }
     const loginSection = document.getElementById('login-page');
@@ -348,9 +349,8 @@ export function updateHeaderAuthUI() {
 
   if (authContainer) {
     if (user) {
-      const isAdminOrStaff = user.role === 'SUPERADMIN' || user.role === 'ADMIN' || user.role === 'STAFF';
-      const isSuperAdmin = user.role === 'SUPERADMIN';
-      const avatarBg = isSuperAdmin ? 'bg-purple-600' : 'bg-blue-600';
+      const isAdminOrStaff = user.isAdmin() || user.isStaff();
+      const avatarBg = user.isSuperAdmin() ? 'bg-purple-600' : 'bg-blue-600';
 
       authContainer.innerHTML = `
           <div class="flex items-center space-x-1.5 sm:space-x-2">
@@ -362,9 +362,9 @@ export function updateHeaderAuthUI() {
             ` : ''}
             <a href="#account" class="flex items-center space-x-1.5 bg-[#f1f5f9] hover:bg-[#e2e8f0] border border-[#e2e8f0] hover:border-[#cbd5e1] p-1.5 lg:px-2.5 lg:py-1.5 rounded-md transition-all group shadow-sm" title="My Account (${user.name})">
               <div class="w-6 h-6 rounded ${avatarBg} text-white font-extrabold text-[11px] flex items-center justify-center shadow-xs flex-shrink-0">
-                ${user.name.charAt(0).toUpperCase()}
+                ${user.getInitial()}
               </div>
-              <span class="text-xs font-semibold text-[#0f172a] max-w-[90px] truncate hidden lg:inline">${user.name.split(' ')[0]}</span>
+              <span class="text-xs font-semibold text-[#0f172a] max-w-[90px] truncate hidden lg:inline">${(user.name || user.username).split(' ')[0]}</span>
             </a>
           </div>
         `;
@@ -383,26 +383,18 @@ export function updateHeaderAuthUI() {
 
   if (mobileDrawer) {
     if (user) {
-      const isAdminOrStaff = user.role === 'SUPERADMIN' || user.role === 'ADMIN' || user.role === 'STAFF';
-      const isSuperAdmin = user.role === 'SUPERADMIN';
-      const avatarBg = isSuperAdmin ? 'bg-purple-600' : 'bg-blue-600';
-      const roleBadge = isSuperAdmin 
-        ? '<span class="px-2 py-0.5 rounded text-[9px] font-mono font-extrabold uppercase bg-purple-50 text-purple-700 border border-purple-200">SUPERADMIN</span>'
-        : user.role === 'ADMIN'
-          ? '<span class="px-2 py-0.5 rounded text-[9px] font-mono font-bold uppercase bg-blue-50 text-blue-700 border border-blue-200">ADMIN</span>'
-          : user.role === 'STAFF'
-            ? '<span class="px-2 py-0.5 rounded text-[9px] font-mono font-bold uppercase bg-sky-50 text-sky-700 border border-sky-200">STAFF</span>'
-            : '<span class="px-2 py-0.5 rounded text-[9px] font-mono font-medium uppercase bg-white text-[#475569] border border-[#e2e8f0]">CUSTOMER</span>';
+      const isAdminOrStaff = user.isAdmin() || user.isStaff();
+      const avatarBg = user.isSuperAdmin() ? 'bg-purple-600' : 'bg-blue-600';
 
       mobileDrawer.innerHTML = `
         <div class="p-3 bg-white border border-[#e2e8f0] rounded-xl space-y-3 shadow-xs">
           <div class="flex items-center space-x-3">
-            <div class="w-9 h-9 rounded-lg ${avatarBg} text-white font-bold flex items-center justify-center text-sm shadow-xs">${user.name.charAt(0).toUpperCase()}</div>
+            <div class="w-9 h-9 rounded-lg ${avatarBg} text-white font-bold flex items-center justify-center text-sm shadow-xs">${user.getInitial()}</div>
             <div class="min-w-0 flex-1">
-              <p class="font-bold text-[#0f172a] text-xs truncate">${user.name}</p>
+              <p class="font-bold text-[#0f172a] text-xs truncate">${user.name || user.username}</p>
               <p class="text-[10px] text-[#64748b] truncate">${user.email}</p>
             </div>
-            ${roleBadge}
+            ${getRoleBadge(user.role)}
           </div>
           <div class="grid grid-cols-2 gap-2 pt-1 border-t border-[#e2e8f0]">
             <a href="#account" onclick="closeMobileMenu()" class="text-center py-2 bg-[#f8fafc] hover:bg-[#f1f5f9] border border-[#e2e8f0] text-[#0f172a] rounded-lg text-xs font-bold transition-colors">My Profile</a>
@@ -752,6 +744,27 @@ let homeBannerTimerInterval = null;
 export function renderHomeDealBannerLive() {
   const container = document.getElementById('home-weekend-deal-card');
   if (!container || typeof getHomeDealBanner === 'undefined') return;
+
+  const isLive = typeof isHomeDealBannerActive === 'function' ? isHomeDealBannerActive() : true;
+  const bannerCol = container.closest('.lg\\:col-span-5') || container.parentElement;
+  const bestSellersCol = document.querySelector('#featured .lg\\:col-span-7, #featured .lg\\:col-span-12');
+
+  if (!isLive) {
+    if (bannerCol) bannerCol.classList.add('hidden');
+    if (bestSellersCol) {
+      bestSellersCol.classList.remove('lg:col-span-7');
+      bestSellersCol.classList.add('lg:col-span-12');
+    }
+    if (homeBannerTimerInterval) clearInterval(homeBannerTimerInterval);
+    return;
+  }
+
+  // If live, ensure visible and properly laid out
+  if (bannerCol) bannerCol.classList.remove('hidden');
+  if (bestSellersCol) {
+    bestSellersCol.classList.remove('lg:col-span-12');
+    bestSellersCol.classList.add('lg:col-span-7');
+  }
 
   const banner = getHomeDealBanner();
   container.style.backgroundImage = `url('${banner.bgImage || 'public/images/WEEKEND-TECH-DEAL-cart-bg.jpeg'}')`;

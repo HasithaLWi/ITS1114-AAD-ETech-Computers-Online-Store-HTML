@@ -15,7 +15,7 @@ import {
 } from './src/js/models/policy-data.js';
 import { ET_CONFIG } from './src/js/models/et-training.js';
 import { 
-    User, CURRENT_USER_STORAGE_KEY, getRoleBadge, extractUniqueRoles
+    User, CURRENT_USER_STORAGE_KEY, DEFAULT_ROLE, USER_ROLE, getRoleBadge, buildRoleOptionsHtml
 } from './src/js/models/user_model.js';
 import { AuthApi, UserApi } from './src/js/api/userApi.js';
 import {
@@ -30,7 +30,7 @@ import {
 import { getBranches, calculateShippingFee, autoSelectFulfillmentBranch } from './src/js/controller/branch_controller.js';
 import {
     getCart, saveCart, updateCartBadge, addToCart, addBundleToCart, showToast,
-    initCartLogic, initCheckoutLogic,
+    initCartLogic, initCheckoutLogic, validateCartBundles,
     updateItemQuantity, removeItemFromCart
 } from './src/js/controller/cart_controller.js';
 import {
@@ -153,16 +153,17 @@ import {
     setBundleBadgeTag, setBundleFormPresetTimer, updateBundleLivePreview,
     openHotDealModal, closeHotDealModal, updateHotDealModalProductDetails,
     calculateHotDealModalSavings, setHotDealModalTimer, handleSaveHotDealSubmit,
-    handleDeleteHotDeal, handleToggleHotDealStatus
+    handleDeleteHotDeal, handleToggleHotDealStatus, updateHomeBannerLivePreview
 } from './src/js/controller/promotion_management_controller.js';
 import {
-    getHomeDealBanner, saveHomeDealBanner,
+    getHomeDealBanner, saveHomeDealBanner, isHomeDealBannerActive,
     getDealBundles, saveDealBundles, addDealBundle,
     updateDealBundle, deleteDealBundle, getAllDiscountsAndDeals,
     updateProductDiscount, calculateBundleInventory, normalizeBundleItems,
     getHomeBannerRemainingTime, getBundleRemainingTime, getRemainingTimeFromDuration,
     getHotDeals, getActiveHotDeals, getHotDealByProductId, saveHotDeals,
-    addHotDeal, updateHotDeal, deleteHotDeal, toggleHotDealStatus
+    addHotDeal, updateHotDeal, deleteHotDeal, toggleHotDealStatus,
+    isBundleAvailable
 } from './src/js/models/deals_data.js';
 
 // Inter-Branch Stock Transfers Controller & Model Imports
@@ -195,15 +196,16 @@ Object.assign(window, {
     setBundleBadgeTag, setBundleFormPresetTimer, updateBundleLivePreview,
     openHotDealModal, closeHotDealModal, updateHotDealModalProductDetails,
     calculateHotDealModalSavings, setHotDealModalTimer, handleSaveHotDealSubmit,
-    handleDeleteHotDeal, handleToggleHotDealStatus,
-    getHomeDealBanner, saveHomeDealBanner,
+    handleDeleteHotDeal, handleToggleHotDealStatus, updateHomeBannerLivePreview,
+    getHomeDealBanner, saveHomeDealBanner, isHomeDealBannerActive,
     getDealBundles, saveDealBundles, addDealBundle,
     updateDealBundle, deleteDealBundle, getAllDiscountsAndDeals,
     updateProductDiscount, calculateBundleInventory, normalizeBundleItems,
     getHomeBannerRemainingTime, getBundleRemainingTime, getRemainingTimeFromDuration,
     getHotDeals, getActiveHotDeals, getHotDealByProductId, saveHotDeals,
     addHotDeal, updateHotDeal, deleteHotDeal, toggleHotDealStatus,
-    addBundleToCart,
+    isBundleAvailable,
+    addBundleToCart, validateCartBundles,
     products, getProductById, getFeaturedProducts, getNewArrivalProducts, getStoredProducts, saveProduct, deleteProduct,
     updateProductStockSettings, quickAdjustStock, transferBranchStock,
 
@@ -223,7 +225,7 @@ Object.assign(window, {
     ET_CONFIG,
 
     // User Model & Data Layer
-    User, CURRENT_USER_STORAGE_KEY, getRoleBadge, extractUniqueRoles,
+    User, CURRENT_USER_STORAGE_KEY, DEFAULT_ROLE, USER_ROLE, getRoleBadge, buildRoleOptionsHtml,
 
     // Authentication & User Profile Management
     AuthApi, UserApi, getToken, setToken, removeToken,

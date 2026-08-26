@@ -34,7 +34,7 @@ export function initAdminDashboard() {
   activeUser = getCurrentUser();
 
   // Security Role Guard: Only STAFF, ADMIN, and SUPERADMIN allowed
-  if (!activeUser || (!['SUPERADMIN', 'ADMIN', 'STAFF'].includes(activeUser.role))) {
+  if (!activeUser || (!activeUser.isAdmin() && !activeUser.isStaff())) {
     alert('Access Denied: You do not have administrative privileges.');
     window.location.hash = '#home';
     return;
@@ -90,17 +90,17 @@ function updateUserInfoHeader() {
   if (nameEl) nameEl.textContent = activeUser.name;
   if (roleEl) {
     roleEl.textContent = activeUser.role;
-    if (activeUser.role === 'SUPERADMIN') {
+    if (activeUser.isSuperAdmin()) {
       roleEl.className = 'px-2 py-0.5 rounded text-[9px] font-extrabold uppercase bg-purple-50 text-purple-700 border border-purple-200';
-    } else if (activeUser.role === 'ADMIN') {
+    } else if (activeUser.isAdmin()) {
       roleEl.className = 'px-2 py-0.5 rounded text-[9px] font-extrabold uppercase bg-blue-50 text-blue-700 border border-blue-200';
     } else {
       roleEl.className = 'px-2 py-0.5 rounded text-[9px] font-extrabold uppercase bg-sky-50 text-sky-700 border border-sky-200';
     }
   }
   if (avatarEl) {
-    avatarEl.textContent = activeUser.name.charAt(0).toUpperCase();
-    if (activeUser.role === 'SUPERADMIN') {
+    avatarEl.textContent = activeUser.getInitial();
+    if (activeUser.isSuperAdmin()) {
       avatarEl.className = 'w-8 h-8 rounded-md bg-purple-600 text-white font-extrabold text-xs flex items-center justify-center shadow-sm';
     } else {
       avatarEl.className = 'w-8 h-8 rounded-md bg-blue-600 text-white font-extrabold text-xs flex items-center justify-center shadow-sm';
@@ -112,7 +112,7 @@ function updateUserInfoHeader() {
  * Configure Side Navbar items based on user role (Hide Admin-only tabs for Staff)
  */
 function setupRoleBasedNavigation() {
-  const isSuperOrAdmin = activeUser && (activeUser.role === 'SUPERADMIN' || activeUser.role === 'ADMIN');
+  const isSuperOrAdmin = activeUser && activeUser.isAdmin();
   const adminOnlyNavItems = document.querySelectorAll('.admin-only-nav');
   adminOnlyNavItems.forEach(item => {
     if (!isSuperOrAdmin) {
@@ -127,7 +127,7 @@ function setupRoleBasedNavigation() {
  * Tab Switching Handler
  */
 export function switchAdminTab(tabName, param = null) {
-  const isSuperOrAdmin = activeUser && (activeUser.role === 'SUPERADMIN' || activeUser.role === 'ADMIN');
+  const isSuperOrAdmin = activeUser && activeUser.isAdmin();
 
   // Prevent Staff from accessing Admin-only tabs
   if (!isSuperOrAdmin && ['branches', 'users', 'analytics', 'policies'].includes(tabName)) {

@@ -1,29 +1,94 @@
 // ============================================================
-//  src/js/models/user_model.js — User Entity & Dynamic Session Model
+//  src/js/models/user_model.js — User Entity & Role Model
 // ============================================================
 import { getToken, setToken, removeToken } from '../api/apiClient.js';
 
 export const CURRENT_USER_STORAGE_KEY = 'etech_current_user';
+export const DEFAULT_ROLE = 'CUSTOMER';
+export const USER_ROLE = {
+    CUSTOMER: 'CUSTOMER',
+    STAFF: 'STAFF',
+    ADMIN: 'ADMIN',
+    SUPERADMIN: 'SUPERADMIN'
+};
 
 /**
- * Generic User Model Entity
+ * User Entity Model Class (Industry Standard ES6 Class)
  */
 export class User {
-    constructor(userData = {}) {
-        Object.assign(this, userData);
-        this.createdAt = this.createdAt || new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+    id;
+    username;
+    name;
+    email;
+    password;
+    role;
+    assignedBranch;
+    createdAt;
+
+    constructor(data = {}) {
+        this.id = data.id ?? null;
+        this.username = data.username ?? '';
+        this.name = data.name ?? '';
+        this.email = data.email ?? '';
+        this.password = data.password ?? null;
+        this.role = (data.role ?? DEFAULT_ROLE).toUpperCase();
+        this.assignedBranch = data.assignedBranch ?? null;
+        this.createdAt = data.createdAt ?? new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+    }
+
+    /**
+     * Check if user is Superadmin
+     * @returns {boolean}
+     */
+    isSuperAdmin() {
+        return this.role === USER_ROLE.SUPERADMIN;
+    }
+
+    /**
+     * Check if user has administrative privileges (Admin or Superadmin)
+     * @returns {boolean}
+     */
+    isAdmin() {
+        return this.role === USER_ROLE.ADMIN || this.role === USER_ROLE.SUPERADMIN;
+    }
+
+    /**
+     * Check if user is branch staff
+     * @returns {boolean}
+     */
+    isStaff() {
+        return this.role === USER_ROLE.STAFF;
+    }
+
+    /**
+     * Check if user is a standard customer
+     * @returns {boolean}
+     */
+    isCustomer() {
+        return this.role === USER_ROLE.CUSTOMER;
+    }
+
+    /**
+     * Get user initial for avatar UI badges
+     * @returns {string}
+     */
+    getInitial() {
+        return (this.name || this.username || 'U').charAt(0).toUpperCase();
     }
 }
 
 // ── Storage & Session Manipulation Logic ─────────────────────
 
 /**
- * Retrieve active user session from localStorage
+ * Retrieve active user session from localStorage as a User instance
+ * @returns {User|null}
  */
 export function getCurrentUser() {
     try {
         const session = localStorage.getItem(CURRENT_USER_STORAGE_KEY);
-        return session ? JSON.parse(session) : null;
+        if (!session) return null;
+        const parsed = JSON.parse(session);
+        return parsed ? new User(parsed) : null;
     } catch (e) {
         return null;
     }
@@ -31,11 +96,14 @@ export function getCurrentUser() {
 
 /**
  * Set active user session in localStorage
+ * @param {object|User} user
+ * @returns {User|null}
  */
 export function setCurrentUser(user) {
     if (!user) return null;
-    localStorage.setItem(CURRENT_USER_STORAGE_KEY, JSON.stringify(user));
-    return user;
+    const userInstance = user instanceof User ? user : new User(user);
+    localStorage.setItem(CURRENT_USER_STORAGE_KEY, JSON.stringify(userInstance));
+    return userInstance;
 }
 
 /**
@@ -47,6 +115,7 @@ export function removeCurrentUser() {
 
 /**
  * Check if a valid authenticated user session is active
+ * @returns {boolean}
  */
 export function isLoggedIn() {
     return Boolean(getToken() && getCurrentUser());
@@ -60,39 +129,37 @@ export function logoutUser() {
     removeCurrentUser();
 }
 
-// ── Dynamic Role & UI Formatting Utilities ──────────────────
+// ── Centralized Role UI Formatting ──────────────────────────
 
 /**
- * Dynamic role badge formatter that automatically adapts to any role returned by the database
+ * Generate <option> HTML tags directly from USER_ROLE
+ * @param {string} [selectedRole='']
+ * @returns {string}
+ */
+export function buildRoleOptionsHtml(selectedRole = '') {
+    const active = String(selectedRole || DEFAULT_ROLE).toUpperCase();
+    return Object.values(USER_ROLE).map(role => {
+        const isSelected = role === active;
+        return `<option value="${role}" ${isSelected ? 'selected' : ''}>${role}</option>`;
+    }).join('');
+}
+
+/**
+ * Role badge formatter using USER_ROLE
  * @param {string} role
  * @returns {string} HTML markup for badge
  */
 export function getRoleBadge(role) {
-    const rawRole = (role || 'CUSTOMER').toUpperCase();
-    
-    if (rawRole.includes('SUPER') || rawRole.includes('OWNER')) {
-        return `<span class="px-2 py-0.5 rounded text-[9px] font-mono font-extrabold uppercase bg-purple-50 text-purple-700 border border-purple-200 shadow-xs">${rawRole}</span>`;
-    }
-    if (rawRole.includes('ADMIN')) {
-        return `<span class="px-2 py-0.5 rounded text-[9px] font-mono font-bold uppercase bg-blue-50 text-blue-700 border border-blue-200 shadow-xs">${rawRole}</span>`;
-    }
-    if (rawRole.includes('STAFF') || rawRole.includes('EMPLOYEE') || rawRole.includes('MANAGER')) {
-        return `<span class="px-2 py-0.5 rounded text-[9px] font-mono font-bold uppercase bg-sky-50 text-sky-700 border border-sky-200 shadow-xs">${rawRole}</span>`;
-    }
-    return `<span class="px-2 py-0.5 rounded text-[9px] font-mono font-medium uppercase bg-[#f8fafc] text-[#475569] border border-[#e2e8f0]">${rawRole}</span>`;
-}
+    const rawRole = (role || DEFAULT_ROLE).toUpperCase();
 
-/**
- * Extract distinct roles dynamically from user list
- * @param {Array<object>} users
- * @returns {Array<string>}
- */
-export function extractUniqueRoles(users = []) {
-    const roleSet = new Set(['CUSTOMER', 'STAFF', 'ADMIN', 'SUPERADMIN']);
-    if (Array.isArray(users)) {
-        users.forEach(u => {
-            if (u && u.role) roleSet.add(u.role.toUpperCase());
-        });
+    switch (rawRole) {
+        case USER_ROLE.SUPERADMIN:
+            return `<span class="px-2 py-0.5 rounded text-[9px] font-mono font-extrabold uppercase bg-purple-50 text-purple-700 border border-purple-200 shadow-xs">${rawRole}</span>`;
+        case USER_ROLE.ADMIN:
+            return `<span class="px-2 py-0.5 rounded text-[9px] font-mono font-bold uppercase bg-blue-50 text-blue-700 border border-blue-200 shadow-xs">${rawRole}</span>`;
+        case USER_ROLE.STAFF:
+            return `<span class="px-2 py-0.5 rounded text-[9px] font-mono font-bold uppercase bg-sky-50 text-sky-700 border border-sky-200 shadow-xs">${rawRole}</span>`;
+        default:
+            return `<span class="px-2 py-0.5 rounded text-[9px] font-mono font-medium uppercase bg-[#f8fafc] text-[#475569] border border-[#e2e8f0]">${rawRole}</span>`;
     }
-    return Array.from(roleSet);
 }

@@ -127,7 +127,7 @@ export function renderLoginPage(queryPart) {
 
             <div>
               <label class="block text-xs font-semibold text-[#475569] uppercase tracking-wider mb-1">Username *</label>
-              <input type="text" id="signup-username" required pattern="[a-zA-Z0-9_.-]+" minlength="3" placeholder="e.g. john_doe"
+              <input type="text" id="signup-username" required pattern="[a-zA-Z0-9._-]+" minlength="3" placeholder="e.g. john_doe"
                 class="w-full px-3.5 py-2.5 rounded-lg bg-[#f8fafc] border border-[#e2e8f0] text-[#0f172a] placeholder-[#94a3b8] text-sm focus:border-blue-600 transition-colors">
               <p class="text-[10px] text-[#64748b] mt-0.5">Used to log in to your account (min. 3 alphanumeric characters).</p>
             </div>

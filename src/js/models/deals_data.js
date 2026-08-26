@@ -16,6 +16,15 @@ export const DEAL_BUNDLES_STORAGE_KEY = 'etech_deal_bundles';
 export const HOT_DEALS_STORAGE_KEY = 'etech_hot_deals_list';
 
 /**
+ * Check if the Home Deal Banner & Hot Deals Campaign is currently active/visible
+ * @returns {boolean}
+ */
+export function isHomeDealBannerActive() {
+  const banner = getHomeDealBanner();
+  return banner.active !== false;
+}
+
+/**
  * Calculates realtime remaining countdown duration from timerUpdatedAt & total configured duration
  * 
  * @param {Object} item - An object containing durationDays, durationHours, durationMins, durationSecs, durationSeconds, and timerUpdatedAt
@@ -24,6 +33,23 @@ export const HOT_DEALS_STORAGE_KEY = 'etech_hot_deals_list';
 export function getRemainingTimeFromDuration(item) {
   if (!item) {
     return { totalSeconds: 0, days: "00", hours: "00", mins: "00", secs: "00", isExpired: true };
+  }
+
+  // If the item or campaign is frozen/paused, return frozen remaining duration
+  if (item.isPaused && item.pausedRemainingSeconds !== undefined) {
+    const remaining = Math.max(0, Number(item.pausedRemainingSeconds) || 0);
+    const remDays = Math.floor(remaining / 86400);
+    const remHours = Math.floor((remaining % 86400) / 3600);
+    const remMins = Math.floor((remaining % 3600) / 60);
+    const remSecs = remaining % 60;
+    return {
+      totalSeconds: remaining,
+      days: String(remDays).padStart(2, '0'),
+      hours: String(remHours).padStart(2, '0'),
+      mins: String(remMins).padStart(2, '0'),
+      secs: String(remSecs).padStart(2, '0'),
+      isExpired: remaining <= 0
+    };
   }
 
   const days = Number(item.durationDays) || 0;
@@ -229,17 +255,54 @@ export function getHomeDealBanner() {
 }
 
 /**
- * Save Home Deal Banner Configuration
+ * Save Home Deal Banner Configuration with full Hot Deals Campaign state cascade
  */
 export function saveHomeDealBanner(bannerData) {
+  const currentBanner = getHomeDealBanner();
+  const wasActive = currentBanner.active !== false;
+  const isNowActive = bannerData.active !== undefined ? Boolean(bannerData.active) : true;
+
   const durationDays = Number(bannerData.durationDays) || 0;
   const durationHours = Number(bannerData.durationHours) || 8;
   const durationMins = Number(bannerData.durationMins) || 0;
   const durationSecs = Number(bannerData.durationSecs) || 0;
   const durationSeconds = (durationDays * 86400) + (durationHours * 3600) + (durationMins * 60) + durationSecs;
 
+  // Hot deals pause / resume transition handling
+  if (wasActive && !isNowActive) {
+    // Pausing campaign: freeze remaining countdown on all hot deals
+    const rawDeals = localStorage.getItem(HOT_DEALS_STORAGE_KEY);
+    let deals = [];
+    try { deals = JSON.parse(rawDeals) || []; } catch(e) { deals = []; }
+    const updatedDeals = deals.map(d => {
+      const rem = getRemainingTimeFromDuration(d);
+      return {
+        ...d,
+        pausedRemainingSeconds: rem.totalSeconds,
+        isPaused: true
+      };
+    });
+    localStorage.setItem(HOT_DEALS_STORAGE_KEY, JSON.stringify(updatedDeals));
+  } else if (!wasActive && isNowActive) {
+    // Resuming campaign: unfreeze hot deals from pausedRemainingSeconds
+    const rawDeals = localStorage.getItem(HOT_DEALS_STORAGE_KEY);
+    let deals = [];
+    try { deals = JSON.parse(rawDeals) || []; } catch(e) { deals = []; }
+    const updatedDeals = deals.map(d => {
+      const remainingSecs = d.pausedRemainingSeconds !== undefined ? d.pausedRemainingSeconds : d.durationSeconds;
+      return {
+        ...d,
+        durationSeconds: remainingSecs,
+        timerUpdatedAt: new Date().toISOString(),
+        isPaused: false
+      };
+    });
+    localStorage.setItem(HOT_DEALS_STORAGE_KEY, JSON.stringify(updatedDeals));
+  }
+
   const updated = {
     ...bannerData,
+    active: isNowActive,
     durationDays,
     durationHours,
     durationMins,
@@ -443,6 +506,30 @@ export function deleteDealBundle(id) {
 }
 
 /**
+ * Validates whether a deal bundle is currently active, unexpired, and in stock
+ */
+export function isBundleAvailable(bundleId) {
+  const bundles = getDealBundles();
+  const bundle = bundles.find(b => b.id === Number(bundleId));
+  if (!bundle || bundle.active === false) {
+    return { available: false, reason: 'inactive', message: 'This deal bundle is currently inactive.' };
+  }
+
+  const timer = getBundleRemainingTime(bundle.id);
+  if (timer.isExpired) {
+    return { available: false, reason: 'expired', message: `The deal bundle "${bundle.title}" has expired.` };
+  }
+
+  const products = getStoredProducts();
+  const inv = calculateBundleInventory(bundle, products);
+  if (inv.maxAvailableBundles <= 0) {
+    return { available: false, reason: 'out_of_stock', message: `The deal bundle "${bundle.title}" is currently out of stock.` };
+  }
+
+  return { available: true, bundle, inv, remainingSeconds: timer.totalSeconds };
+}
+
+/**
  * Get all products with promotion details for the discounts table
  */
 export function getAllDiscountsAndDeals() {
@@ -570,9 +657,12 @@ export function getHotDeals() {
 }
 
 /**
- * Get only Active and Unexpired Hot Deals
+ * Get only Active and Unexpired Hot Deals (returns empty if master campaign is paused/hidden)
  */
 export function getActiveHotDeals() {
+  if (!isHomeDealBannerActive()) {
+    return [];
+  }
   return getHotDeals().filter(d => d.active !== false && !d.isExpired);
 }
 

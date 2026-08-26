@@ -30,6 +30,7 @@
    - [Financial Analytics & Reports (`/api/v1/analytics`)](#financial-analytics--reports)
 6. [Spring Boot Application Architecture & Dependencies](#6-spring-boot-application-architecture--dependencies)
 7. [Client-Side Simplifications & Role-Based UI Security (RBAC)](#7-client-side-simplifications--role-based-ui-security-rbac)
+   - [Architectural Regulations: Database-Driven Frontend & Single Source of Truth](#architectural-regulations-database-driven-frontend--single-source-of-truth)
 8. [Frontend API Service Layer Architecture (`src/js/api/`)](#8-frontend-api-service-layer-architecture-srcjsapi)
 9. [Step-by-Step Backend Migration & Cutover Checklist](#9-step-by-step-backend-migration--cutover-checklist)
 
@@ -703,6 +704,7 @@ All endpoints are prefixed with `/api/v1`.
 | `PUT` | `/api/v1/users/me/profile` | Authenticated | Update current user personal profile | `{ "name": "...", "username": "...", "email": "..." }` | Updated User Profile DTO |
 | `PUT` | `/api/v1/users/me/password` | Authenticated | Change current user password | `{ "currentPassword": "...", "newPassword": "..." }` | `{ "success": true, "message": "Password changed" }` |
 | `GET` | `/api/v1/users` | `SUPERADMIN, ADMIN` | List system users.<br>- **Superadmin**: Returns all users across all roles.<br>- **Admin**: Returns other Admins (marked `canManage: false`), Staff, and Customers. **`SUPERADMIN` records are stripped out completely** (invisible to Admin). | Query: `?role=STAFF&branch=BR-COL` | List of User DTOs |
+| `GET` | `/api/v1/users/roles` | Public / Auth | Fetch dynamic list of available system user roles configured in database | None | `[ "SUPERADMIN", "ADMIN", "STAFF", "CUSTOMER" ]` |
 | `POST` | `/api/v1/users` | `SUPERADMIN, ADMIN` | Create user account.<br>- **Superadmin**: Can create `ADMIN`, `STAFF`, `CUSTOMER`.<br>- **Admin**: Can only create `STAFF`, `CUSTOMER`. Attempt to create `ADMIN` or `SUPERADMIN` yields `403 Forbidden`. | `{ "name": "...", "username": "...", "email": "...", "password": "...", "role": "STAFF", "assignedBranch": "BR-GAL" }` | Created User DTO |
 | `PUT` | `/api/v1/users/{id}` | `SUPERADMIN, ADMIN` | Update user details & branch.<br>- **Superadmin**: Full update authority.<br>- **Admin**: Can only update `STAFF` and `CUSTOMER`. Modifying an `ADMIN` or `SUPERADMIN` yields `403 Forbidden`. | User Form DTO | Updated User DTO |
 | `PATCH` | `/api/v1/users/{id}/role` | `SUPERADMIN, ADMIN` | Change user role.<br>- **Superadmin**: Can switch between `ADMIN`, `STAFF`, `CUSTOMER`. (Superadmin account is immutable).<br>- **Admin**: Can only switch between `CUSTOMER` and `STAFF`. Promoting to or altering an `ADMIN` yields `403 Forbidden`. | `{ "role": "STAFF", "assignedBranch": "BR-COL" }` | Updated User DTO |
@@ -1066,57 +1068,119 @@ When connecting the frontend to Spring Boot, the following complex client-side l
 
 ---
 
+### Architectural Regulations: Database-Driven Frontend & Single Source of Truth
+
+To ensure clean maintainability, prevent duplication, and avoid multi-file code drift whenever database schemas or roles change, adhere strictly to the following architectural regulations:
+
+1. **Centralized `USER_ROLE` Enum & `User` Class Model (`src/js/models/user_model.js`)**:
+   - **Never** repeat role string arrays or switch cases across multiple controller or component files.
+   - **Single Point of Truth**: All dynamic role state, default fallbacks (`DEFAULT_ROLE = 'CUSTOMER'`), badge formatters (`getRoleBadge(role)`), and `<select>` builders (`buildRoleOptionsHtml(selectedRole)`) are strictly centralized in `user_model.js`.
+   - **Industry-Standard ES6 `User` Class**: Represents user entities throughout the application (`id`, `username`, `name`, `email`, `password`, `role`, `assignedBranch`, `createdAt`) with encapsulated helper methods (`isAdmin()`, `isSuperAdmin()`, `isStaff()`, `isCustomer()`, `getInitial()`).
+   - `getCurrentUser()` automatically returns a `User` instance, ensuring instant access to domain helper methods across all controllers.
+
+2. **Zero Redundant / Rigid Frontend Validation**:
+   - **Database & Backend Authority**: The Spring Boot backend and database schema are the single source of truth for validation rules (email regex, username format, password strength, role authorization, and uniqueness constraints).
+   - **Minimal Client-Side Sanity Checks Only**: The frontend performs only basic checks for presence of required inputs and UI password confirmation matching.
+   - **Direct Error Surfacing**: Backend validation errors (HTTP 400 Bad Request, HTTP 403 Forbidden, HTTP 422 Unprocessable Entity) returned in JSON responses are surfaced directly to the user in the UI without intermediate frontend filtering.
+
+3. **Zero Mock Storage Replication for Database Entities**:
+   - When communicating with the backend API, the frontend MUST NOT replicate database tables into `localStorage` (e.g., no `etech_users` mock arrays).
+   - The frontend maintains only the active session token (`etech_jwt_token`) and sanitized active profile (`etech_current_user`).
+
+4. **Sanitized Debug Logging Standard**:
+   - All API client operations (`apiClient.js` and `userApi.js`) must log method, endpoint, roundtrip duration (ms), status codes, and payload/response data for debugging.
+   - **Credential Redaction**: Sensitive attributes (`password`, `currentPassword`, `newPassword`, `confirmPassword`, `token`, `jwt`, `secret`, `cvv`, `cardNumber`) MUST be sanitized and redacted as `[REDACTED]` prior to printing to browser console.
+
+---
+
 ## 8. Frontend API Service Layer Architecture (`src/js/api/`)
 
 Create modular API service clients under `src/js/api/`. Controllers will invoke these async functions instead of interacting directly with `localStorage`.
 
 ### 1. Base API Client (`src/js/api/apiClient.js`):
 ```javascript
-const BASE_URL = 'http://localhost:8080/api/v1';
+export const API_BASE_URL = window.API_BASE_URL || 'http://localhost:8080/api/v1';
+export const TOKEN_STORAGE_KEY = 'etech_jwt_token';
+export const CURRENT_USER_STORAGE_KEY = 'etech_current_user';
 
-export async function apiRequest(endpoint, options = {}) {
-    const token = localStorage.getItem('etech_jwt_token');
-    const headers = {
-        'Content-Type': 'application/json',
-        ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-        ...options.headers
-    };
+export function getToken() {
+  return localStorage.getItem(TOKEN_STORAGE_KEY);
+}
 
-    const response = await fetch(`${BASE_URL}${endpoint}`, { ...options, headers });
-    
-    if (response.status === 401) {
-        localStorage.removeItem('etech_jwt_token');
-        localStorage.removeItem('etech_current_user');
-        window.location.hash = '#login';
-        throw new Error('Session expired. Please sign in again.');
-    }
+export function setToken(token) {
+  if (token) localStorage.setItem(TOKEN_STORAGE_KEY, token);
+}
 
-    if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
-    }
+export function removeToken() {
+  localStorage.removeItem(TOKEN_STORAGE_KEY);
+}
 
-    if (response.status === 204) return null;
-    return response.json();
+export function sanitizeForLogging(payload) {
+  // Redacts passwords, tokens, and secrets from console logs
+}
+
+export function ajaxRequest({ endpoint, method = 'GET', data = null, headers = {} }) {
+  const url = `${API_BASE_URL}${endpoint}`;
+  const token = getToken();
+  const reqHeaders = {
+    'Content-Type': 'application/json',
+    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+    ...headers
+  };
+
+  return new Promise((resolve, reject) => {
+    $.ajax({
+      url,
+      method,
+      headers: reqHeaders,
+      data: data ? JSON.stringify(data) : undefined,
+      success: (res) => resolve(res),
+      error: (xhr) => {
+        if (xhr.status === 401) {
+          removeToken();
+          localStorage.removeItem(CURRENT_USER_STORAGE_KEY);
+          window.location.hash = '#login';
+        }
+        reject(new Error(xhr.responseJSON?.message || `HTTP ${xhr.status}: ${xhr.statusText}`));
+      }
+    });
+  });
 }
 ```
 
-### 2. Authentication API (`src/js/api/authApi.js`):
+### 2. Authentication & User API (`src/js/api/userApi.js`):
 ```javascript
-import { apiRequest } from './apiClient.js';
+import { ajaxRequest } from './apiClient.js';
 
 export const AuthApi = {
-    login: (username, password) => apiRequest('/auth/login', { 
-        method: 'POST', 
-        body: JSON.stringify({ username, password }) 
-    }),
+  login: (username, password) => ajaxRequest({ endpoint: '/auth/login', method: 'POST', data: { username, password } }),
+  register: (userData) => ajaxRequest({ endpoint: '/auth/register', method: 'POST', data: userData }),
+  getCurrentUser: () => ajaxRequest({ endpoint: '/auth/me', method: 'GET' })
+};
 
-    register: (userData) => apiRequest('/auth/register', { 
-        method: 'POST', 
-        body: JSON.stringify(userData) 
-    }),
+export const UserApi = {
+  getUsers: (params = {}) => ajaxRequest({ endpoint: `/users${$.param(params) ? '?' + $.param(params) : ''}`, method: 'GET' }),
+  getUserById: (id) => ajaxRequest({ endpoint: `/users/${id}`, method: 'GET' }),
+  createUser: (payload) => ajaxRequest({ endpoint: '/users', method: 'POST', data: payload }),
+  updateUser: (id, payload) => ajaxRequest({ endpoint: `/users/${id}`, method: 'PUT', data: payload }),
+  updateUserRole: (id, payload) => ajaxRequest({ endpoint: `/users/${id}/role`, method: 'PATCH', data: payload }),
+  deleteUser: (id) => ajaxRequest({ endpoint: `/users/${id}`, method: 'DELETE' }),
+  updateSelfProfile: (payload) => ajaxRequest({ endpoint: '/users/me/profile', method: 'PUT', data: payload }),
+  changePassword: (payload) => ajaxRequest({ endpoint: '/users/me/password', method: 'PUT', data: payload })
+};
+```
 
-    getCurrentUser: () => apiRequest('/auth/me')
+### 3. Hardware Brands API (`src/js/api/brandsApi.js`):
+```javascript
+import { ajaxRequest } from './apiClient.js';
+
+export const BrandsApi = {
+  getAllBrands: (params = {}) => ajaxRequest({ endpoint: `/brands${$.param(params) ? '?' + $.param(params) : ''}`, method: 'GET' }),
+  getBrandById: (id) => ajaxRequest({ endpoint: `/brands/${id}`, method: 'GET' }),
+  createBrand: (payload) => ajaxRequest({ endpoint: '/brands', method: 'POST', data: payload }),
+  updateBrand: (id, payload) => ajaxRequest({ endpoint: `/brands/${id}`, method: 'PUT', data: payload }),
+  toggleFeatured: (id, featured) => ajaxRequest({ endpoint: `/brands/${id}/featured`, method: 'PATCH', data: { featured } }),
+  deleteBrand: (id) => ajaxRequest({ endpoint: `/brands/${id}`, method: 'DELETE' })
 };
 ```
 

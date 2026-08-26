@@ -56,63 +56,44 @@ export function renderPromotionsTab() {
           <p class="text-xs text-[#64748b] mt-0.5">Control Home & Hot Deals banners, create promotional bundles with carousels, and manage store discounts.</p>
         </div>
 
-        <!-- Quick 1-Week Deal Preset Trigger Button -->
+        <!-- Header Action Button -->
         <div class="flex items-center space-x-2.5">
-          <button onclick="handleQuickStartOneWeekDeal()" 
-            class="px-4 py-2.5 bg-gradient-to-r from-rose-600 to-amber-600 hover:from-rose-500 hover:to-amber-500 text-white font-extrabold text-xs rounded-lg shadow-md transition-all flex items-center space-x-2">
-            <span>⚡</span>
-            <span>Start 1-Week Deal Now</span>
-          </button>
           <button onclick="openBundleFormPage(null)" 
-            class="px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-lg shadow-sm transition-all flex items-center space-x-1.5">
+            class="px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-lg shadow-sm transition-all flex items-center space-x-1.5 cursor-pointer">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
             <span>New Deal Bundle</span>
           </button>
         </div>
       </div>
 
-      <!-- Promotions Sub-Navigation Tabs -->
-      <div class="flex items-center space-x-2 overflow-x-auto pb-1">
+      <!-- Promotions Sub-Navigation Tabs (Solid Professional Buttons) -->
+      <div class="bg-[#f1f5f9] p-1.5 rounded-xl border border-[#cbd5e1] shadow-xs flex items-center space-x-2 overflow-x-auto">
         <button onclick="switchPromoSubTab('home-banner')"
-          class="promo-subtab-btn px-4 py-2.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-2 ${
-            activePromoSubTab === 'home-banner'
-              ? 'bg-blue-600 text-white shadow-sm'
-              : 'bg-white text-[#475569] border border-[#e2e8f0] hover:bg-[#f8fafc] hover:text-[#0f172a]'
-          }">
-          <span>🏠</span>
-          <span>Home Deal Banner (Image 1)</span>
+          class="promo-subtab-btn px-4 py-2.5 rounded-lg text-xs font-extrabold transition-all flex items-center space-x-2 border shadow-sm cursor-pointer ${activePromoSubTab === 'home-banner'
+      ? 'bg-blue-600 text-white border-blue-600 shadow-md ring-2 ring-blue-400/20'
+      : 'bg-white hover:bg-slate-50 text-[#1e293b] hover:text-blue-600 border-[#cbd5e1] hover:border-blue-300'
+    }">
+          <span>Home Deal Banner</span>
+          <span class="px-2 py-0.5 text-[10px] rounded-full font-mono font-black ${homeBanner.active !== false ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+    }">${homeBanner.active !== false ? 'LIVE' : 'OFF'}</span>
         </button>
 
         <button onclick="switchPromoSubTab('hot-bundles')"
-          class="promo-subtab-btn px-4 py-2.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-2 ${
-            activePromoSubTab === 'hot-bundles'
-              ? 'bg-blue-600 text-white shadow-sm'
-              : 'bg-white text-[#475569] border border-[#e2e8f0] hover:bg-[#f8fafc] hover:text-[#0f172a]'
-          }">
-          <span>🎠</span>
-          <span>Featured Deal Carousel Bundles (Image 2 & 3)</span>
-          <span class="px-1.5 py-0.2 bg-blue-100 text-blue-800 text-[10px] rounded-full font-mono font-bold">${bundles.length}</span>
+          class="promo-subtab-btn px-4 py-2.5 rounded-lg text-xs font-extrabold transition-all flex items-center space-x-2 border shadow-sm cursor-pointer ${activePromoSubTab === 'hot-bundles'
+      ? 'bg-blue-600 text-white border-blue-600 shadow-md ring-2 ring-blue-400/20'
+      : 'bg-white hover:bg-slate-50 text-[#1e293b] hover:text-blue-600 border-[#cbd5e1] hover:border-blue-300'
+    }">
+          <span>Featured Deal Carousel Bundles</span>
+          <span class="px-2 py-0.5 ${activePromoSubTab === 'hot-bundles' ? 'bg-white/20 text-white' : 'bg-blue-50 text-blue-700 border border-blue-200'} text-[10px] rounded-full font-mono font-black">${bundles.length}</span>
         </button>
 
         <button onclick="switchPromoSubTab('hot-deals')"
-          class="promo-subtab-btn px-4 py-2.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-2 ${
-            activePromoSubTab === 'hot-deals' || activePromoSubTab === 'discounts'
-              ? 'bg-blue-600 text-white shadow-sm'
-              : 'bg-white text-[#475569] border border-[#e2e8f0] hover:bg-[#f8fafc] hover:text-[#0f172a]'
-          }">
-          <span>🔥</span>
+          class="promo-subtab-btn px-4 py-2.5 rounded-lg text-xs font-extrabold transition-all flex items-center space-x-2 border shadow-sm cursor-pointer ${activePromoSubTab === 'hot-deals' || activePromoSubTab === 'discounts'
+      ? 'bg-blue-600 text-white border-blue-600 shadow-md ring-2 ring-blue-400/20'
+      : 'bg-white hover:bg-slate-50 text-[#1e293b] hover:text-rose-600 border-[#cbd5e1] hover:border-rose-300'
+    }">
           <span>Hot Deals & Flash Sales</span>
-          <span class="px-1.5 py-0.2 bg-rose-100 text-rose-800 text-[10px] rounded-full font-mono font-bold">${hotDeals.filter(d => d.active).length}</span>
-        </button>
-
-        <button onclick="switchPromoSubTab('timer-presets')"
-          class="promo-subtab-btn px-4 py-2.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-2 ${
-            activePromoSubTab === 'timer-presets'
-              ? 'bg-blue-600 text-white shadow-sm'
-              : 'bg-white text-[#475569] border border-[#e2e8f0] hover:bg-[#f8fafc] hover:text-[#0f172a]'
-          }">
-          <span>⏱️</span>
-          <span>Deal Timing & Presets</span>
+          <span class="px-2 py-0.5 ${activePromoSubTab === 'hot-deals' || activePromoSubTab === 'discounts' ? 'bg-white/20 text-white' : 'bg-rose-50 text-rose-700 border border-rose-200'} text-[10px] rounded-full font-mono font-black">${hotDeals.filter(d => d.active).length}</span>
         </button>
       </div>
 
@@ -148,8 +129,6 @@ function renderActiveSubTabContent(homeBanner, bundles, hotDeals) {
     return renderHotBundlesManager(bundles);
   } else if (activePromoSubTab === 'hot-deals' || activePromoSubTab === 'discounts') {
     return renderHotDealsManager(hotDeals);
-  } else if (activePromoSubTab === 'timer-presets') {
-    return renderTimingPresets(homeBanner);
   }
   return '';
 }
@@ -159,18 +138,45 @@ function renderActiveSubTabContent(homeBanner, bundles, hotDeals) {
 /* ========================================================================== */
 
 function renderHomeBannerEditor(banner) {
+  const isLive = banner.active !== false;
+
   return `
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
       
       <!-- Left 7 Cols: Editor Form -->
-      <div class="lg:col-span-7 bg-white border border-[#e2e8f0] rounded-xl p-5 sm:p-6 shadow-sm space-y-4">
-        <div class="border-b border-[#e2e8f0] pb-3">
-          <h3 class="text-base font-extrabold text-[#0f172a]">Edit Home Page Weekend Tech Deal Banner</h3>
-          <p class="text-xs text-[#64748b]">Configure headline, highlight text, background image, and countdown timer shown on store homepage.</p>
+      <div class="lg:col-span-7 bg-white border border-[#e2e8f0] rounded-xl p-5 sm:p-6 shadow-sm space-y-5">
+        <div class="border-b border-[#e2e8f0] pb-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <div>
+            <h3 class="text-base font-extrabold text-[#0f172a]">Edit Home Page Weekend Tech Deal Banner</h3>
+            <p class="text-xs text-[#64748b]">Configure headline, highlight text, background image, visibility, and countdown timer.</p>
+          </div>
+          <span id="hb-status-badge" class="px-2.5 py-1 rounded-md text-[10px] font-mono font-black uppercase inline-flex items-center space-x-1.5 ${isLive ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-50 text-amber-700 border border-amber-200'
+    }">
+            <span class="w-2 h-2 rounded-full ${isLive ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}"></span>
+            <span>${isLive ? 'LIVE ON HOMEPAGE' : 'HIDDEN & PAUSED'}</span>
+          </span>
         </div>
 
         <form onsubmit="handleSaveHomeBanner(event)" class="space-y-4">
           
+          <!-- Master Visibility & Hot Deals Campaign Toggle Card -->
+          <div class="bg-[#f8fafc] border ${isLive ? 'border-emerald-200 bg-emerald-50/30' : 'border-amber-200 bg-amber-50/30'} rounded-xl p-4 transition-all">
+            <div class="flex items-center justify-between gap-3">
+              <div class="space-y-0.5">
+                <label for="hb-active-toggle" class="text-xs font-black text-[#0f172a] cursor-pointer flex items-center space-x-2">
+                  <span>Show Deal Banner & Run Hot Deals Campaign</span>
+                </label>
+                <p class="text-[11px] text-[#64748b]">
+                  When disabled, the banner is hidden from homepage, hot deal product timers are paused, flash deals are hidden from dealpage, and checkout discounts are disabled. (Bundles remain unaffected).
+                </p>
+              </div>
+              <label class="relative inline-flex items-center cursor-pointer shrink-0">
+                <input type="checkbox" id="hb-active-toggle" ${isLive ? 'checked' : ''} onchange="updateHomeBannerLivePreview()" class="sr-only peer">
+                <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+              </label>
+            </div>
+          </div>
+
           <!-- Deal Tag -->
           <div>
             <label class="block text-xs font-bold text-[#0f172a] mb-1">Deal Header Tag</label>
@@ -206,7 +212,7 @@ function renderHomeBannerEditor(banner) {
               <input type="text" id="hb-bg-image" value="${banner.bgImage || 'public/images/WEEKEND-TECH-DEAL-cart-bg.jpeg'}" required
                 class="flex-1 px-3.5 py-2.5 bg-[#f8fafc] border border-[#e2e8f0] rounded-lg text-xs font-semibold focus:border-blue-600 focus:outline-none">
               <button type="button" onclick="document.getElementById('hb-bg-image').value = 'public/images/WEEKEND-TECH-DEAL-cart-bg.jpeg'; updateHomeBannerLivePreview();"
-                class="px-3 py-2.5 bg-[#f8fafc] border border-[#e2e8f0] text-[#475569] text-xs font-bold rounded-lg hover:bg-[#f1f5f9]">
+                class="px-3 py-2.5 bg-[#f8fafc] border border-[#e2e8f0] text-[#475569] text-xs font-bold rounded-lg hover:bg-[#f1f5f9] cursor-pointer">
                 Default
               </button>
             </div>
@@ -240,12 +246,12 @@ function renderHomeBannerEditor(banner) {
             </div>
 
             <!-- Quick Presets -->
-            <div class="flex items-center space-x-2 pt-1">
+            <div class="flex items-center space-x-2 pt-1 flex-wrap gap-1">
               <span class="text-[10px] font-bold text-[#64748b]">Presets:</span>
-              <button type="button" onclick="setHomeBannerTimerPreset(7, 0, 0, 0)" class="px-2 py-1 bg-white border border-[#e2e8f0] rounded text-[10px] font-bold text-[#475569] hover:text-blue-600">1 Week</button>
-              <button type="button" onclick="setHomeBannerTimerPreset(3, 0, 0, 0)" class="px-2 py-1 bg-white border border-[#e2e8f0] rounded text-[10px] font-bold text-[#475569] hover:text-blue-600">3 Days</button>
-              <button type="button" onclick="setHomeBannerTimerPreset(2, 14, 30, 0)" class="px-2 py-1 bg-white border border-[#e2e8f0] rounded text-[10px] font-bold text-[#475569] hover:text-blue-600">Weekend Special</button>
-              <button type="button" onclick="setHomeBannerTimerPreset(1, 0, 0, 0)" class="px-2 py-1 bg-white border border-[#e2e8f0] rounded text-[10px] font-bold text-[#475569] hover:text-blue-600">24 Hours</button>
+              <button type="button" onclick="setHomeBannerTimerPreset(7, 0, 0, 0)" class="px-2 py-1 bg-white border border-[#e2e8f0] rounded text-[10px] font-bold text-[#475569] hover:text-blue-600 cursor-pointer">1 Week</button>
+              <button type="button" onclick="setHomeBannerTimerPreset(3, 0, 0, 0)" class="px-2 py-1 bg-white border border-[#e2e8f0] rounded text-[10px] font-bold text-[#475569] hover:text-blue-600 cursor-pointer">3 Days</button>
+              <button type="button" onclick="setHomeBannerTimerPreset(2, 14, 30, 0)" class="px-2 py-1 bg-white border border-[#e2e8f0] rounded text-[10px] font-bold text-[#475569] hover:text-blue-600 cursor-pointer">Weekend Special</button>
+              <button type="button" onclick="setHomeBannerTimerPreset(1, 0, 0, 0)" class="px-2 py-1 bg-white border border-[#e2e8f0] rounded text-[10px] font-bold text-[#475569] hover:text-blue-600 cursor-pointer">24 Hours</button>
             </div>
           </div>
 
@@ -255,7 +261,6 @@ function renderHomeBannerEditor(banner) {
             </div>
             <button type="submit" 
               class="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-lg shadow-md transition-all flex items-center space-x-1.5 cursor-pointer">
-              <span>💾</span>
               <span>Save & Publish Live</span>
             </button>
           </div>
@@ -270,7 +275,9 @@ function renderHomeBannerEditor(banner) {
             <span>👁️</span>
             <span>Live Home Banner Preview</span>
           </span>
-          <span class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 text-[10px] font-bold border border-emerald-200">REAL-TIME</span>
+          <span id="hb-preview-badge" class="px-2 py-0.5 rounded text-[10px] font-bold border">
+            <!-- Injected by updateHomeBannerLivePreview -->
+          </span>
         </div>
 
         <div id="hb-live-preview-container" class="rounded-2xl overflow-hidden shadow-lg border border-slate-200">
@@ -283,19 +290,32 @@ function renderHomeBannerEditor(banner) {
 }
 
 function attachHomeBannerLiveListeners() {
-  const ids = ['hb-tag', 'hb-title', 'hb-title-highlight', 'hb-subtitle', 'hb-bg-image', 'hb-days', 'hb-hours', 'hb-mins', 'hb-secs'];
+  const ids = ['hb-tag', 'hb-title', 'hb-title-highlight', 'hb-subtitle', 'hb-bg-image', 'hb-days', 'hb-hours', 'hb-mins', 'hb-secs', 'hb-active-toggle'];
   ids.forEach(id => {
     const el = document.getElementById(id);
     if (el) {
       el.addEventListener('input', updateHomeBannerLivePreview);
+      el.addEventListener('change', updateHomeBannerLivePreview);
     }
   });
   updateHomeBannerLivePreview();
 }
 
-function updateHomeBannerLivePreview() {
+export function updateHomeBannerLivePreview() {
   const container = document.getElementById('hb-live-preview-container');
   if (!container) return;
+
+  const isActive = document.getElementById('hb-active-toggle')?.checked ?? true;
+  const previewBadge = document.getElementById('hb-preview-badge');
+  if (previewBadge) {
+    if (isActive) {
+      previewBadge.className = 'px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 text-[10px] font-bold border border-emerald-200';
+      previewBadge.textContent = 'REAL-TIME LIVE';
+    } else {
+      previewBadge.className = 'px-2 py-0.5 rounded bg-amber-50 text-amber-700 text-[10px] font-bold border border-amber-200';
+      previewBadge.textContent = 'PAUSED / HIDDEN';
+    }
+  }
 
   const tag = document.getElementById('hb-tag')?.value || 'WEEKEND TECH DEAL';
   const title = document.getElementById('hb-title')?.value || 'Upgrade your setup';
@@ -322,6 +342,18 @@ function updateHomeBannerLivePreview() {
           <text x="24" y="26" fill="white" font-size="16" font-weight="900" font-family="system-ui, sans-serif" text-anchor="middle">%</text>
         </svg>
       </div>
+
+      ${!isActive ? `
+        <!-- Paused Overlay Badge -->
+        <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-[2px] z-30 flex flex-col items-center justify-center p-4 text-center">
+          <span class="px-3 py-1.5 rounded-lg bg-amber-500 text-white font-extrabold text-xs tracking-wider uppercase shadow-md flex items-center space-x-1.5">
+            <span>Banner Hidden & Hot Deals Paused</span>
+          </span>
+          <p class="text-xs text-white/90 font-medium mt-2 max-w-[240px]">
+            This banner is currently hidden from the homepage and hot deals discounts are disabled.
+          </p>
+        </div>
+      ` : ''}
 
       <!-- Deal Details -->
       <div class="space-y-1.5 relative z-10 max-w-[270px]">
@@ -368,10 +400,13 @@ function updateHomeBannerLivePreview() {
   `;
 }
 
-window.handleSaveHomeBanner = function(event) {
+window.handleSaveHomeBanner = function (event) {
   if (event) event.preventDefault();
 
+  const isActive = document.getElementById('hb-active-toggle') ? document.getElementById('hb-active-toggle').checked : true;
+
   const bannerData = {
+    active: isActive,
     tag: document.getElementById('hb-tag').value.trim(),
     title: document.getElementById('hb-title').value.trim(),
     titleHighlight: document.getElementById('hb-title-highlight').value.trim(),
@@ -387,11 +422,15 @@ window.handleSaveHomeBanner = function(event) {
 
   saveHomeDealBanner(bannerData);
   window.dispatchEvent(new Event('productsUpdated'));
-  showToast('✅ Home Page Weekend Tech Deal Banner saved & published live!');
+  if (isActive) {
+    showToast('✅ Home Page Weekend Tech Deal Banner saved & published live!');
+  } else {
+    showToast('⏸️ Home Page Deal Banner hidden and Hot Deals campaign paused.');
+  }
   renderPromotionsTab();
 };
 
-window.setHomeBannerTimerPreset = function(days, hours, mins, secs) {
+window.setHomeBannerTimerPreset = function (days, hours, mins, secs) {
   if (document.getElementById('hb-days')) document.getElementById('hb-days').value = days;
   if (document.getElementById('hb-hours')) document.getElementById('hb-hours').value = hours;
   if (document.getElementById('hb-mins')) document.getElementById('hb-mins').value = mins;
@@ -435,18 +474,16 @@ function renderHotBundlesManager(bundles) {
                 <span class="w-6 h-6 rounded-full bg-slate-900 text-white font-mono font-bold text-xs flex items-center justify-center">
                   ${index + 1}
                 </span>
-                <span class="px-2 py-0.5 rounded text-[9px] font-extrabold uppercase ${
-                  bundle.badge === 'BEST DEAL' ? 'bg-rose-50 text-rose-700 border border-rose-200' : 'bg-blue-50 text-blue-700 border border-blue-200'
-                }">
+                <span class="px-2 py-0.5 rounded text-[9px] font-extrabold uppercase ${bundle.badge === 'BEST DEAL' ? 'bg-rose-50 text-rose-700 border border-rose-200' : 'bg-blue-50 text-blue-700 border border-blue-200'
+    }">
                   ${bundle.badge}
                 </span>
               </div>
               <button onclick="toggleBundleActiveStatus(${bundle.id})" 
-                class="px-2.5 py-1 rounded text-[10px] font-bold ${
-                  bundle.active 
-                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100' 
-                    : 'bg-slate-100 text-slate-600 border border-slate-200 hover:bg-slate-200'
-                }">
+                class="px-2.5 py-1 rounded text-[10px] font-bold ${bundle.active
+      ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100'
+      : 'bg-slate-100 text-slate-600 border border-slate-200 hover:bg-slate-200'
+    }">
                 ${bundle.active ? '● Active in Carousel' : '○ Inactive'}
               </button>
             </div>
@@ -521,7 +558,7 @@ function renderHotBundlesManager(bundles) {
   `;
 }
 
-window.toggleBundleActiveStatus = function(id) {
+window.toggleBundleActiveStatus = function (id) {
   const bundles = getDealBundles();
   const bundle = bundles.find(b => b.id === Number(id));
   if (!bundle) return;
@@ -531,7 +568,7 @@ window.toggleBundleActiveStatus = function(id) {
   renderPromotionsTab();
 };
 
-window.handleDeleteBundle = function(id) {
+window.handleDeleteBundle = function (id) {
   if (confirm('Are you sure you want to delete this deal bundle slide?')) {
     deleteDealBundle(id);
     showToast('Deal bundle deleted.');
@@ -596,9 +633,9 @@ function renderHotDealsManager(hotDeals) {
                   </td>
                 </tr>
               ` : hotDeals.map(d => {
-                const isLive = d.active && !d.isExpired;
-                const timeStr = `${d.remainingTime.days > 0 ? d.remainingTime.days + 'd ' : ''}${d.remainingTime.hours}h ${d.remainingTime.mins}m ${d.remainingTime.secs}s`;
-                return `
+    const isLive = d.active && !d.isExpired;
+    const timeStr = `${d.remainingTime.days > 0 ? d.remainingTime.days + 'd ' : ''}${d.remainingTime.hours}h ${d.remainingTime.mins}m ${d.remainingTime.secs}s`;
+    return `
                   <tr class="hover:bg-[#f8fafc] transition-colors">
                     <td class="p-3.5">
                       <div class="flex items-center space-x-3">
@@ -668,11 +705,10 @@ function renderHotDealsManager(hotDeals) {
                     <!-- Status Toggle -->
                     <td class="p-3.5 text-center">
                       <button onclick="handleToggleHotDealStatus(${d.id})" title="Toggle Active Status"
-                        class="px-2.5 py-1 rounded-full text-[10px] font-bold transition-all border cursor-pointer ${
-                          isLive 
-                            ? 'bg-emerald-50 text-emerald-700 border-emerald-300 hover:bg-emerald-100' 
-                            : 'bg-slate-100 text-slate-500 border-slate-300 hover:bg-slate-200'
-                        }">
+                        class="px-2.5 py-1 rounded-full text-[10px] font-bold transition-all border cursor-pointer ${isLive
+        ? 'bg-emerald-50 text-emerald-700 border-emerald-300 hover:bg-emerald-100'
+        : 'bg-slate-100 text-slate-500 border-slate-300 hover:bg-slate-200'
+      }">
                         ${isLive ? '● Live' : (d.isExpired ? '○ Expired' : '○ Paused')}
                       </button>
                     </td>
@@ -695,7 +731,7 @@ function renderHotDealsManager(hotDeals) {
                     </td>
                   </tr>
                 `;
-              }).join('')}
+  }).join('')}
             </tbody>
           </table>
         </div>
@@ -705,7 +741,7 @@ function renderHotDealsManager(hotDeals) {
   `;
 }
 
-window.filterHotDealsTable = function(query) {
+window.filterHotDealsTable = function (query) {
   const q = (query || '').toLowerCase();
   const rows = document.querySelectorAll('#hot-deals-table-body tr');
   rows.forEach(row => {
@@ -965,110 +1001,7 @@ export function handleToggleHotDealStatus(id) {
 }
 
 /* ========================================================================== */
-/* 4. DEAL TIMING & PRESETS                                                    */
-/* ========================================================================== */
 
-function renderTimingPresets(banner) {
-  return `
-    <div class="bg-white border border-[#e2e8f0] rounded-xl p-6 shadow-sm max-w-2xl space-y-6">
-      <div>
-        <h3 class="text-base font-extrabold text-[#0f172a]">Global Deal Timing Engine & Presets</h3>
-        <p class="text-xs text-[#64748b]">Trigger pre-configured sale durations across the store with a single click or customize date ranges.</p>
-      </div>
-
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        
-        <!-- Preset 1: 1-Week Flash Sale -->
-        <div class="border border-blue-200 bg-blue-50/50 rounded-xl p-4 flex flex-col justify-between space-y-3">
-          <div>
-            <div class="flex items-center justify-between">
-              <span class="text-xs font-mono font-extrabold uppercase text-blue-700">PRESET 01</span>
-              <span class="text-lg">⚡</span>
-            </div>
-            <h4 class="text-sm font-bold text-[#0f172a] mt-1">1-Week Mega Tech Sale</h4>
-            <p class="text-xs text-[#64748b] mt-0.5">Sets active timers across Home Banner & Deals Page to 7 Days (168 Hours).</p>
-          </div>
-          <button onclick="handleApplyPresetTimer(7, 0, 0, 0, '1-Week Mega Sale')" 
-            class="w-full py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-lg shadow-sm transition-all">
-            Apply 1-Week Preset
-          </button>
-        </div>
-
-        <!-- Preset 2: Weekend 3-Day Special -->
-        <div class="border border-rose-200 bg-rose-50/50 rounded-xl p-4 flex flex-col justify-between space-y-3">
-          <div>
-            <div class="flex items-center justify-between">
-              <span class="text-xs font-mono font-extrabold uppercase text-rose-700">PRESET 02</span>
-              <span class="text-lg">🔥</span>
-            </div>
-            <h4 class="text-sm font-bold text-[#0f172a] mt-1">Weekend 3-Day Blast</h4>
-            <p class="text-xs text-[#64748b] mt-0.5">Sets active countdown to 72 Hours (3 Days) for weekend hardware discount events.</p>
-          </div>
-          <button onclick="handleApplyPresetTimer(3, 0, 0, 0, 'Weekend 3-Day Blast')" 
-            class="w-full py-2 bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs rounded-lg shadow-sm transition-all">
-            Apply 3-Day Preset
-          </button>
-        </div>
-
-        <!-- Preset 3: 24-Hour Midnight Flash -->
-        <div class="border border-amber-200 bg-amber-50/50 rounded-xl p-4 flex flex-col justify-between space-y-3">
-          <div>
-            <div class="flex items-center justify-between">
-              <span class="text-xs font-mono font-extrabold uppercase text-amber-700">PRESET 03</span>
-              <span class="text-lg">⏳</span>
-            </div>
-            <h4 class="text-sm font-bold text-[#0f172a] mt-1">24-Hour Midnight Rush</h4>
-            <p class="text-xs text-[#64748b] mt-0.5">Rapid 24-hour urgency countdown for limited-quantity clearance items.</p>
-          </div>
-          <button onclick="handleApplyPresetTimer(1, 0, 0, 0, '24-Hour Midnight Rush')" 
-            class="w-full py-2 bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs rounded-lg shadow-sm transition-all">
-            Apply 24-Hour Preset
-          </button>
-        </div>
-
-        <!-- Preset 4: Custom Countdown Range -->
-        <div class="border border-slate-200 bg-slate-50 rounded-xl p-4 flex flex-col justify-between space-y-3">
-          <div>
-            <div class="flex items-center justify-between">
-              <span class="text-xs font-mono font-extrabold uppercase text-slate-700">CUSTOM</span>
-              <span class="text-lg">🎯</span>
-            </div>
-            <h4 class="text-sm font-bold text-[#0f172a] mt-1">Custom Time Range</h4>
-            <p class="text-xs text-[#64748b] mt-0.5">Configure precise days, hours, and minutes for a customized marketing campaign.</p>
-          </div>
-          <button onclick="switchPromoSubTab('home-banner')" 
-            class="w-full py-2 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs rounded-lg shadow-sm transition-all">
-            Configure Custom Range
-          </button>
-        </div>
-
-      </div>
-
-    </div>
-  `;
-}
-
-window.handleApplyPresetTimer = function(days, hours, mins, secs, label) {
-  saveHomeDealBanner({
-    durationDays: days,
-    durationHours: hours,
-    durationMins: mins,
-    durationSecs: secs
-  });
-  showToast(`⚡ Timer preset "${label}" applied to all active promotional banners!`);
-  renderPromotionsTab();
-};
-
-window.handleQuickStartOneWeekDeal = function() {
-  saveHomeDealBanner({
-    durationDays: 7,
-    durationHours: 0,
-    durationMins: 0,
-    durationSecs: 0
-  });
-  showToast('🎉 1-Week Promotional Deal successfully activated store-wide!');
-  renderPromotionsTab();
-};
 
 /* ========================================================================== */
 /* 2. DEDICATED DEAL BUNDLE SLIDE EDITOR WORKSPACE (FULL PAGE VIEW)          */
@@ -1711,15 +1644,15 @@ export function updateBundleBranchMatrix() {
     <!-- Branch Assembly KPI Pills -->
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
       ${branches.map(b => {
-        const ready = (inv.branchAssembly[b.id] && inv.branchAssembly[b.id].readyKits) || 0;
-        return `
+    const ready = (inv.branchAssembly[b.id] && inv.branchAssembly[b.id].readyKits) || 0;
+    return `
           <div class="p-3 rounded-xl border ${ready > 0 ? 'bg-blue-50/60 border-blue-200' : 'bg-slate-50 border-slate-200 opacity-75'} text-center space-y-0.5">
             <span class="text-[10px] font-bold text-[#64748b] block uppercase tracking-wider">${b.city} Hub</span>
             <span class="text-base font-extrabold font-mono ${ready > 0 ? 'text-blue-700' : 'text-slate-400'}">${ready} Ready</span>
             <span class="text-[9px] text-[#64748b] block">${ready > 0 ? 'Complete Kit in Stock' : 'Incomplete Kit'}</span>
           </div>
         `;
-      }).join('')}
+  }).join('')}
     </div>
 
     <!-- Component by Branch Table -->
@@ -1773,10 +1706,10 @@ export function updateBundleBranchMatrix() {
           <span class="font-extrabold text-xs text-blue-900">Inter-Branch Stock Transfer Engine</span>
         </div>
         <p class="text-[11px] text-blue-700 mt-0.5">
-          ${missingInColombo > 0 
-            ? `Parts for <strong>${missingInColombo}</strong> additional bundles exist across branches. Transfer parts to Colombo Main Hub to enable ready-to-ship dispatch.`
-            : `Colombo Main Hub is fully stocked with <strong>${colomboKits}</strong> complete ready-to-ship bundle kits!`
-          }
+          ${missingInColombo > 0
+      ? `Parts for <strong>${missingInColombo}</strong> additional bundles exist across branches. Transfer parts to Colombo Main Hub to enable ready-to-ship dispatch.`
+      : `Colombo Main Hub is fully stocked with <strong>${colomboKits}</strong> complete ready-to-ship bundle kits!`
+    }
         </p>
       </div>
 
@@ -1817,9 +1750,9 @@ export function updateBundleLivePreview() {
   const origPrice = Number(document.getElementById('bf-orig-price')?.value) || (inv.calculatedMSRP > 0 ? inv.calculatedMSRP : 289999);
   const soldCount = Number(document.getElementById('bf-sold-count')?.value) || 0;
   const targetQuota = Number(document.getElementById('bf-target-quota')?.value) || 20;
-  
+
   const stockLeft = inv.maxAvailableBundles;
-  
+
   // Calculate dynamic claimed %
   let claimedPercent = 0;
   if (soldCount + stockLeft > 0) {
@@ -1831,7 +1764,7 @@ export function updateBundleLivePreview() {
   // Update hidden claimed and display note
   const claimedHidden = document.getElementById('bf-claimed');
   if (claimedHidden) claimedHidden.value = claimedPercent;
-  
+
   const stockInput = document.getElementById('bf-stock');
   if (stockInput) stockInput.value = stockLeft;
 
@@ -1862,9 +1795,8 @@ export function updateBundleLivePreview() {
 
       <!-- Top Row: Badge & Status -->
       <div class="flex items-center justify-between mb-3 relative z-10">
-        <span class="px-2.5 py-0.5 rounded-full ${
-          badge === 'BEST DEAL' ? 'bg-rose-600' : 'bg-blue-600'
-        } text-white font-extrabold text-[9px] uppercase tracking-wider shadow-sm">
+        <span class="px-2.5 py-0.5 rounded-full ${badge === 'BEST DEAL' ? 'bg-rose-600' : 'bg-blue-600'
+    } text-white font-extrabold text-[9px] uppercase tracking-wider shadow-sm">
           ${badge}
         </span>
         <span class="text-[10px] font-mono font-bold ${isActive ? 'text-emerald-300 bg-emerald-500/20' : 'text-slate-300 bg-white/10'} px-2 py-0.5 rounded-full border border-white/15">
@@ -1891,9 +1823,9 @@ export function updateBundleLivePreview() {
           <span class="text-[9px] font-mono font-bold text-blue-300 uppercase tracking-wider block">📦 Included Package (${inv.componentsBreakdown.length} Products):</span>
           <div class="space-y-1">
             ${inv.componentsBreakdown.map(item => {
-              const specEntries = Object.entries(item.specs || {}).slice(0, 2);
-              const specText = specEntries.map(([k, v]) => v).join(' • ');
-              return `
+      const specEntries = Object.entries(item.specs || {}).slice(0, 2);
+      const specText = specEntries.map(([k, v]) => v).join(' • ');
+      return `
                 <div class="bg-white/10 border border-white/15 rounded-lg p-1.5 flex items-center justify-between text-[10px]">
                   <div class="min-w-0 flex-1 pr-2">
                     <div class="flex items-center space-x-1">
@@ -1905,7 +1837,7 @@ export function updateBundleLivePreview() {
                   <span class="font-mono font-extrabold text-amber-300 whitespace-nowrap">Rs. ${Number(item.unitPrice).toLocaleString()}</span>
                 </div>
               `;
-            }).join('')}
+    }).join('')}
           </div>
         </div>
       ` : ''}
@@ -2065,7 +1997,7 @@ window.updateBundleLivePreview = updateBundleLivePreview;
 /* MODAL: EDIT PRODUCT DISCOUNT & BADGES (DYNAMIC TAXONOMY INTEGRATED)        */
 /* ========================================================================== */
 
-window.openEditDiscountModal = function(productId) {
+window.openEditDiscountModal = function (productId) {
   const products = getStoredProducts();
   const badges = getBadges().filter(b => b.isActive !== false);
   const product = products.find(p => p.id === Number(productId));
@@ -2137,7 +2069,7 @@ window.openEditDiscountModal = function(productId) {
   `;
 };
 
-window.handleSaveProductDiscount = function(event, productId) {
+window.handleSaveProductDiscount = function (event, productId) {
   if (event) event.preventDefault();
 
   const price = Number(document.getElementById('dm-price').value);
@@ -2154,4 +2086,5 @@ window.handleSaveProductDiscount = function(event, productId) {
 // Global Window Bindings for Dynamic Admin UI
 window.switchPromoSubTab = switchPromoSubTab;
 window.renderPromotionsTab = renderPromotionsTab;
+window.updateHomeBannerLivePreview = updateHomeBannerLivePreview;
 

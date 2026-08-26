@@ -57,18 +57,6 @@ export const AuthApi = {
 
 export const UserApi = {
   /**
-   * Fetch list of available user roles from database (if supported by backend)
-   * GET /api/v1/users/roles
-   */
-  async getRoles() {
-    console.log('[UserAPI] UserApi.getRoles() -> fetching system roles');
-    return ajaxRequest({
-      endpoint: '/users/roles',
-      method: 'GET'
-    });
-  },
-
-  /**
    * Fetch system user directory with optional filtering (Admin/Superadmin only)
    * GET /api/v1/users
    */

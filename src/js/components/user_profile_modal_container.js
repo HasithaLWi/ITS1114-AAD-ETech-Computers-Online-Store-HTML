@@ -21,7 +21,7 @@ export function renderUserProfileModal(user) {
         <div class="flex items-center justify-between border-b border-[#e2e8f0] pb-3">
           <div class="flex items-center space-x-3">
             <div class="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 font-extrabold flex items-center justify-center border border-blue-200 shadow-sm">
-              ${(user.name || 'U').charAt(0).toUpperCase()}
+              ${typeof user.getInitial === 'function' ? user.getInitial() : (user.name || 'U').charAt(0).toUpperCase()}
             </div>
             <div>
               <h3 class="text-base font-extrabold text-[#0f172a]">Edit Profile & Credentials</h3>
@@ -55,7 +55,7 @@ export function renderUserProfileModal(user) {
             <label class="block text-[#475569] font-bold mb-1">Username (@handle) *</label>
             <div class="relative">
               <span class="absolute left-3 top-2 text-[#64748b] font-mono">@</span>
-              <input type="text" id="modal-edit-username" required pattern="[a-zA-Z0-9_.-]+" minlength="3" value="${user.username || ''}" class="w-full pl-7 pr-3 py-2 rounded-md bg-[#f8fafc] border border-[#e2e8f0] text-[#0f172a] focus:border-blue-600 font-mono">
+              <input type="text" id="modal-edit-username" required pattern="[a-zA-Z0-9._-]+" minlength="3" value="${user.username || ''}" class="w-full pl-7 pr-3 py-2 rounded-md bg-[#f8fafc] border border-[#e2e8f0] text-[#0f172a] focus:border-blue-600 font-mono">
             </div>
             <p class="text-[10px] text-[#64748b] mt-1">Used for signing in and displaying account identity.</p>
           </div>

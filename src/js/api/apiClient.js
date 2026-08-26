@@ -31,8 +31,6 @@ export function removeToken() {
 
 /**
  * Safely sanitizes request/response payload for debug logging (strips passwords, tokens, credentials)
- * @param {any} payload
- * @returns {any}
  */
 export function sanitizeForLogging(payload) {
   if (!payload) return payload;
@@ -48,11 +46,11 @@ export function sanitizeForLogging(payload) {
     if (typeof obj !== 'object' || obj === null) return obj;
 
     const SENSITIVE_KEYS = [
-      'password', 'currentpassword', 'newpassword', 
-      'confirmpassword', 'token', 'jwt', 'secret', 
+      'password', 'currentpassword', 'newpassword',
+      'confirmpassword', 'token', 'jwt', 'secret',
       'cvv', 'cardnumber'
     ];
-    
+
     if (Array.isArray(obj)) {
       return obj.map(item => sanitizeForLogging(item));
     }

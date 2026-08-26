@@ -5,7 +5,7 @@ import { AuthApi, UserApi } from '../api/userApi.js';
 import { getToken, setToken, removeToken } from '../api/apiClient.js';
 import { 
   getCurrentUser, setCurrentUser, isLoggedIn, logoutUser, 
-  CURRENT_USER_STORAGE_KEY 
+  CURRENT_USER_STORAGE_KEY, User, USER_ROLE 
 } from '../models/user_model.js';
 import { renderUserProfileModal } from '../components/user_profile_modal_container.js';
 
@@ -23,8 +23,8 @@ export async function loginUser(usernameOrEmail, password) {
   try {
     const data = await AuthApi.login(cleanIdentifier, password);
     setToken(data.token);
-    setCurrentUser(data.user);
-    return { success: true, message: 'Logged in successfully!', user: data.user };
+    const userInstance = setCurrentUser(new User(data.user));
+    return { success: true, message: 'Logged in successfully!', user: userInstance };
   } catch (err) {
     return { success: false, message: err.message || 'Invalid credentials. Please check your username and password.' };
   }
@@ -50,8 +50,8 @@ export async function registerUser(name, username, email, password) {
       password: password
     });
     setToken(data.token);
-    setCurrentUser(data.user);
-    return { success: true, message: 'Account created successfully!', user: data.user };
+    const userInstance = setCurrentUser(new User(data.user));
+    return { success: true, message: 'Account created successfully!', user: userInstance };
   } catch (err) {
     return { success: false, message: err.message || 'Registration failed. Please check your details and try again.' };
   }
@@ -64,8 +64,8 @@ export async function refreshCurrentUserSession() {
   if (!isLoggedIn()) return null;
   try {
     const freshUser = await AuthApi.getCurrentUser();
-    setCurrentUser(freshUser);
-    return freshUser;
+    const userInstance = setCurrentUser(new User(freshUser));
+    return userInstance;
   } catch (err) {
     if (err.status === 401) {
       logoutUser();
@@ -92,8 +92,8 @@ export async function updateUserProfile(userId, { name, username, email }) {
       username: cleanUsername,
       email: cleanEmail
     });
-    setCurrentUser(updatedUser);
-    return { success: true, message: 'Profile details updated successfully!', user: updatedUser };
+    const userInstance = setCurrentUser(new User(updatedUser));
+    return { success: true, message: 'Profile details updated successfully!', user: userInstance };
   } catch (err) {
     return { success: false, message: err.message || 'Failed to update profile.' };
   }
@@ -166,7 +166,8 @@ export function showAlert(message, isError = true) {
 }
 
 export function getRedirectTarget(user) {
-  if (user && (user.role === 'SUPERADMIN' || user.role === 'ADMIN' || user.role === 'STAFF')) {
+  const u = user ? (user instanceof User ? user : new User(user)) : null;
+  if (u && (u.isAdmin() || u.isStaff())) {
     return '#admin';
   }
 

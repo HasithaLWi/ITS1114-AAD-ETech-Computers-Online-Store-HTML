@@ -217,6 +217,21 @@ export function renderFlashDealsGrid() {
   if (!container) return;
 
   const activeHotDeals = getActiveHotDeals();
+  if (activeHotDeals.length === 0) {
+    container.innerHTML = `
+      <div class="col-span-full py-12 px-6 text-center bg-white rounded-2xl border border-[#e2e8f0]">
+        <div class="text-4xl mb-2">⚡</div>
+        <h4 class="text-base font-bold text-[#0f172a]">No hot deals available at the moment</h4>
+        <p class="text-xs text-[#64748b] mt-1">Check back soon for new flash sales or explore our full hardware catalog.</p>
+        <a href="#shop" class="inline-flex items-center space-x-1.5 mt-4 px-4 py-2 bg-blue-600 text-white text-xs font-bold rounded-lg hover:bg-blue-500 transition-all shadow-sm">
+          <span>Explore Catalog</span>
+          <span>→</span>
+        </a>
+      </div>
+    `;
+    return;
+  }
+
   let filtered = activeHotDeals;
   if (activeDealCategory !== 'all') {
     filtered = activeHotDeals.filter(d => (d.category || '').toLowerCase() === activeDealCategory);
@@ -228,7 +243,7 @@ export function renderFlashDealsGrid() {
         <div class="text-4xl mb-2">⚡</div>
         <h4 class="text-base font-bold text-[#0f172a]">No deals found for this category</h4>
         <p class="text-xs text-[#64748b] mt-1">Check back soon or explore our full hardware catalog.</p>
-        <button onclick="filterDealsByCategory('all')" class="mt-4 px-4 py-2 bg-blue-600 text-white text-xs font-bold rounded-lg hover:bg-blue-500 transition-all">
+        <button onclick="filterDealsByCategory('all')" class="mt-4 px-4 py-2 bg-blue-600 text-white text-xs font-bold rounded-lg hover:bg-blue-500 transition-all cursor-pointer">
           View All Deals
         </button>
       </div>
