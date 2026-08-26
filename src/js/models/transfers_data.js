@@ -61,12 +61,25 @@ export function createStockTransfer(transferData) {
     };
   }
 
-  // Deduct from source branch right now (held in transit)
-  product.branchStock[fromBranch.id] = Math.max(0, availableAtSource - qty);
-  product.totalStock = Object.values(product.branchStock).reduce((a, b) => a + b, 0);
-  saveStoredProducts(products);
+  const initialStatus = transferData.instantDelivery ? "Received" : (transferData.status || "Requested");
 
-  const nextSeq = list.length > 0 ? Math.max(...list.map(t => parseInt(t.id.replace('TRF-', '')) || 8000)) + 1 : 8001;
+  // If initial status is In Transit, deduct from source branch immediately
+  if (initialStatus === "In Transit") {
+    product.branchStock[fromBranch.id] = Math.max(0, availableAtSource - qty);
+    product.totalStock = Object.values(product.branchStock).reduce((a, b) => a + b, 0);
+    saveStoredProducts(products);
+  }
+
+  // If instant delivery, deduct from source & credit destination branch immediately
+  if (transferData.instantDelivery) {
+    product.branchStock[fromBranch.id] = Math.max(0, availableAtSource - qty);
+    if (!product.branchStock[toBranch.id]) product.branchStock[toBranch.id] = 0;
+    product.branchStock[toBranch.id] += qty;
+    product.totalStock = Object.values(product.branchStock).reduce((a, b) => a + b, 0);
+    saveStoredProducts(products);
+  }
+
+  const nextSeq = list.length > 0 ? Math.max(...list.map(t => parseInt(String(t.id).replace('TRF-', '')) || 8000)) + 1 : 8001;
   const newTransfer = {
     id: `TRF-${nextSeq}`,
     referenceNo: `TRF-2026-${String(nextSeq).padStart(4, '0')}`,
@@ -82,22 +95,17 @@ export function createStockTransfer(transferData) {
     reason: transferData.reason || "General Stock Rebalancing",
     bundleId: transferData.bundleId || null,
     bundleTitle: transferData.bundleTitle || null,
-    status: transferData.instantDelivery ? "Received" : (transferData.status || "In Transit"),
-    requestedBy: transferData.requestedBy || "Administrator",
+    status: initialStatus,
+    requestedBy: transferData.requestedBy || "Staff Member",
+    dispatchedBy: initialStatus === "In Transit" || transferData.instantDelivery ? (transferData.dispatchedBy || "Warehouse Dispatch") : null,
+    receivedBy: transferData.instantDelivery ? (transferData.receivedBy || "Destination Staff") : null,
     driverOrCourier: transferData.driverOrCourier || "ETech Logistics Fleet",
     trackingCode: transferData.trackingCode || `ET-LOG-${Math.floor(1000 + Math.random() * 9000)}`,
     notes: transferData.notes || "",
     createdAt: new Date().toISOString(),
-    dispatchedAt: new Date().toISOString(),
+    dispatchedAt: initialStatus === "In Transit" || transferData.instantDelivery ? new Date().toISOString() : null,
     receivedAt: transferData.instantDelivery ? new Date().toISOString() : null
   };
-
-  // If instant delivery, credit destination branch immediately
-  if (transferData.instantDelivery) {
-    product.branchStock[toBranch.id] = ((product.branchStock && product.branchStock[toBranch.id]) || 0) + qty;
-    product.totalStock = Object.values(product.branchStock).reduce((a, b) => a + b, 0);
-    saveStoredProducts(products);
-  }
 
   list.unshift(newTransfer);
   saveStockTransfers(list);
@@ -107,7 +115,46 @@ export function createStockTransfer(transferData) {
 }
 
 /**
- * Mark a transfer as Received & Verified at destination branch
+ * Approve & Dispatch an incoming transfer request (called by Source branch staff or Admin)
+ */
+export function dispatchStockTransfer(transferId, dispatchedBy = 'Branch Dispatch Staff') {
+  const list = getStockTransfers();
+  const transfer = list.find(t => t.id === transferId);
+  if (!transfer) return { success: false, message: 'Transfer record not found.' };
+
+  if (transfer.status !== 'Requested') {
+    return { success: false, message: `Cannot dispatch transfer in '${transfer.status}' status.` };
+  }
+
+  const products = getStoredProducts();
+  const product = products.find(p => p.id === Number(transfer.productId));
+  if (!product) return { success: false, message: 'Product record not found.' };
+
+  const availableAtSource = (product.branchStock && product.branchStock[transfer.fromBranchId]) || 0;
+  if (availableAtSource < transfer.quantity) {
+    return { 
+      success: false, 
+      message: `Cannot dispatch: Insufficient stock at source branch (${availableAtSource} available, ${transfer.quantity} requested).` 
+    };
+  }
+
+  // Deduct from source branch stock now
+  product.branchStock[transfer.fromBranchId] = Math.max(0, availableAtSource - transfer.quantity);
+  product.totalStock = Object.values(product.branchStock).reduce((a, b) => a + b, 0);
+  saveStoredProducts(products);
+
+  transfer.status = 'In Transit';
+  transfer.dispatchedAt = new Date().toISOString();
+  transfer.dispatchedBy = dispatchedBy;
+
+  saveStockTransfers(list);
+  window.dispatchEvent(new Event('productsUpdated'));
+
+  return { success: true, transfer };
+}
+
+/**
+ * Mark a transfer as Received & Verified at destination branch (called by Destination branch staff or Admin)
  */
 export function receiveStockTransfer(transferId, receivedBy = 'Staff Verification') {
   const list = getStockTransfers();
@@ -119,6 +166,9 @@ export function receiveStockTransfer(transferId, receivedBy = 'Staff Verificatio
   }
   if (transfer.status === 'Cancelled') {
     return { success: false, message: 'Cannot receive a cancelled transfer.' };
+  }
+  if (transfer.status === 'Requested') {
+    return { success: false, message: 'Transfer has not yet been approved & dispatched by the source branch.' };
   }
 
   const products = getStoredProducts();
@@ -141,9 +191,9 @@ export function receiveStockTransfer(transferId, receivedBy = 'Staff Verificatio
 }
 
 /**
- * Cancel a transfer and return stock back to source branch
+ * Cancel or Reject a transfer
  */
-export function cancelStockTransfer(transferId, reason = 'Cancelled by Administrator') {
+export function cancelStockTransfer(transferId, reason = 'Cancelled', cancelledBy = 'Staff / Administrator') {
   const list = getStockTransfers();
   const transfer = list.find(t => t.id === transferId);
   if (!transfer) return { success: false, message: 'Transfer record not found.' };
@@ -155,18 +205,21 @@ export function cancelStockTransfer(transferId, reason = 'Cancelled by Administr
     return { success: false, message: 'Transfer is already cancelled.' };
   }
 
-  // Return stock back to source branch
-  const products = getStoredProducts();
-  const product = products.find(p => p.id === Number(transfer.productId));
-  if (product && product.branchStock) {
-    product.branchStock[transfer.fromBranchId] = (product.branchStock[transfer.fromBranchId] || 0) + transfer.quantity;
-    product.totalStock = Object.values(product.branchStock).reduce((a, b) => a + b, 0);
-    saveStoredProducts(products);
+  // If it was already dispatched (In Transit), refund stock back to source branch
+  if (transfer.status === 'In Transit') {
+    const products = getStoredProducts();
+    const product = products.find(p => p.id === Number(transfer.productId));
+    if (product && product.branchStock) {
+      product.branchStock[transfer.fromBranchId] = (product.branchStock[transfer.fromBranchId] || 0) + transfer.quantity;
+      product.totalStock = Object.values(product.branchStock).reduce((a, b) => a + b, 0);
+      saveStoredProducts(products);
+    }
   }
 
   transfer.status = 'Cancelled';
   transfer.cancellationReason = reason;
   transfer.cancelledAt = new Date().toISOString();
+  transfer.cancelledBy = cancelledBy;
 
   saveStockTransfers(list);
   window.dispatchEvent(new Event('productsUpdated'));

@@ -514,14 +514,20 @@ export function openQuickRestockModal(productId, defaultBranchId = 'BR-COL') {
   const product = products.find(p => p.id === parseInt(productId));
   if (!product) return;
 
+  const activeUser = getCurrentUser();
   const branches = getBranches();
   const branchStock = product.branchStock || {};
   const modalContainer = document.getElementById('admin-modal-container');
   if (!modalContainer) return;
 
+  // Determine allowed branches based on role
+  const isScopedUser = activeUser && (activeUser.isStaff() || (activeUser.isAdmin() && activeUser.assignedBranch));
+  const userAssignedBranch = activeUser ? activeUser.assignedBranch : null;
+  const initialBranch = (isScopedUser && userAssignedBranch) ? userAssignedBranch : defaultBranchId;
+
   modalContainer.innerHTML = `
     <div class="fixed inset-0 z-50 bg-[#0f172a]/60 backdrop-blur-xs flex items-center justify-center p-4">
-      <div class="bg-white border border-[#e2e8f0] rounded-lg p-6 max-w-lg w-full shadow-xl space-y-5 text-xs">
+      <div class="bg-white border border-[#e2e8f0] rounded-xl p-6 max-w-lg w-full shadow-xl space-y-5 text-xs">
         
         <!-- Header -->
         <div class="flex items-center justify-between border-b border-[#e2e8f0] pb-3">
@@ -564,9 +570,17 @@ export function openQuickRestockModal(productId, defaultBranchId = 'BR-COL') {
         <form id="form-direct-restock" onsubmit="handleQuickRestockSubmit(event, ${product.id})" class="space-y-4">
           <div>
             <label class="block text-[#475569] font-bold mb-1">Target Warehouse Hub *</label>
-            <select id="quick-restock-branch" class="w-full px-3 py-2 rounded-md bg-[#f8fafc] border border-[#e2e8f0] text-[#0f172a]">
-              ${branches.map(b => `<option value="${b.id}" ${b.id === defaultBranchId ? 'selected' : ''}>${b.name} (${b.city}) — Currently ${branchStock[b.id] || 0} units</option>`).join('')}
-            </select>
+            ${isScopedUser ? `
+              <input type="hidden" id="quick-restock-branch" value="${userAssignedBranch}">
+              <div class="px-3.5 py-2 bg-sky-50 border border-sky-200 rounded-lg text-sky-900 font-bold flex items-center justify-between">
+                <span>${branches.find(b => b.id === userAssignedBranch)?.name || userAssignedBranch}</span>
+                <span class="text-[10px] font-mono bg-white px-2 py-0.5 rounded border border-sky-300">Your Branch (${branchStock[userAssignedBranch] || 0} units)</span>
+              </div>
+            ` : `
+              <select id="quick-restock-branch" class="w-full px-3 py-2 rounded-md bg-[#f8fafc] border border-[#e2e8f0] text-[#0f172a]">
+                ${branches.map(b => `<option value="${b.id}" ${b.id === initialBranch ? 'selected' : ''}>${b.name} (${b.city}) — Currently ${branchStock[b.id] || 0} units</option>`).join('')}
+              </select>
+            `}
           </div>
 
           <div>
@@ -595,9 +609,16 @@ export function openQuickRestockModal(productId, defaultBranchId = 'BR-COL') {
             </div>
             <div>
               <label class="block text-[#475569] font-bold mb-1">To Hub (Destination) *</label>
-              <select id="transfer-to-branch" class="w-full px-2.5 py-2 rounded-md bg-[#f8fafc] border border-[#e2e8f0] text-[#0f172a] text-xs">
-                ${branches.map((b, i) => `<option value="${b.id}" ${i === 1 ? 'selected' : ''}>${b.name.replace(' Hub', '')} (${branchStock[b.id] || 0} units)</option>`).join('')}
-              </select>
+              ${isScopedUser ? `
+                <input type="hidden" id="transfer-to-branch" value="${userAssignedBranch}">
+                <div class="px-2.5 py-2 bg-sky-50 border border-sky-200 rounded-md text-sky-900 font-bold text-xs">
+                  ${branches.find(b => b.id === userAssignedBranch)?.name.replace(' Hub', '') || userAssignedBranch}
+                </div>
+              ` : `
+                <select id="transfer-to-branch" class="w-full px-2.5 py-2 rounded-md bg-[#f8fafc] border border-[#e2e8f0] text-[#0f172a] text-xs">
+                  ${branches.map((b, i) => `<option value="${b.id}" ${i === 1 ? 'selected' : ''}>${b.name.replace(' Hub', '')} (${branchStock[b.id] || 0} units)</option>`).join('')}
+                </select>
+              `}
             </div>
           </div>
 
@@ -631,15 +652,15 @@ export function switchRestockModalMode(mode) {
   const btnTransfer = document.getElementById('restock-mode-transfer');
 
   if (mode === 'add') {
-    formAdd.classList.remove('hidden');
-    formTransfer.classList.add('hidden');
-    btnAdd.className = 'flex-1 py-1.5 text-xs font-bold rounded bg-blue-600 text-white transition-all shadow-sm';
-    btnTransfer.className = 'flex-1 py-1.5 text-xs font-bold rounded text-[#64748b] hover:text-[#0f172a] transition-all';
+    if (formAdd) formAdd.classList.remove('hidden');
+    if (formTransfer) formTransfer.classList.add('hidden');
+    if (btnAdd) btnAdd.className = 'flex-1 py-1.5 text-xs font-bold rounded bg-blue-600 text-white transition-all shadow-sm';
+    if (btnTransfer) btnTransfer.className = 'flex-1 py-1.5 text-xs font-bold rounded text-[#64748b] hover:text-[#0f172a] transition-all';
   } else {
-    formAdd.classList.add('hidden');
-    formTransfer.classList.remove('hidden');
-    btnTransfer.className = 'flex-1 py-1.5 text-xs font-bold rounded bg-blue-600 text-white transition-all shadow-sm';
-    btnAdd.className = 'flex-1 py-1.5 text-xs font-bold rounded text-[#64748b] hover:text-[#0f172a] transition-all';
+    if (formAdd) formAdd.classList.add('hidden');
+    if (formTransfer) formTransfer.classList.remove('hidden');
+    if (btnTransfer) btnTransfer.className = 'flex-1 py-1.5 text-xs font-bold rounded bg-blue-600 text-white transition-all shadow-sm';
+    if (btnAdd) btnAdd.className = 'flex-1 py-1.5 text-xs font-bold rounded text-[#64748b] hover:text-[#0f172a] transition-all';
   }
 }
 
@@ -648,16 +669,24 @@ export function switchRestockModalMode(mode) {
  */
 export function handleQuickRestockSubmit(e, productId) {
   e.preventDefault();
+  const activeUser = getCurrentUser();
   const branchId = document.getElementById('quick-restock-branch').value;
   const qty = parseInt(document.getElementById('quick-restock-qty').value) || 0;
 
   if (qty <= 0) return;
 
+  if (activeUser && !activeUser.canManageBranch(branchId)) {
+    alert(`Permission Denied: You are only authorized to manage inventory for your assigned branch (${activeUser.assignedBranch}).`);
+    return;
+  }
+
   const updated = quickAdjustStock(productId, branchId, qty, false);
   if (updated) {
     showToast(`Added +${qty} units of ${updated.name} to warehouse.`);
-    document.getElementById('admin-modal-container').innerHTML = '';
+    const modal = document.getElementById('admin-modal-container');
+    if (modal) modal.innerHTML = '';
     renderStockHealthTab();
+    if (typeof renderOverviewTab === 'function') renderOverviewTab();
   }
 }
 
@@ -666,6 +695,7 @@ export function handleQuickRestockSubmit(e, productId) {
  */
 export function handleStockTransferSubmit(e, productId) {
   e.preventDefault();
+  const activeUser = getCurrentUser();
   const fromBranch = document.getElementById('transfer-from-branch').value;
   const toBranch = document.getElementById('transfer-to-branch').value;
   const qty = parseInt(document.getElementById('transfer-qty').value) || 0;
@@ -675,11 +705,18 @@ export function handleStockTransferSubmit(e, productId) {
     return;
   }
 
+  if (activeUser && activeUser.isStaff() && toBranch !== activeUser.assignedBranch) {
+    alert(`Staff members can only request transfers inbound to their assigned branch (${activeUser.assignedBranch}).`);
+    return;
+  }
+
   const result = transferBranchStock(productId, fromBranch, toBranch, qty);
   if (result.success) {
     showToast(`Transferred ${result.transferred} units between warehouses.`);
-    document.getElementById('admin-modal-container').innerHTML = '';
+    const modal = document.getElementById('admin-modal-container');
+    if (modal) modal.innerHTML = '';
     renderStockHealthTab();
+    if (typeof renderOverviewTab === 'function') renderOverviewTab();
   } else {
     alert(result.message || 'Transfer failed.');
   }

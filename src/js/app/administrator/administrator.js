@@ -45,7 +45,7 @@ export function renderAdminPage(queryPart) {
               <!-- Expanded Brand Text -->
               <div class="sidebar-text-label hidden lg:flex flex-col min-w-0">
                 <span class="text-base font-extrabold tracking-tight text-[#0f172a] truncate">
-                  ETech<span class="text-blue-600">Console</span>
+                  ETech<span class="text-blue-600">Computers</span>
                 </span>
                 <span class="text-[9px] tracking-[0.2em] uppercase text-[#64748b] font-semibold truncate">Worker Workspace</span>
               </div>
@@ -225,146 +225,54 @@ export function renderAdminPage(queryPart) {
               </svg>
             </button>
             <div>
-              <h2 class="text-sm font-extrabold text-[#0f172a]">Management Console</h2>
-              <p class="text-[10px] text-[#64748b]">ETech Operations & Branch Warehouse Control</p>
+              <h2 id="admin-console-header-title" class="text-sm sm:text-base font-extrabold text-[#0f172a]">Management Console</h2>
+              <p id="admin-console-header-subtitle" class="text-[10px] text-[#64748b]">ETech Operations & Branch Warehouse Control</p>
             </div>
           </div>
 
-          <!-- Active Worker Profile Badge -->
-          <div class="flex items-center space-x-3">
-            <div
-              class="w-8 h-8 rounded-md bg-blue-600 text-white font-extrabold text-xs flex items-center justify-center shadow-sm"
-              id="admin-user-avatar">
-              A
+          <!-- Right Header Tools: Status, Notifications, Profile -->
+          <div class="flex items-center space-x-3 sm:space-x-4">
+            <!-- System Status Pill -->
+            <div class="hidden sm:flex items-center space-x-2 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 shadow-2xs">
+              <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              <div class="flex flex-col text-[10px] leading-tight">
+                <span class="text-[#64748b] text-[8px] font-semibold uppercase">System Status</span>
+                <span class="text-emerald-700 font-extrabold font-mono tracking-wider">ONLINE</span>
+              </div>
             </div>
-            <div class="flex flex-col text-right">
-              <span class="text-xs font-bold text-[#0f172a]" id="admin-user-name">Administrator</span>
-              <span id="admin-user-role"
-                class="px-2 py-0.5 rounded text-[9px] font-extrabold uppercase bg-blue-50 text-blue-700 border border-blue-200">ADMIN</span>
+
+            <!-- Notification Bell -->
+            <button id="admin-notification-bell" onclick="handleNotificationClick()" title="Notifications"
+              class="relative p-2 rounded-lg text-[#475569] hover:text-[#0f172a] bg-[#f8fafc] hover:bg-[#f1f5f9] border border-[#e2e8f0] transition-all focus:outline-none">
+              <svg class="w-4 h-4 sm:w-5 sm:h-5 text-[#475569]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+              </svg>
+              <span id="admin-notification-badge" class="absolute -top-1 -right-1 w-4 h-4 bg-rose-500 text-white text-[9px] font-extrabold rounded-full flex items-center justify-center shadow-xs">8</span>
+            </button>
+
+            <!-- Active Worker Profile Badge -->
+            <div class="flex items-center space-x-2.5">
+              <div id="admin-user-avatar"
+                class="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-purple-600 text-white font-extrabold text-xs flex items-center justify-center shadow-sm flex-shrink-0">
+                S
+              </div>
+              <div class="hidden md:flex flex-col text-left">
+                <span id="admin-user-name" class="text-xs font-bold text-[#0f172a] truncate max-w-[170px]">System Owner & Super Admin</span>
+                <span id="admin-user-role"
+                  class="px-2 py-0.5 rounded text-[9px] font-extrabold uppercase bg-purple-50 text-purple-700 border border-purple-200 w-fit">SUPER ADMIN</span>
+              </div>
             </div>
           </div>
         </header>
 
         <!-- Main Dynamic Tab Content Scroll Area -->
-        <main class="flex-1 overflow-y-auto p-6 sm:p-8">
+        <main class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
 
-          <!-- Tab Panel 1: Overview -->
+          <!-- Tab Panel 1: Overview (Dynamic Admin or Staff Overview) -->
           <div id="tab-panel-overview" class="dashboard-tab-panel">
-            <div id="overview-content-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-
-              <div
-                class="bg-white border border-[#e2e8f0] rounded-lg p-4 shadow-sm flex items-center justify-between">
-                <div>
-                  <span class="text-xs font-semibold text-[#64748b] uppercase tracking-wider">Total Sales Revenue</span>
-                  <h3 id="overview-total-revenue" class="text-xl font-extrabold text-[#0f172a] mt-1 font-mono">Rs. 0.00</h3>
-                  <p class="text-[10px] text-emerald-600 font-bold mt-1 flex items-center">
-                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                    </svg>
-                    Live Store Analytics
-                  </p>
-                </div>
-                <div
-                  class="w-10 h-10 rounded-md bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center">
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-              </div>
-
-              <div
-                class="bg-white border border-[#e2e8f0] rounded-lg p-4 shadow-sm flex items-center justify-between">
-                <div>
-                  <span class="text-xs font-semibold text-[#64748b] uppercase tracking-wider">Orders To Process</span>
-                  <h3 id="overview-pending-orders" class="text-xl font-extrabold text-amber-600 mt-1 font-mono">0</h3>
-                  <p id="overview-total-orders" class="text-[10px] text-[#64748b] mt-1">0 Total Orders Recorded</p>
-                </div>
-                <div
-                  class="w-10 h-10 rounded-md bg-amber-50 text-amber-600 border border-amber-200 flex items-center justify-center">
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                  </svg>
-                </div>
-              </div>
-
-              <!-- Branch Stock Alerts Metric Card -->
-              <div onclick="switchAdminTab('stock-health')"
-                class="bg-white hover:bg-rose-50/30 border border-[#e2e8f0] hover:border-rose-300 rounded-lg p-4 shadow-sm flex items-center justify-between cursor-pointer transition-all group">
-                <div>
-                  <span class="text-xs font-semibold text-[#64748b] group-hover:text-rose-700 uppercase tracking-wider transition-colors">Branch Stock Alerts</span>
-                  <h3 id="overview-low-stock-count" class="text-xl font-extrabold text-rose-600 mt-1 font-mono">0</h3>
-                  <p id="overview-low-stock-subtitle" class="text-[10px] text-[#64748b] mt-1">0 Depleted, 0 Low Stock</p>
-                </div>
-                <div
-                  class="w-10 h-10 rounded-md bg-rose-50 group-hover:bg-rose-100 text-rose-600 border border-rose-200 flex items-center justify-center transition-colors" title="Open Stock Health Center">
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                  </svg>
-                </div>
-              </div>
-
-              <div
-                class="bg-white border border-[#e2e8f0] rounded-lg p-4 shadow-sm flex items-center justify-between">
-                <div>
-                  <span class="text-xs font-semibold text-[#64748b] uppercase tracking-wider">Registered Accounts</span>
-                  <h3 id="overview-registered-users" class="text-xl font-extrabold text-blue-600 mt-1 font-mono">0</h3>
-                  <p id="overview-active-branches" class="text-[10px] text-[#64748b] mt-1">0 Active Store Branches</p>
-                </div>
-                <div
-                  class="w-10 h-10 rounded-md bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center">
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                  </svg>
-                </div>
-              </div>
-
-            </div>
-
-            <!-- Overview Content Split: Recent Orders & Stock Alerts -->
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-              <!-- Recent Orders Feed (2 cols) -->
-              <div class="lg:col-span-2 bg-white border border-[#e2e8f0] rounded-lg p-5 shadow-sm">
-                <div class="flex items-center justify-between mb-4">
-                  <h3 class="text-sm font-bold text-[#0f172a] flex items-center space-x-2">
-                    <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                    </svg>
-                    <span>Recent Incoming Orders</span>
-                  </h3>
-                  <button onclick="switchAdminTab('orders')" class="text-xs font-bold text-blue-600 hover:underline">View
-                    All Orders &rarr;</button>
-                </div>
-
-                <!-- recent orders feed -->
-                <div id="recent-orders-feed" class="space-y-2.5"></div>
-              </div>
-
-              <!-- Low Stock Alerts Sidebar (1 col) -->
-              <div class="bg-white border border-[#e2e8f0] rounded-lg p-5 shadow-sm space-y-3">
-                <div class="flex items-center justify-between">
-                  <h3 class="text-sm font-bold text-[#0f172a] flex items-center space-x-2">
-                    <svg class="w-4 h-4 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span>Branch Stock Warnings</span>
-                  </h3>
-                  <button onclick="switchAdminTab('stock-health')" class="text-xs font-bold text-rose-600 hover:underline">
-                    View Health Center &rarr;
-                  </button>
-                </div>
-                <p class="text-[11px] text-[#64748b]">Products requiring replenishment at warehouses:</p>
-
-                <!-- low stock alerts -->
-                <div id="low-stocks-alerts" class="space-y-2.5 max-h-[360px] overflow-y-auto pr-1"></div>
-              </div>
+            <div id="overview-dynamic-root" class="space-y-6">
+              <!-- Dynamically populated by renderOverviewTab() -->
             </div>
           </div>
 
@@ -834,11 +742,14 @@ export function renderAdminPage(queryPart) {
 
         </main>
 
-        <!-- Simple Worker Footer -->
+        <!-- Console Footer -->
         <footer
-          class="h-10 border-t border-[#e2e8f0] px-6 flex items-center justify-between text-[11px] text-[#64748b] flex-shrink-0 bg-white shadow-sm">
-          <span>&copy; 2026 ETech Computers Management Console v1.0</span>
-          <span class="font-mono text-[10px]">System Status: <strong class="text-emerald-600">ONLINE</strong></span>
+          class="h-10 border-t border-[#e2e8f0] px-4 sm:px-6 flex items-center justify-between text-xs text-[#64748b] flex-shrink-0 bg-white shadow-sm">
+          <span class="text-[11px] font-medium">&copy; 2026 ETech Computers Management Console v3.5</span>
+          <div class="flex items-center space-x-4">
+            <span id="admin-footer-last-updated" class="text-[11px] font-mono">Last Updated: Aug 26, 2026 02:44 PM</span>
+            <span class="font-mono text-[10px] hidden sm:inline">System Status: <strong class="text-emerald-600 font-bold">ONLINE</strong></span>
+          </div>
         </footer>
 
       </div>

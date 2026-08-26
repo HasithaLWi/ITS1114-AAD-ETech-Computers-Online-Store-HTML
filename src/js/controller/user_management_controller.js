@@ -118,7 +118,15 @@ export async function renderUsersTab() {
 export async function changeUserRole(userId, newRole) {
   try {
     const user = cachedUsers.find(u => String(u.id) === String(userId));
-    const assignedBranch = user ? user.assignedBranch : null;
+    let assignedBranch = user ? user.assignedBranch : null;
+    
+    // If role is changing to STAFF and no branch is currently assigned, assign the first available branch
+    if (newRole === 'STAFF' && !assignedBranch) {
+      const branches = getBranches();
+      assignedBranch = branches.length > 0 ? branches[0].id : 'BR-COL';
+      alert(`Role set to STAFF. Assigned by default to branch: ${assignedBranch}. You can edit this in the user details modal.`);
+    }
+
     await UserApi.updateUserRole(userId, { role: newRole, assignedBranch });
     await renderUsersTab();
   } catch (err) {
@@ -178,10 +186,11 @@ export async function openUserModal(userId = null) {
 
   const modalTitle = targetUser ? 'Edit User Account' : 'Create User Account';
   const roleOptionsHtml = buildRoleOptionsHtml(targetUser ? targetUser.role : 'CUSTOMER');
+  const isStaff = targetUser && targetUser.role === 'STAFF';
 
   modal.innerHTML = `
     <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0f172a]/60 backdrop-blur-xs">
-      <div class="bg-white border border-[#e2e8f0] rounded-lg p-6 max-w-md w-full space-y-4 shadow-xl">
+      <div class="bg-white border border-[#e2e8f0] rounded-xl p-6 max-w-md w-full space-y-4 shadow-xl">
         <div class="flex items-center justify-between border-b border-[#e2e8f0] pb-3">
           <div>
             <h3 class="text-base font-extrabold text-[#0f172a]">${modalTitle}</h3>
@@ -215,16 +224,19 @@ export async function openUserModal(userId = null) {
           <div class="grid grid-cols-2 gap-3">
             <div>
               <label class="block text-[#475569] font-bold mb-1">System Role *</label>
-              <select id="modal-u-role" required class="w-full px-3 py-2 rounded-md bg-[#f8fafc] border border-[#e2e8f0] text-[#0f172a] focus:border-blue-600">
+              <select id="modal-u-role" required onchange="handleUserModalRoleChange(this.value)" class="w-full px-3 py-2 rounded-md bg-[#f8fafc] border border-[#e2e8f0] text-[#0f172a] focus:border-blue-600 font-medium">
                 ${roleOptionsHtml}
               </select>
             </div>
             <div>
-              <label class="block text-[#475569] font-bold mb-1">Assigned Branch</label>
-              <select id="modal-u-branch" class="w-full px-3 py-2 rounded-md bg-[#f8fafc] border border-[#e2e8f0] text-[#0f172a] focus:border-blue-600">
-                <option value="">None (Headquarters / Remote)</option>
-                ${branches.map(b => `<option value="${b.id}" ${targetUser && targetUser.assignedBranch === b.id ? 'selected' : ''}>${b.city}</option>`).join('')}
+              <label id="modal-u-branch-label" class="block text-[#475569] font-bold mb-1">
+                Assigned Branch <span id="modal-u-branch-req" class="${isStaff ? 'text-rose-600 font-bold' : 'hidden'}">*</span>
+              </label>
+              <select id="modal-u-branch" class="w-full px-3 py-2 rounded-md bg-[#f8fafc] border border-[#e2e8f0] text-[#0f172a] focus:border-blue-600 font-medium">
+                <option value="" ${!targetUser || !targetUser.assignedBranch ? 'selected' : ''}>None (Global / Headquarters)</option>
+                ${branches.map(b => `<option value="${b.id}" ${targetUser && targetUser.assignedBranch === b.id ? 'selected' : ''}>${b.name} (${b.city})</option>`).join('')}
               </select>
+              <p id="modal-u-branch-hint" class="text-[10px] text-amber-600 mt-1 font-medium ${isStaff ? '' : 'hidden'}">Staff members must be assigned to a branch warehouse.</p>
             </div>
           </div>
 
@@ -236,6 +248,27 @@ export async function openUserModal(userId = null) {
       </div>
     </div>
   `;
+}
+
+/**
+ * Handle dynamic changes when role is selected in User modal
+ */
+export function handleUserModalRoleChange(role) {
+  const branchReq = document.getElementById('modal-u-branch-req');
+  const branchHint = document.getElementById('modal-u-branch-hint');
+  const branchSelect = document.getElementById('modal-u-branch');
+
+  if (role === 'STAFF') {
+    if (branchReq) branchReq.classList.remove('hidden');
+    if (branchHint) branchHint.classList.remove('hidden');
+    if (branchSelect && !branchSelect.value) {
+      const branches = getBranches();
+      if (branches.length > 0) branchSelect.value = branches[0].id;
+    }
+  } else {
+    if (branchReq) branchReq.classList.add('hidden');
+    if (branchHint) branchHint.classList.add('hidden');
+  }
 }
 
 /**
@@ -257,6 +290,13 @@ export async function handleSaveUserSubmit(e, userId) {
 
   if (!name || !username || !email || (!userId && !password)) {
     alert('Please fill in all required fields.');
+    return;
+  }
+
+  // Critical Validation: STAFF must always be assigned to a branch
+  if (role === 'STAFF' && !branch) {
+    alert('Validation Error: Staff members must always be assigned to a specific branch warehouse. Please select a branch from the Assigned Branch dropdown.');
+    if (branchEl) branchEl.focus();
     return;
   }
 

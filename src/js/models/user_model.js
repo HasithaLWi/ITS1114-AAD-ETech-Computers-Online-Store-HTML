@@ -69,6 +69,25 @@ export class User {
     }
 
     /**
+     * Check if user has global management access (SuperAdmin or Unassigned Admin)
+     * @returns {boolean}
+     */
+    hasGlobalAccess() {
+        return this.isSuperAdmin() || (this.isAdmin() && !this.assignedBranch);
+    }
+
+    /**
+     * Check if user has authority to manipulate data for a specific branch
+     * @param {string} branchId
+     * @returns {boolean}
+     */
+    canManageBranch(branchId) {
+        if (!branchId) return this.hasGlobalAccess();
+        if (this.hasGlobalAccess()) return true;
+        return this.assignedBranch === branchId;
+    }
+
+    /**
      * Get user initial for avatar UI badges
      * @returns {string}
      */

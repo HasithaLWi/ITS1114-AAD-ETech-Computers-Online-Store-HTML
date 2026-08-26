@@ -4,6 +4,7 @@
 import {
   getStockTransfers,
   createStockTransfer,
+  dispatchStockTransfer,
   receiveStockTransfer,
   cancelStockTransfer,
   getTransfersMetrics
@@ -11,8 +12,8 @@ import {
 import { getStoredProducts } from '../models/data.js';
 import { getBranches } from './branch_controller.js';
 import { showToast } from './cart_controller.js';
-import { closeAdminModal } from './admin_dashboard_controller.js';
-import { getDealBundles } from '../models/deals_data.js';
+import { closeAdminModal, renderOverviewTab } from './admin_dashboard_controller.js';
+import { getCurrentUser } from './login_controller.js';
 
 let transferSearchQuery = '';
 let activeStatusFilter = 'all';
@@ -25,6 +26,7 @@ export function renderTransfersTab() {
   const container = document.getElementById('tab-panel-transfers');
   if (!container) return;
 
+  const activeUser = getCurrentUser();
   const transfers = getStockTransfers();
   const metrics = getTransfersMetrics();
 
@@ -64,7 +66,11 @@ export function renderTransfersTab() {
             </span>
           </div>
           <h2 class="text-xl font-extrabold text-[#0f172a] tracking-tight mt-1.5">Stock Transfers & Logistics Control</h2>
-          <p class="text-xs text-[#64748b] mt-0.5">Track multi-branch inventory movements, stage bundle kit assemblies, and verify inbound dispatches.</p>
+          <p class="text-xs text-[#64748b] mt-0.5">
+            ${activeUser && activeUser.isStaff() 
+              ? `Logged in as Staff (${activeUser.assignedBranch || 'Assigned Branch'}) • Request inbound stock or dispatch outbound transfer orders.` 
+              : 'Track multi-branch inventory movements, stage bundle kit assemblies, and verify inbound/outbound dispatches.'}
+          </p>
         </div>
 
         <button onclick="openInitiateTransferModal()" 
@@ -72,7 +78,7 @@ export function renderTransfersTab() {
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
           </svg>
-          <span>+ Initiate Stock Transfer</span>
+          <span>+ ${activeUser && activeUser.isStaff() ? 'Request Stock Transfer' : 'Initiate Stock Transfer'}</span>
         </button>
       </div>
 
@@ -105,17 +111,17 @@ export function renderTransfersTab() {
           <p class="text-[11px] text-[#64748b] mt-1">Stock credited and verified at destination.</p>
         </div>
 
-        <!-- Card 3: Bundle Assembly Transfers -->
+        <!-- Card 3: Requested / Pending Dispatch -->
         <div class="bg-white border border-[#e2e8f0] rounded-2xl p-4 sm:p-5 shadow-sm relative overflow-hidden">
           <div class="flex items-center justify-between">
-            <span class="text-xs font-bold text-[#64748b] uppercase tracking-wider">Bundle Kit Rebalances</span>
-            <span class="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-sm border border-blue-200">🎠</span>
+            <span class="text-xs font-bold text-[#64748b] uppercase tracking-wider">Pending Approval</span>
+            <span class="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-sm border border-blue-200">📋</span>
           </div>
           <div class="flex items-baseline space-x-2 mt-2">
-            <span class="text-2xl sm:text-3xl font-extrabold font-mono text-blue-600">${metrics.bundleTransfers}</span>
-            <span class="text-xs font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full">Deal Assemblies</span>
+            <span class="text-2xl sm:text-3xl font-extrabold font-mono text-blue-600">${metrics.requested}</span>
+            <span class="text-xs font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full">Awaiting Dispatch</span>
           </div>
-          <p class="text-[11px] text-[#64748b] mt-1">Parts moved to build ready-to-ship deal kits.</p>
+          <p class="text-[11px] text-[#64748b] mt-1">Requests waiting for source hub verification.</p>
         </div>
 
         <!-- Card 4: Total Units Moved -->
@@ -141,9 +147,9 @@ export function renderTransfersTab() {
           <div class="flex items-center space-x-1.5 overflow-x-auto pb-1 w-full md:w-auto">
             ${[
               { id: 'all', label: 'All Transfers', count: transfers.length },
+              { id: 'requested', label: 'Requested 📋', count: metrics.requested, color: 'blue' },
               { id: 'in transit', label: 'In Transit 🚚', count: metrics.inTransit, color: 'amber' },
               { id: 'received', label: 'Received ✓', count: metrics.received, color: 'emerald' },
-              { id: 'requested', label: 'Requested 📋', count: metrics.requested, color: 'blue' },
               { id: 'cancelled', label: 'Cancelled ✕', count: metrics.cancelled, color: 'rose' }
             ].map(tab => `
               <button onclick="filterTransfersByStatus('${tab.id}')"
@@ -198,9 +204,13 @@ export function renderTransfersTab() {
                   </td>
                 </tr>
               ` : filtered.map(t => {
+                const isRequested = t.status === 'Requested';
                 const isTransit = t.status === 'In Transit';
                 const isReceived = t.status === 'Received';
                 const isCancelled = t.status === 'Cancelled';
+
+                const canDispatchFromSource = activeUser && (activeUser.hasGlobalAccess() || activeUser.assignedBranch === t.fromBranchId);
+                const canReceiveAtDestination = activeUser && (activeUser.hasGlobalAccess() || activeUser.assignedBranch === t.toBranchId);
 
                 return `
                   <tr class="hover:bg-[#f8fafc] transition-colors">
@@ -227,9 +237,9 @@ export function renderTransfersTab() {
                     <!-- Route -->
                     <td class="p-4">
                       <div class="flex items-center space-x-2 text-xs font-semibold">
-                        <span class="text-[#0f172a]">${t.fromBranchName}</span>
+                        <span class="text-[#0f172a] font-bold ${activeUser && activeUser.assignedBranch === t.fromBranchId ? 'text-blue-700' : ''}">${t.fromBranchName}</span>
                         <span class="text-blue-600 font-bold">➔</span>
-                        <span class="text-[#0f172a] font-bold">${t.toBranchName}</span>
+                        <span class="text-[#0f172a] font-bold ${activeUser && activeUser.assignedBranch === t.toBranchId ? 'text-emerald-700' : ''}">${t.toBranchName}</span>
                       </div>
                       <div class="text-[10px] text-[#64748b] font-mono mt-0.5">${t.driverOrCourier || 'Internal Logistics'}</div>
                     </td>
@@ -269,12 +279,24 @@ export function renderTransfersTab() {
                     <!-- Actions -->
                     <td class="p-4 text-right">
                       <div class="flex items-center justify-end space-x-1.5">
-                        ${isTransit ? `
+                        
+                        <!-- Step 1: Requested -> Source Branch Approves & Dispatches -->
+                        ${isRequested && canDispatchFromSource ? `
+                          <button onclick="handleApproveDispatchTransfer('${t.id}')"
+                            class="px-2.5 py-1 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-lg text-[11px] shadow-sm transition-all flex items-center space-x-1"
+                            title="Approve request and dispatch stock from ${t.fromBranchName}">
+                            <span>🚚</span>
+                            <span>Approve & Dispatch</span>
+                          </button>
+                        ` : ''}
+
+                        <!-- Step 2: In Transit -> Destination Branch Confirms Receipt -->
+                        ${isTransit && canReceiveAtDestination ? `
                           <button onclick="handleReceiveTransfer('${t.id}')"
                             class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg text-[11px] shadow-sm transition-all flex items-center space-x-1"
-                            title="Verify and credit inventory at destination branch">
+                            title="Verify and credit inventory at ${t.toBranchName}">
                             <span>✓</span>
-                            <span>Receive Stock</span>
+                            <span>Confirm Receipt</span>
                           </button>
                         ` : ''}
 
@@ -284,10 +306,10 @@ export function renderTransfersTab() {
                           Manifest
                         </button>
 
-                        ${(isTransit || t.status === 'Requested') ? `
+                        ${(isRequested || isTransit) && (canDispatchFromSource || canReceiveAtDestination) ? `
                           <button onclick="handleCancelTransfer('${t.id}')"
                             class="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors border border-transparent hover:border-rose-200"
-                            title="Cancel transfer and return stock to source branch">
+                            title="Reject / Cancel transfer">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                           </button>
                         ` : ''}
@@ -316,22 +338,54 @@ export function handleTransferSearch(query) {
   renderTransfersTab();
 }
 
-export function handleReceiveTransfer(transferId) {
-  const res = receiveStockTransfer(transferId, 'Administrator Verification');
+/**
+ * Approve & Dispatch transfer from Source Branch
+ */
+export function handleApproveDispatchTransfer(transferId) {
+  const activeUser = getCurrentUser();
+  const userName = activeUser ? `${activeUser.name} (${activeUser.assignedBranch || 'Admin'})` : 'Branch Dispatch';
+
+  const res = dispatchStockTransfer(transferId, userName);
   if (res.success) {
-    showToast(`✅ Transfer ${transferId} successfully received & credited to ${res.transfer.toBranchName}!`);
+    showToast(`🚚 Transfer ${transferId} approved and dispatched! Stock deducted from ${res.transfer.fromBranchName}.`, 'success');
     renderTransfersTab();
+    if (typeof renderOverviewTab === 'function') renderOverviewTab();
   } else {
     showToast(res.message, 'error');
   }
 }
 
+/**
+ * Receive transfer at Destination Branch
+ */
+export function handleReceiveTransfer(transferId) {
+  const activeUser = getCurrentUser();
+  const userName = activeUser ? `${activeUser.name} (${activeUser.assignedBranch || 'Admin'})` : 'Destination Verification';
+
+  const res = receiveStockTransfer(transferId, userName);
+  if (res.success) {
+    showToast(`✅ Transfer ${transferId} successfully received & credited to ${res.transfer.toBranchName}!`, 'success');
+    renderTransfersTab();
+    if (typeof renderOverviewTab === 'function') renderOverviewTab();
+  } else {
+    showToast(res.message, 'error');
+  }
+}
+
+/**
+ * Cancel or Reject transfer
+ */
 export function handleCancelTransfer(transferId) {
-  if (confirm(`Are you sure you want to cancel Transfer ${transferId}? Stock will be immediately returned to source warehouse.`)) {
-    const res = cancelStockTransfer(transferId, 'Cancelled from management dashboard');
+  const activeUser = getCurrentUser();
+  const userName = activeUser ? activeUser.name : 'Administrator';
+
+  const reason = prompt(`Enter reason for cancelling / rejecting Transfer ${transferId}:`, 'Requested by branch supervisor');
+  if (reason !== null) {
+    const res = cancelStockTransfer(transferId, reason || 'Cancelled by staff/admin', userName);
     if (res.success) {
-      showToast(`Transfer ${transferId} cancelled. Stock returned to ${res.transfer.fromBranchName}.`);
+      showToast(`Transfer ${transferId} cancelled.`, 'info');
       renderTransfersTab();
+      if (typeof renderOverviewTab === 'function') renderOverviewTab();
     } else {
       showToast(res.message, 'error');
     }
@@ -339,17 +393,26 @@ export function handleCancelTransfer(transferId) {
 }
 
 /**
- * Open Modal to Initiate a New Transfer
+ * Open Modal to Initiate / Request a Transfer
  */
 export function openInitiateTransferModal(prefill = null) {
   const modalContainer = document.getElementById('admin-modal-container');
   if (!modalContainer) return;
 
+  const activeUser = getCurrentUser();
   const products = getStoredProducts();
   const branches = getBranches();
 
-  const selectedProductId = prefill ? prefill.productId : (products[0] ? products[0].id : 1);
-  const selectedProduct = products.find(p => p.id === selectedProductId) || products[0];
+  // If Staff, destination is strictly their assigned branch
+  const isStaffUser = activeUser && activeUser.isStaff();
+  const staffBranchId = isStaffUser ? activeUser.assignedBranch : null;
+
+  let selectedProductId = 1;
+  if (prefill) {
+    selectedProductId = typeof prefill === 'object' ? prefill.productId : Number(prefill);
+  } else if (products.length > 0) {
+    selectedProductId = products[0].id;
+  }
 
   modalContainer.innerHTML = `
     <div class="fixed inset-0 bg-[#0f172a]/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
@@ -359,8 +422,14 @@ export function openInitiateTransferModal(prefill = null) {
           <div class="flex items-center space-x-2">
             <span class="p-2 rounded-xl bg-blue-50 text-blue-600 font-bold">🚚</span>
             <div>
-              <h3 class="text-base font-extrabold text-[#0f172a]">Initiate Inter-Branch Stock Transfer</h3>
-              <p class="text-xs text-[#64748b]">Dispatch hardware inventory from one hub warehouse to another.</p>
+              <h3 class="text-base font-extrabold text-[#0f172a]">
+                ${isStaffUser ? 'Request Stock Transfer (Inbound to Your Branch)' : 'Initiate Inter-Branch Stock Transfer'}
+              </h3>
+              <p class="text-xs text-[#64748b]">
+                ${isStaffUser 
+                  ? `Request stock from another warehouse into ${activeUser.assignedBranch}. Source branch will review and approve.` 
+                  : 'Dispatch hardware inventory between regional warehouse branches.'}
+              </p>
             </div>
           </div>
           <button onclick="closeAdminModal()" class="text-slate-400 hover:text-slate-700 text-xl font-bold">&times;</button>
@@ -389,27 +458,37 @@ export function openInitiateTransferModal(prefill = null) {
           <!-- Source & Destination Branches -->
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label class="block font-bold text-[#0f172a] mb-1">From Source Branch Hub *</label>
+              <label class="block font-bold text-[#0f172a] mb-1">From Source Branch (Sender) *</label>
               <select id="tf-from-branch" onchange="validateTransferSourceStock()" required
                 class="w-full px-3.5 py-2 bg-[#f8fafc] border border-[#e2e8f0] rounded-xl text-[#0f172a] font-bold focus:border-blue-600 focus:outline-none">
-                ${branches.map(b => `
-                  <option value="${b.id}" ${prefill && prefill.fromBranchId === b.id ? 'selected' : ''}>
-                    ${b.name} (${b.city})
-                  </option>
-                `).join('')}
+                ${branches
+                  .filter(b => !isStaffUser || b.id !== staffBranchId)
+                  .map(b => `
+                    <option value="${b.id}" ${prefill && prefill.fromBranchId === b.id ? 'selected' : ''}>
+                      ${b.name} (${b.city})
+                    </option>
+                  `).join('')}
               </select>
             </div>
 
             <div>
-              <label class="block font-bold text-[#0f172a] mb-1">To Destination Hub *</label>
-              <select id="tf-to-branch" required
-                class="w-full px-3.5 py-2 bg-[#f8fafc] border border-[#e2e8f0] rounded-xl text-[#0f172a] font-bold focus:border-blue-600 focus:outline-none">
-                ${branches.map(b => `
-                  <option value="${b.id}" ${prefill && prefill.toBranchId === b.id ? 'selected' : (b.id === 'BR-COL' ? 'selected' : '')}>
-                    ${b.name} (${b.city})
-                  </option>
-                `).join('')}
-              </select>
+              <label class="block font-bold text-[#0f172a] mb-1">To Destination Hub (Receiver) *</label>
+              ${isStaffUser ? `
+                <input type="hidden" id="tf-to-branch" value="${staffBranchId}">
+                <div class="px-3.5 py-2 bg-sky-50 border border-sky-200 rounded-xl text-sky-900 font-extrabold flex items-center justify-between">
+                  <span>${branches.find(b => b.id === staffBranchId)?.name || staffBranchId}</span>
+                  <span class="text-[10px] font-mono bg-white px-2 py-0.5 rounded border border-sky-300">Your Branch</span>
+                </div>
+              ` : `
+                <select id="tf-to-branch" required
+                  class="w-full px-3.5 py-2 bg-[#f8fafc] border border-[#e2e8f0] rounded-xl text-[#0f172a] font-bold focus:border-blue-600 focus:outline-none">
+                  ${branches.map(b => `
+                    <option value="${b.id}" ${prefill && prefill.toBranchId === b.id ? 'selected' : (b.id === 'BR-COL' ? 'selected' : '')}>
+                      ${b.name} (${b.city})
+                    </option>
+                  `).join('')}
+                </select>
+              `}
             </div>
           </div>
 
@@ -417,7 +496,7 @@ export function openInitiateTransferModal(prefill = null) {
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label class="block font-bold text-[#0f172a] mb-1">Transfer Quantity (Units) *</label>
-              <input type="number" id="tf-qty" min="1" max="999" value="${prefill ? prefill.qty : 1}" required
+              <input type="number" id="tf-qty" min="1" max="999" value="${prefill && prefill.qty ? prefill.qty : 1}" required
                 class="w-full px-3.5 py-2 bg-[#f8fafc] border border-[#e2e8f0] rounded-xl text-[#0f172a] font-mono font-bold focus:border-blue-600 focus:outline-none">
               <span id="tf-source-avail-note" class="text-[10px] text-blue-600 font-bold block mt-1"></span>
             </div>
@@ -425,8 +504,8 @@ export function openInitiateTransferModal(prefill = null) {
             <div>
               <label class="block font-bold text-[#0f172a] mb-1">Transfer Purpose / Reason</label>
               <select id="tf-reason" class="w-full px-3.5 py-2 bg-[#f8fafc] border border-[#e2e8f0] rounded-xl text-[#0f172a] font-semibold focus:border-blue-600 focus:outline-none">
-                <option value="Deal Bundle Kit Assembly" ${prefill && prefill.reason === 'Deal Bundle Kit Assembly' ? 'selected' : ''}>Deal Bundle Kit Assembly 🎠</option>
                 <option value="Low Stock Rebalance">Low Stock Rebalance ⚖️</option>
+                <option value="Deal Bundle Kit Assembly" ${prefill && prefill.reason === 'Deal Bundle Kit Assembly' ? 'selected' : ''}>Deal Bundle Kit Assembly 🎠</option>
                 <option value="Customer Order Reservation">Customer Order Reservation 👤</option>
                 <option value="Emergency Restock">Emergency Restock ⚡</option>
               </select>
@@ -449,18 +528,22 @@ export function openInitiateTransferModal(prefill = null) {
 
           <div>
             <label class="block font-bold text-[#0f172a] mb-1">Notes / Instructions</label>
-            <input type="text" id="tf-notes" value="${prefill && prefill.notes ? prefill.notes : ''}" placeholder="e.g. Expedited delivery for bundle kit assembly."
+            <input type="text" id="tf-notes" value="${prefill && prefill.notes ? prefill.notes : ''}" placeholder="e.g. Expedited delivery for customer reservation."
               class="w-full px-3.5 py-2 bg-[#f8fafc] border border-[#e2e8f0] rounded-xl text-[#0f172a] focus:border-blue-600 focus:outline-none">
           </div>
 
-          <!-- Dispatch Mode Option -->
-          <div class="p-3 bg-blue-50/70 border border-blue-200 rounded-xl flex items-center justify-between">
-            <div>
-              <span class="font-bold text-blue-900 block">Instant Warehouse Delivery (Auto-Receive)</span>
-              <span class="text-[10px] text-blue-700">Check to instantly credit stock to destination without transit delay.</span>
+          ${!isStaffUser ? `
+            <!-- Dispatch Mode Option (Admin only) -->
+            <div class="p-3 bg-blue-50/70 border border-blue-200 rounded-xl flex items-center justify-between">
+              <div>
+                <span class="font-bold text-blue-900 block">Instant Warehouse Delivery (Auto-Receive)</span>
+                <span class="text-[10px] text-blue-700">Check to instantly credit stock to destination without transit delay.</span>
+              </div>
+              <input type="checkbox" id="tf-instant" class="w-4 h-4 text-blue-600 rounded">
             </div>
-            <input type="checkbox" id="tf-instant" class="w-4 h-4 text-blue-600 rounded">
-          </div>
+          ` : `
+            <input type="hidden" id="tf-instant" value="false">
+          `}
 
           <!-- Buttons -->
           <div class="pt-3 border-t border-[#e2e8f0] flex items-center justify-end space-x-3">
@@ -470,7 +553,7 @@ export function openInitiateTransferModal(prefill = null) {
             </button>
             <button type="submit"
               class="px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-xs rounded-xl shadow-md transition-all">
-              Dispatch Transfer
+              ${isStaffUser ? 'Submit Transfer Request' : 'Dispatch Transfer'}
             </button>
           </div>
 
@@ -524,13 +607,14 @@ export function validateTransferSourceStock() {
   const avail = (p.branchStock && p.branchStock[fromBranchId]) || 0;
   note.textContent = `Available at source branch: ${avail} units`;
   if (qtyInput) {
-    qtyInput.max = avail;
+    qtyInput.max = Math.max(1, avail);
   }
 }
 
 export function handleSaveTransferSubmit(event) {
   if (event) event.preventDefault();
 
+  const activeUser = getCurrentUser();
   const productId = Number(document.getElementById('tf-product-id').value);
   const fromBranchId = document.getElementById('tf-from-branch').value;
   const toBranchId = document.getElementById('tf-to-branch').value;
@@ -539,12 +623,16 @@ export function handleSaveTransferSubmit(event) {
   const driverOrCourier = document.getElementById('tf-driver').value.trim();
   const trackingCode = document.getElementById('tf-tracking').value.trim();
   const notes = document.getElementById('tf-notes').value.trim();
-  const instantDelivery = document.getElementById('tf-instant').checked;
+  const instantCheckbox = document.getElementById('tf-instant');
+  const instantDelivery = instantCheckbox ? instantCheckbox.checked : false;
 
   if (fromBranchId === toBranchId) {
     alert("Source and Destination branches must be different.");
     return;
   }
+
+  const isStaff = activeUser && activeUser.isStaff();
+  const requestedStatus = isStaff ? "Requested" : (instantDelivery ? "Received" : "In Transit");
 
   const res = createStockTransfer({
     productId,
@@ -555,13 +643,20 @@ export function handleSaveTransferSubmit(event) {
     driverOrCourier,
     trackingCode,
     notes,
-    instantDelivery
+    instantDelivery,
+    status: requestedStatus,
+    requestedBy: activeUser ? `${activeUser.name} (${activeUser.role})` : "Staff Member"
   });
 
   if (res.success) {
-    showToast(`🚀 Stock transfer ${res.transfer.id} initiated successfully!`);
+    if (isStaff) {
+      showToast(`📋 Transfer request #${res.transfer.id} submitted! Waiting for ${res.transfer.fromBranchName} approval.`, 'success');
+    } else {
+      showToast(`🚀 Stock transfer ${res.transfer.id} initiated successfully!`, 'success');
+    }
     closeAdminModal();
     renderTransfersTab();
+    if (typeof renderOverviewTab === 'function') renderOverviewTab();
   } else {
     alert(res.message);
   }
@@ -662,15 +757,3 @@ export function viewTransferManifestModal(transferId) {
     </div>
   `;
 }
-
-// Global Window Bindings
-window.renderTransfersTab = renderTransfersTab;
-window.filterTransfersByStatus = filterTransfersByStatus;
-window.handleTransferSearch = handleTransferSearch;
-window.handleReceiveTransfer = handleReceiveTransfer;
-window.handleCancelTransfer = handleCancelTransfer;
-window.openInitiateTransferModal = openInitiateTransferModal;
-window.updateTransferProductDetails = updateTransferProductDetails;
-window.validateTransferSourceStock = validateTransferSourceStock;
-window.handleSaveTransferSubmit = handleSaveTransferSubmit;
-window.viewTransferManifestModal = viewTransferManifestModal;

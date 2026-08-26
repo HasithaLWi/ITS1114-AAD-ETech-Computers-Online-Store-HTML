@@ -82,7 +82,9 @@ import {
 import {
     initAdminDashboard, switchAdminTab, closeAdminModal,
     handleAdminLogout, filterProductsTable, toggleAdminSidebar,
-    openAdminSidebar, closeAdminSidebar
+    openAdminSidebar, closeAdminSidebar, setSalesChartRange,
+    initSalesOrdersChart, filterStaffAlerts,
+    handleNotificationClick, renderOverviewTab
 } from './src/js/controller/admin_dashboard_controller.js';
 
 // Product Management Controller Imports
@@ -114,7 +116,7 @@ import {
 // User Management Controller Imports
 import {
     renderUsersTab, changeUserRole, confirmDeleteUser,
-    openUserModal, handleSaveUserSubmit
+    openUserModal, handleSaveUserSubmit, handleUserModalRoleChange
 } from './src/js/controller/user_management_controller.js';
 
 // Analytics and Reports Controller Imports
@@ -169,13 +171,13 @@ import {
 // Inter-Branch Stock Transfers Controller & Model Imports
 import {
     renderTransfersTab, filterTransfersByStatus, handleTransferSearch,
-    handleReceiveTransfer, handleCancelTransfer, openInitiateTransferModal,
-    updateTransferProductDetails, validateTransferSourceStock,
+    handleApproveDispatchTransfer, handleReceiveTransfer, handleCancelTransfer, 
+    openInitiateTransferModal, updateTransferProductDetails, validateTransferSourceStock,
     handleSaveTransferSubmit, viewTransferManifestModal
 } from './src/js/controller/transfer_management_controller.js';
 import {
     getStockTransfers, saveStockTransfers, createStockTransfer,
-    receiveStockTransfer, cancelStockTransfer, getTransfersMetrics
+    dispatchStockTransfer, receiveStockTransfer, cancelStockTransfer, getTransfersMetrics
 } from './src/js/models/transfers_data.js';
 
 // ── Bind everything to window in one shot ────────────────────
@@ -274,7 +276,9 @@ Object.assign(window, {
     // Admin Dashboard Shell
     initAdminDashboard, switchAdminTab, closeAdminModal,
     handleAdminLogout, filterProductsTable, toggleAdminSidebar,
-    openAdminSidebar, closeAdminSidebar,
+    openAdminSidebar, closeAdminSidebar, setSalesChartRange,
+    initSalesOrdersChart, filterStaffAlerts,
+    handleNotificationClick, renderOverviewTab,
 
     // Product Management
     renderProductsTab, confirmDeleteProduct, openProductFormPage,
@@ -296,7 +300,7 @@ Object.assign(window, {
 
     // User Management
     renderUsersTab, changeUserRole, confirmDeleteUser,
-    openUserModal, handleSaveUserSubmit,
+    openUserModal, handleSaveUserSubmit, handleUserModalRoleChange,
 
     // Dynamic Page Generators (SPA)
     renderLoginPage, initLoginPage,
@@ -308,6 +312,14 @@ Object.assign(window, {
     openQuickRestockModal, switchRestockModalMode,
     handleQuickRestockSubmit, handleStockTransferSubmit,
     filterStockHealthTable, clearStockSearch, navigateToStockHealthWithSearch,
+
+    // Transfers
+    renderTransfersTab, filterTransfersByStatus, handleTransferSearch,
+    handleApproveDispatchTransfer, handleReceiveTransfer, handleCancelTransfer, 
+    openInitiateTransferModal, updateTransferProductDetails, validateTransferSourceStock,
+    handleSaveTransferSubmit, viewTransferManifestModal,
+    getStockTransfers, saveStockTransfers, createStockTransfer,
+    dispatchStockTransfer, receiveStockTransfer, cancelStockTransfer, getTransfersMetrics,
 
     // Analytics & Reports
     renderAnalyticsTab,

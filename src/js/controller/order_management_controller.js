@@ -622,51 +622,78 @@ export function renderOrdersTab() {
   const tbody = document.getElementById('orders-tbody');
   if (!tbody) return;
 
-  const orders = getAllOrders();
+  const activeUser = getCurrentUser();
+  const allOrders = getAllOrders();
 
-  tbody.innerHTML = orders.map(o => `
-    <tr class="hover:bg-[#f8fafc] transition-colors">
-      <td class="py-3 px-3.5">
-        <a href="#order-detail?id=${o.orderId}" class="font-mono font-extrabold text-blue-600 hover:underline text-xs">${o.orderId}</a>
-        <p class="text-[10px] text-[#64748b]">${o.date}</p>
-      </td>
-      <td class="py-3 px-3.5">
-        <p class="font-bold text-[#0f172a] text-xs">${o.customerName}</p>
-        <p class="text-[10px] text-[#64748b]">${o.email}</p>
-      </td>
-      <td class="py-3 px-3.5">
-        <p class="font-bold text-[#0f172a] text-xs">${o.fulfillmentBranch || 'Colombo Hub'}</p>
-        <p class="text-[10px] text-[#64748b]">Dest: <strong class="text-blue-600">${o.city}</strong> (${o.distanceKm || 5} km)</p>
-      </td>
-      <td class="py-3 px-3.5 font-bold text-[#0f172a] font-mono text-xs">
-        Rs. ${parseFloat((o.totalAmount || 0).toString().replace(/[^0-9.]/g, '')).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-      </td>
-      <td class="py-3 px-3.5">
-        <span class="px-2 py-0.5 rounded text-[9px] font-bold ${getStatusStyle(o.status)}">
-          ${o.status || 'Pending'}
-        </span>
-      </td>
-      <td class="py-3 px-3.5 text-right">
-        <div class="flex items-center justify-end space-x-2">
-          <select onchange="changeOrderStatus('${o.orderId}', this.value)" class="bg-[#f8fafc] border border-[#e2e8f0] text-[#0f172a] rounded px-2 py-1 text-xs focus:border-blue-600 cursor-pointer shadow-sm">
-            <option value="Pending" ${o.status === 'Pending' ? 'selected' : ''}>Pending</option>
-            <option value="Processing" ${o.status === 'Processing' ? 'selected' : ''}>Processing</option>
-            <option value="Shipped" ${o.status === 'Shipped' ? 'selected' : ''}>Shipped</option>
-            <option value="Delivered" ${o.status === 'Delivered' ? 'selected' : ''}>Delivered</option>
-            <option value="Cancelled" ${o.status === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
-          </select>
-        </div>
-      </td>
-    </tr>
-  `).join('') || '<tr><td colspan="6" class="py-8 text-center text-xs text-[#64748b]">No orders recorded yet.</td></tr>';
+  let orders = allOrders;
+  // If Staff, strictly scope to assigned branch
+  if (activeUser && activeUser.isStaff() && activeUser.assignedBranch) {
+    orders = allOrders.filter(o => {
+      if (o.fulfillmentBranchId) return o.fulfillmentBranchId === activeUser.assignedBranch;
+      if (o.fulfillmentBranch) return o.fulfillmentBranch.includes(activeUser.assignedBranch);
+      return true;
+    });
+  }
+
+  tbody.innerHTML = orders.map(o => {
+    const canModifyOrder = activeUser && (activeUser.hasGlobalAccess() || activeUser.canManageBranch(o.fulfillmentBranchId));
+
+    return `
+      <tr class="hover:bg-[#f8fafc] transition-colors">
+        <td class="py-3 px-3.5">
+          <a href="#order-detail?id=${o.orderId}" class="font-mono font-extrabold text-blue-600 hover:underline text-xs">${o.orderId}</a>
+          <p class="text-[10px] text-[#64748b]">${o.date}</p>
+        </td>
+        <td class="py-3 px-3.5">
+          <p class="font-bold text-[#0f172a] text-xs">${o.customerName}</p>
+          <p class="text-[10px] text-[#64748b]">${o.email}</p>
+        </td>
+        <td class="py-3 px-3.5">
+          <p class="font-bold text-[#0f172a] text-xs">${o.fulfillmentBranch || 'Colombo Hub'}</p>
+          <p class="text-[10px] text-[#64748b]">Dest: <strong class="text-blue-600">${o.city}</strong> (${o.distanceKm || 5} km)</p>
+        </td>
+        <td class="py-3 px-3.5 font-bold text-[#0f172a] font-mono text-xs">
+          Rs. ${parseFloat((o.totalAmount || 0).toString().replace(/[^0-9.]/g, '')).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+        </td>
+        <td class="py-3 px-3.5">
+          <span class="px-2 py-0.5 rounded text-[9px] font-bold ${getStatusStyle(o.status)}">
+            ${o.status || 'Pending'}
+          </span>
+        </td>
+        <td class="py-3 px-3.5 text-right">
+          <div class="flex items-center justify-end space-x-2">
+            ${canModifyOrder ? `
+              <select onchange="changeOrderStatus('${o.orderId}', this.value)" class="bg-[#f8fafc] border border-[#e2e8f0] text-[#0f172a] rounded px-2 py-1 text-xs focus:border-blue-600 cursor-pointer shadow-sm">
+                <option value="Pending" ${o.status === 'Pending' ? 'selected' : ''}>Pending</option>
+                <option value="Processing" ${o.status === 'Processing' ? 'selected' : ''}>Processing</option>
+                <option value="Shipped" ${o.status === 'Shipped' ? 'selected' : ''}>Shipped</option>
+                <option value="Delivered" ${o.status === 'Delivered' ? 'selected' : ''}>Delivered</option>
+                <option value="Cancelled" ${o.status === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
+              </select>
+            ` : `
+              <span class="text-[10px] text-[#94a3b8] font-mono px-2 py-1 bg-slate-50 rounded border border-slate-200">
+                View Only
+              </span>
+            `}
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('') || '<tr><td colspan="6" class="py-8 text-center text-xs text-[#64748b]">No orders found for your branch.</td></tr>';
 }
 
 export function changeOrderStatus(orderId, newStatus) {
+  const activeUser = getCurrentUser();
+  const order = getOrderById(orderId);
+
+  if (activeUser && !activeUser.hasGlobalAccess() && order && !activeUser.canManageBranch(order.fulfillmentBranchId)) {
+    alert(`Permission Denied: You are only authorized to modify orders assigned to your branch (${activeUser.assignedBranch}).`);
+    return;
+  }
+
   const res = updateOrderStatus(orderId, newStatus);
   if (res.success) {
-    if (document.getElementById('recent-orders-feed')) {
-      if (window.initAdminDashboard) window.initAdminDashboard();
-    }
+    if (window.showToast) window.showToast(res.message, 'success');
     if (document.getElementById('orders-tbody')) {
       renderOrdersTab();
     }
