@@ -14,6 +14,9 @@ import {
     DEFAULT_BUSINESS_INFO, DEFAULT_LEGAL_POLICIES
 } from './src/js/models/policy-data.js';
 import { ET_CONFIG } from './src/js/models/et-training.js';
+import { 
+    User, CURRENT_USER_STORAGE_KEY, getRoleBadge, extractUniqueRoles
+} from './src/js/models/user_model.js';
 import { AuthApi, UserApi } from './src/js/api/userApi.js';
 import {
     getToken, setToken, removeToken,
@@ -95,8 +98,12 @@ import {
 // Order Management Controller Imports
 import {
     renderOrdersTab, changeOrderStatus,
-    saveOrder, getAllOrders, getUserOrders, updateOrderStatus
+    saveOrder, getAllOrders, getUserOrders, updateOrderStatus,
+    getOrderById, cancelCustomerOrder, renderCustomerOrderDetailPage,
+    openOrderSupportEmail, handleCustomerCancelOrder, closeCancelOrderModal,
+    confirmCancelOrder
 } from './src/js/controller/order_management_controller.js';
+import { handleUserOrderSearch, handleUserOrderStatusFilter } from './src/js/app/app.js';
 
 // Branch Management Controller Imports
 import {
@@ -215,6 +222,9 @@ Object.assign(window, {
     // Chatbot Config
     ET_CONFIG,
 
+    // User Model & Data Layer
+    User, CURRENT_USER_STORAGE_KEY, getRoleBadge, extractUniqueRoles,
+
     // Authentication & User Profile Management
     AuthApi, UserApi, getToken, setToken, removeToken,
     registerUser, loginUser, setCurrentUser,
@@ -272,8 +282,11 @@ Object.assign(window, {
     triggerProductFormSubmit, updateLivePreview, editProduct,
     openProductModal, handleSaveProductSubmit,
 
-    // Order Management
+    // Order Management & Customer Order Control
     renderOrdersTab, changeOrderStatus, saveOrder, getAllOrders, getUserOrders, updateOrderStatus,
+    getOrderById, cancelCustomerOrder, renderCustomerOrderDetailPage, openOrderSupportEmail,
+    handleCustomerCancelOrder, closeCancelOrderModal, confirmCancelOrder,
+    handleUserOrderSearch, handleUserOrderStatusFilter,
 
     // Branch Management
     renderBranchesTab, confirmDeleteBranch, openBranchModal,

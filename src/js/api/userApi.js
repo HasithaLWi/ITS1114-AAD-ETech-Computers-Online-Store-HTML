@@ -7,12 +7,9 @@ export const AuthApi = {
   /**
    * Authenticate user credentials and retrieve JWT token + sanitized profile
    * POST /api/v1/auth/login
-   * 
-   * @param {string} username - Username or email
-   * @param {string} password - Account password
-   * @returns {Promise<{token: string, user: object}>}
    */
   async login(username, password) {
+    console.log('[UserAPI] AuthApi.login() -> username/email:', (username || '').trim());
     return ajaxRequest({
       endpoint: '/auth/login',
       method: 'POST',
@@ -26,15 +23,13 @@ export const AuthApi = {
   /**
    * Register a new customer storefront user
    * POST /api/v1/auth/register
-   * 
-   * @param {object} param0
-   * @param {string} param0.name - Full name
-   * @param {string} param0.username - Unique alphanumeric username
-   * @param {string} param0.email - Unique email address
-   * @param {string} param0.password - Account password
-   * @returns {Promise<{token: string, user: object}>}
    */
   async register({ name, username, email, password }) {
+    console.log('[UserAPI] AuthApi.register() -> new user:', { 
+      name: (name || '').trim(), 
+      username: (username || '').trim().toLowerCase(), 
+      email: (email || '').trim().toLowerCase() 
+    });
     return ajaxRequest({
       endpoint: '/auth/register',
       method: 'POST',
@@ -50,10 +45,9 @@ export const AuthApi = {
   /**
    * Retrieve currently authenticated user profile from active JWT session
    * GET /api/v1/auth/me
-   * 
-   * @returns {Promise<object>}
    */
   async getCurrentUser() {
+    console.log('[UserAPI] AuthApi.getCurrentUser() -> verifying active session');
     return ajaxRequest({
       endpoint: '/auth/me',
       method: 'GET'
@@ -63,22 +57,28 @@ export const AuthApi = {
 
 export const UserApi = {
   /**
+   * Fetch list of available user roles from database (if supported by backend)
+   * GET /api/v1/users/roles
+   */
+  async getRoles() {
+    console.log('[UserAPI] UserApi.getRoles() -> fetching system roles');
+    return ajaxRequest({
+      endpoint: '/users/roles',
+      method: 'GET'
+    });
+  },
+
+  /**
    * Fetch system user directory with optional filtering (Admin/Superadmin only)
    * GET /api/v1/users
-   * 
-   * @param {object} [params]
-   * @param {string} [params.role] - Filter by role (SUPERADMIN, ADMIN, STAFF, CUSTOMER)
-   * @param {string} [params.branch] - Filter by branch ID (BR-COL, BR-GAL, etc.)
-   * @param {string} [params.search] - Search keyword (name, username, email)
-   * @returns {Promise<Array<object>>}
    */
   async getUsers(params = {}) {
-    // Filter out empty params
     const query = {};
     if (params.role) query.role = params.role;
     if (params.branch) query.branch = params.branch;
     if (params.search) query.search = params.search;
 
+    console.log('[UserAPI] UserApi.getUsers() -> query filters:', query);
     return ajaxRequest({
       endpoint: '/users',
       method: 'GET',
@@ -89,11 +89,9 @@ export const UserApi = {
   /**
    * Fetch single user record by database ID
    * GET /api/v1/users/{id}
-   * 
-   * @param {number|string} id
-   * @returns {Promise<object>}
    */
   async getUserById(id) {
+    console.log('[UserAPI] UserApi.getUserById() -> user ID:', id);
     return ajaxRequest({
       endpoint: `/users/${encodeURIComponent(id)}`,
       method: 'GET'
@@ -103,17 +101,16 @@ export const UserApi = {
   /**
    * Create a new user account (Admin/Superadmin only)
    * POST /api/v1/users
-   * 
-   * @param {object} userData
-   * @param {string} userData.name
-   * @param {string} userData.username
-   * @param {string} userData.email
-   * @param {string} userData.password
-   * @param {string} userData.role - Role to assign
-   * @param {string|null} [userData.assignedBranch] - Branch ID or null
-   * @returns {Promise<object>}
    */
   async createUser(userData) {
+    console.log('[UserAPI] UserApi.createUser() -> new user account:', {
+      name: (userData.name || '').trim(),
+      username: (userData.username || '').trim().toLowerCase(),
+      email: (userData.email || '').trim().toLowerCase(),
+      role: userData.role || 'CUSTOMER',
+      assignedBranch: userData.assignedBranch || null
+    });
+
     return ajaxRequest({
       endpoint: '/users',
       method: 'POST',
@@ -131,12 +128,17 @@ export const UserApi = {
   /**
    * Update user details and optionally override password
    * PUT /api/v1/users/{id}
-   * 
-   * @param {number|string} id
-   * @param {object} userData
-   * @returns {Promise<object>}
    */
   async updateUser(id, userData) {
+    console.log('[UserAPI] UserApi.updateUser() -> ID:', id, {
+      name: (userData.name || '').trim(),
+      username: (userData.username || '').trim().toLowerCase(),
+      email: (userData.email || '').trim().toLowerCase(),
+      role: userData.role,
+      assignedBranch: userData.assignedBranch || null,
+      hasPasswordUpdate: Boolean(userData.password)
+    });
+
     const payload = {
       name: (userData.name || '').trim(),
       username: (userData.username || '').trim().toLowerCase(),
@@ -159,14 +161,9 @@ export const UserApi = {
   /**
    * Assign / change a user's system role and branch
    * PATCH /api/v1/users/{id}/role
-   * 
-   * @param {number|string} id
-   * @param {object} param1
-   * @param {string} param1.role - New role (SUPERADMIN, ADMIN, STAFF, CUSTOMER)
-   * @param {string|null} [param1.assignedBranch] - Optional branch ID
-   * @returns {Promise<object>}
    */
   async updateUserRole(id, { role, assignedBranch = null }) {
+    console.log('[UserAPI] UserApi.updateUserRole() -> ID:', id, { role, assignedBranch });
     return ajaxRequest({
       endpoint: `/users/${encodeURIComponent(id)}/role`,
       method: 'PATCH',
@@ -180,11 +177,9 @@ export const UserApi = {
   /**
    * Delete user account from system
    * DELETE /api/v1/users/{id}
-   * 
-   * @param {number|string} id
-   * @returns {Promise<{success: boolean, message: string}>}
    */
   async deleteUser(id) {
+    console.log('[UserAPI] UserApi.deleteUser() -> ID:', id);
     return ajaxRequest({
       endpoint: `/users/${encodeURIComponent(id)}`,
       method: 'DELETE'
@@ -194,14 +189,14 @@ export const UserApi = {
   /**
    * Update logged-in user's personal profile (Name, Username, Email)
    * PUT /api/v1/users/me/profile
-   * 
-   * @param {object} param0
-   * @param {string} param0.name
-   * @param {string} param0.username
-   * @param {string} param0.email
-   * @returns {Promise<object>}
    */
   async updateSelfProfile({ name, username, email }) {
+    console.log('[UserAPI] UserApi.updateSelfProfile() -> profile:', {
+      name: (name || '').trim(),
+      username: (username || '').trim().toLowerCase(),
+      email: (email || '').trim().toLowerCase()
+    });
+
     return ajaxRequest({
       endpoint: '/users/me/profile',
       method: 'PUT',
@@ -216,13 +211,9 @@ export const UserApi = {
   /**
    * Change logged-in user's account password
    * PUT /api/v1/users/me/password
-   * 
-   * @param {object} param0
-   * @param {string} param0.currentPassword
-   * @param {string} param0.newPassword
-   * @returns {Promise<{success: boolean, message: string}>}
    */
   async changeSelfPassword({ currentPassword, newPassword }) {
+    console.log('[UserAPI] UserApi.changeSelfPassword() -> password update request');
     return ajaxRequest({
       endpoint: '/users/me/password',
       method: 'PUT',
@@ -233,3 +224,4 @@ export const UserApi = {
     });
   }
 };
+

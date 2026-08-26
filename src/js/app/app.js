@@ -3,7 +3,10 @@ import { products, getProductById, getFeaturedProducts, getNewArrivalProducts } 
 import { getHomeDealBanner, getHomeBannerRemainingTime } from '../models/deals_data.js';
 import { legalPolicies, getPolicyData, getStoredPolicies } from '../models/policy-data.js';
 import { getCurrentUser, isLoggedIn, logoutUser } from '../controller/login_controller.js';
-import { getUserOrders } from '../controller/order_management_controller.js';
+import { 
+  getUserOrders, getOrderById, renderCustomerOrderDetailPage, 
+  openOrderSupportEmail, handleCustomerCancelOrder, getStatusStyle 
+} from '../controller/order_management_controller.js';
 import { initCartLogic, initCheckoutLogic, updateCartBadge, addToCart, getCart, saveCart, showToast } from '../controller/cart_controller.js';
 import { renderProductDetailsPage, viewProductDetails } from '../controller/product-details_controller.js';
 import { initShopLogic } from '../controller/shop_controller.js';
@@ -128,6 +131,28 @@ function handleRoute() {
       renderPolicyPage(activeKey);
     }
     updateActiveNavLinks(pageName);
+    updateHeaderAuthUI();
+    return;
+  }
+
+  // Handle Order Details & Tracking route (#order-detail?id=X or #order-details?id=X or #order-tracking?id=X)
+  if (['order', 'order-detail', 'order-details', 'order-tracking'].includes(pageName)) {
+    if (!isLoggedIn()) {
+      window.location.hash = `#login?redirect=${encodeURIComponent(hash.substring(1))}`;
+      return;
+    }
+    const orderSection = document.getElementById('order-details-page');
+    if (orderSection) {
+      orderSection.classList.remove('hidden');
+      window.scrollTo(0, 0);
+      let orderId = '';
+      if (queryPart) {
+        const params = new URLSearchParams(queryPart);
+        orderId = params.get('id') || '';
+      }
+      renderCustomerOrderDetailPage(orderId);
+    }
+    updateActiveNavLinks('account');
     updateHeaderAuthUI();
     return;
   }
@@ -460,16 +485,49 @@ function initAccountLogic() {
   if (usernameEl) usernameEl.textContent = `@${user.username || (user.email ? user.email.split('@')[0] : 'user')}`;
   if (emailEl) emailEl.textContent = user.email;
   if (idEl) idEl.textContent = user.id || 'USR-882910';
-  if (joinedEl) joinedEl.textContent = user.createdAt || 'Member';
+  if (joinedEl) {
+    if (user.createdAt) {
+      try {
+        const d = new Date(user.createdAt);
+        joinedEl.textContent = isNaN(d.getTime()) ? user.createdAt : d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+      } catch (e) {
+        joinedEl.textContent = user.createdAt;
+      }
+    } else {
+      joinedEl.textContent = 'Today';
+    }
+  }
   if (roleTextEl) roleTextEl.textContent = `${user.role || 'CUSTOMER'} Account`;
 
   renderUserOrderHistory(user);
 }
 
 /**
- * Render user's saved orders history list
+ * Real-time Order Filtering State & Handlers
  */
-function renderUserOrderHistory(userOrEmail) {
+let userOrderSearchQuery = '';
+let userOrderStatusFilter = 'All';
+
+export function handleUserOrderSearch(query) {
+  userOrderSearchQuery = (query || '').toLowerCase().trim();
+  const currentUser = getCurrentUser();
+  if (currentUser) renderUserOrderHistory(currentUser);
+}
+
+export function handleUserOrderStatusFilter(status) {
+  userOrderStatusFilter = status || 'All';
+  const currentUser = getCurrentUser();
+  if (currentUser) renderUserOrderHistory(currentUser);
+}
+
+window.handleUserOrderSearch = handleUserOrderSearch;
+window.handleUserOrderStatusFilter = handleUserOrderStatusFilter;
+window.renderUserOrderHistory = renderUserOrderHistory;
+
+/**
+ * Render user's saved orders history list with Search, Filtering, and Interactive Controls
+ */
+export function renderUserOrderHistory(userOrEmail) {
   const container = document.getElementById('account-orders-list');
   const countEl = document.getElementById('account-orders-count');
   if (!container) return;
@@ -479,71 +537,197 @@ function renderUserOrderHistory(userOrEmail) {
     return;
   }
 
-  const orders = getUserOrders(userOrEmail);
+  const allOrders = getUserOrders(userOrEmail);
+  const totalCount = allOrders.length;
 
-  if (countEl) countEl.textContent = `${orders.length} Order${orders.length === 1 ? '' : 's'}`;
+  const statusCounts = {
+    All: totalCount,
+    Pending: allOrders.filter(o => (o.status || 'Pending') === 'Pending').length,
+    Processing: allOrders.filter(o => o.status === 'Processing').length,
+    Shipped: allOrders.filter(o => o.status === 'Shipped').length,
+    Delivered: allOrders.filter(o => o.status === 'Delivered').length,
+    Cancelled: allOrders.filter(o => o.status === 'Cancelled').length
+  };
 
-  if (orders.length === 0) {
+  const filteredOrders = allOrders.filter(o => {
+    const oStatus = o.status || 'Pending';
+    const matchesStatus = (userOrderStatusFilter === 'All') || (oStatus === userOrderStatusFilter);
+    if (!matchesStatus) return false;
+
+    if (!userOrderSearchQuery) return true;
+    const q = userOrderSearchQuery;
+    const matchId = String(o.orderId || '').toLowerCase().includes(q);
+    const matchCity = String(o.city || '').toLowerCase().includes(q);
+    const matchBranch = String(o.fulfillmentBranch || '').toLowerCase().includes(q);
+    const matchPayment = String(o.paymentMethod || '').toLowerCase().includes(q);
+    const matchItem = Array.isArray(o.items) && o.items.some(i => String(i.name || '').toLowerCase().includes(q));
+    return matchId || matchCity || matchBranch || matchPayment || matchItem;
+  });
+
+  if (countEl) countEl.textContent = `${filteredOrders.length} of ${totalCount} Order${totalCount === 1 ? '' : 's'}`;
+
+  // Filter toolbar HTML
+  const filterToolbarHTML = `
+    <div class="space-y-2.5 pb-2">
+      <!-- Search Input -->
+      <div class="relative">
+        <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[#94a3b8]">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        </span>
+        <input 
+          type="text" 
+          id="account-orders-search-input"
+          placeholder="Search by Order ID, product title, branch or city..." 
+          value="${userOrderSearchQuery}"
+          oninput="handleUserOrderSearch(this.value)"
+          class="w-full pl-9 pr-8 py-2 bg-[#f8fafc] border border-[#e2e8f0] rounded-lg text-xs text-[#0f172a] focus:bg-white focus:border-blue-600 outline-none transition-all placeholder-[#94a3b8]"
+        >
+        ${userOrderSearchQuery ? `
+          <button type="button" onclick="handleUserOrderSearch(''); document.getElementById('account-orders-search-input').value='';" class="absolute inset-y-0 right-0 pr-3 flex items-center text-[#94a3b8] hover:text-[#0f172a]">
+            &times;
+          </button>
+        ` : ''}
+      </div>
+
+      <!-- Status Filter Chips -->
+      <div class="flex items-center space-x-1.5 overflow-x-auto pb-1 text-[11px]">
+        ${['All', 'Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'].map(st => {
+          const count = statusCounts[st] || 0;
+          const isActive = userOrderStatusFilter === st;
+          return `
+            <button 
+              type="button" 
+              onclick="handleUserOrderStatusFilter('${st}')"
+              class="px-2.5 py-1 rounded-full font-bold transition-all whitespace-nowrap flex items-center space-x-1 ${
+                isActive 
+                  ? 'bg-blue-600 text-white shadow-xs' 
+                  : 'bg-[#f1f5f9] text-[#64748b] hover:bg-[#e2e8f0] hover:text-[#0f172a]'
+              }">
+              <span>${st}</span>
+              <span class="text-[9px] px-1.5 py-0.2 rounded-full ${isActive ? 'bg-white/20 text-white' : 'bg-[#e2e8f0] text-[#475569]'}">${count}</span>
+            </button>
+          `;
+        }).join('')}
+      </div>
+    </div>
+  `;
+
+  if (filteredOrders.length === 0) {
     container.innerHTML = `
+      ${totalCount > 0 ? filterToolbarHTML : ''}
       <div class="text-center py-12 bg-[#f8fafc] rounded-lg border border-[#e2e8f0] space-y-3">
         <div class="w-12 h-12 rounded-full bg-white text-[#64748b] flex items-center justify-center mx-auto border border-[#e2e8f0]">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
         </div>
-        <h4 class="text-sm font-bold text-[#0f172a]">No Orders Placed Yet</h4>
-        <p class="text-xs text-[#64748b] max-w-sm mx-auto">Your order history will appear here after you place an order.</p>
-        <a href="#shop" class="inline-block px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-md transition-colors shadow-sm">Explore Hardware Catalog</a>
+        <h4 class="text-sm font-bold text-[#0f172a]">${totalCount === 0 ? 'No Orders Placed Yet' : 'No Matching Orders Found'}</h4>
+        <p class="text-xs text-[#64748b] max-w-sm mx-auto">
+          ${totalCount === 0 
+            ? 'Your purchase order history will appear here after placing your first hardware order.' 
+            : 'Try adjusting your search keywords or filter status to find what you are looking for.'}
+        </p>
+        ${totalCount === 0 ? `
+          <a href="#shop" class="inline-block px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-md transition-colors shadow-sm">Explore Hardware Catalog</a>
+        ` : `
+          <button type="button" onclick="handleUserOrderSearch(''); handleUserOrderStatusFilter('All');" class="inline-block px-3.5 py-1.5 bg-white border border-[#e2e8f0] hover:bg-[#f1f5f9] text-[#475569] font-bold text-xs rounded-md transition-colors shadow-2xs">
+            Clear Search Filters
+          </button>
+        `}
       </div>
     `;
     return;
   }
 
-  container.innerHTML = orders.map(order => `
-    <div class="bg-[#f8fafc] border border-[#e2e8f0] rounded-lg p-4 space-y-3.5 hover:border-[#cbd5e1] transition-colors shadow-sm">
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[#e2e8f0] pb-2.5 gap-2">
-        <div>
-          <span class="text-[10px] font-bold uppercase tracking-wider text-[#64748b]">Order ID</span>
-          <h4 class="text-sm font-extrabold text-blue-600 font-mono">${order.orderId}</h4>
-          <p class="text-[10px] text-[#64748b]">${order.date}</p>
-        </div>
-        <div class="flex items-center space-x-3">
-          <span class="px-2.5 py-0.5 rounded bg-emerald-50 border border-emerald-200 text-emerald-700 text-[10px] font-bold">
-            ✓ ${order.status || 'Pending'}
-          </span>
-          <span class="text-base font-extrabold text-[#0f172a] font-mono">Rs. ${parseFloat((order.totalAmount || 0).toString().replace(/[^0-9.]/g, '')).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-        </div>
-      </div>
+  container.innerHTML = `
+    ${filterToolbarHTML}
+    <div class="space-y-3">
+      ${filteredOrders.map(order => {
+        const oStatus = order.status || 'Pending';
+        const isCancellable = oStatus === 'Pending' || oStatus === 'Processing';
 
-      <!-- Dispatch Hub & Destination -->
-      <div class="flex items-center justify-between text-xs bg-white p-2.5 rounded-md border border-[#e2e8f0]">
-        <span class="text-[#64748b]">Dispatch Hub: <strong class="text-[#0f172a]">${order.fulfillmentBranch || 'Colombo Hub'}</strong></span>
-        <span class="text-[#64748b]">Destination: <strong class="text-blue-600">${order.city || 'Colombo'}</strong> (${order.distanceKm || 5} km)</span>
-      </div>
-
-      <!-- Items Grid -->
-      <div class="space-y-2">
-        <p class="text-[10px] font-bold text-[#64748b] uppercase tracking-wider">Purchased Items</p>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          ${order.items.map(item => `
-            <div class="flex items-center space-x-2.5 bg-white p-2 rounded-md border border-[#e2e8f0]">
-              <img src="${item.image}" alt="${item.name}" class="w-9 h-9 object-cover rounded flex-shrink-0 bg-[#f8fafc]">
-              <div class="min-w-0 flex-1">
-                <p class="text-xs font-bold text-[#0f172a] truncate">${item.name}</p>
-                <p class="text-[10px] text-[#64748b] font-mono">Qty: ${item.quantity} × Rs. ${item.price}</p>
+        return `
+          <div class="bg-[#f8fafc] border border-[#e2e8f0] rounded-lg p-4 space-y-3.5 hover:border-[#cbd5e1] transition-all shadow-xs">
+            
+            <!-- Order Header -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[#e2e8f0] pb-2.5 gap-2">
+              <div>
+                <span class="text-[10px] font-bold uppercase tracking-wider text-[#64748b]">Order ID</span>
+                <div class="flex items-center space-x-2">
+                  <a href="#order-detail?id=${order.orderId}" class="text-sm font-black text-blue-600 hover:text-blue-700 hover:underline font-mono">
+                    #${order.orderId}
+                  </a>
+                  <span class="text-[10px] text-[#64748b]">&bull; ${order.date}</span>
+                </div>
+              </div>
+              <div class="flex items-center space-x-3">
+                <span class="px-2.5 py-0.5 rounded text-[10px] font-extrabold uppercase ${getStatusStyle(oStatus)}">
+                  ${oStatus === 'Cancelled' ? '✕ Cancelled' : (oStatus === 'Delivered' ? '✓ Delivered' : `● ${oStatus}`)}
+                </span>
+                <span class="text-base font-extrabold text-[#0f172a] font-mono">
+                  Rs. ${parseFloat((order.totalAmount || 0).toString().replace(/[^0-9.]/g, '')).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </span>
               </div>
             </div>
-          `).join('')}
-        </div>
-      </div>
 
-      <div class="pt-2 border-t border-[#e2e8f0] flex items-center justify-between text-[11px] text-[#64748b]">
-        <span>Payment: <strong class="text-[#0f172a]">${order.paymentMethod}</strong></span>
-        <span class="text-emerald-600 font-medium flex items-center space-x-1">
-          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-          <span>Verified Purchase</span>
-        </span>
-      </div>
+            <!-- Dispatch Hub & Destination -->
+            <div class="flex items-center justify-between text-xs bg-white p-2.5 rounded-md border border-[#e2e8f0]">
+              <span class="text-[#64748b]">Dispatch Hub: <strong class="text-[#0f172a]">${order.fulfillmentBranch || 'Colombo Hub'}</strong></span>
+              <span class="text-[#64748b]">Destination: <strong class="text-blue-600">${order.city || 'Colombo'}</strong> (${order.distanceKm || 5} km)</span>
+            </div>
+
+            <!-- Items Grid: Clickable to inspect each product -->
+            <div class="space-y-1.5">
+              <div class="flex items-center justify-between">
+                <p class="text-[10px] font-bold text-[#64748b] uppercase tracking-wider">Purchased Items (${(order.items || []).length})</p>
+                <span class="text-[10px] text-blue-600 font-semibold">Click product to view</span>
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                ${(order.items || []).map(item => `
+                  <a href="#product?id=${item.id}" class="flex items-center space-x-2.5 bg-white p-2.5 rounded-md border border-[#e2e8f0] hover:border-blue-500 hover:bg-blue-50/20 transition-all group shadow-2xs">
+                    <img src="${item.image}" alt="${item.name}" class="w-10 h-10 object-cover rounded flex-shrink-0 bg-[#f8fafc] border border-[#e2e8f0] group-hover:scale-105 transition-transform">
+                    <div class="min-w-0 flex-1">
+                      <p class="text-xs font-bold text-[#0f172a] group-hover:text-blue-600 transition-colors truncate">${item.name}</p>
+                      <p class="text-[10px] text-[#64748b] font-mono">Qty: ${item.quantity} &times; Rs. ${parseFloat(item.price || 0).toLocaleString()}</p>
+                    </div>
+                    <span class="text-[10px] text-blue-600 font-bold opacity-0 group-hover:opacity-100 transition-opacity">View &rarr;</span>
+                  </a>
+                `).join('')}
+              </div>
+            </div>
+
+            <!-- Order Card Action Footer -->
+            <div class="pt-3 border-t border-[#e2e8f0] flex flex-wrap items-center justify-between gap-2.5">
+              <div class="flex items-center space-x-2 text-[11px] text-[#64748b]">
+                <span>Payment: <strong class="text-[#0f172a]">${order.paymentMethod}</strong></span>
+                <span class="text-emerald-600 font-medium flex items-center space-x-1">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                  <span>Verified</span>
+                </span>
+              </div>
+
+              <div class="flex items-center space-x-2">
+                ${isCancellable ? `
+                  <button type="button" onclick="handleCustomerCancelOrder('${order.orderId}')" class="px-2.5 py-1 text-[11px] font-bold text-rose-600 hover:bg-rose-50 border border-rose-200 rounded transition-colors shadow-2xs">
+                    Cancel Order
+                  </button>
+                ` : ''}
+
+                <button type="button" onclick="openOrderSupportEmail('${order.orderId}')" class="px-2.5 py-1 text-[11px] font-bold text-[#475569] hover:bg-[#f1f5f9] border border-[#e2e8f0] rounded transition-colors flex items-center space-x-1 shadow-2xs">
+                  <svg class="w-3 h-3 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                  <span>Email Support</span>
+                </button>
+
+                <a href="#order-detail?id=${order.orderId}" class="px-3.5 py-1 text-[11px] font-bold text-white bg-blue-600 hover:bg-blue-500 rounded shadow-xs transition-colors flex items-center space-x-1">
+                  <span>Track &amp; Details</span>
+                  <span>&rarr;</span>
+                </a>
+              </div>
+            </div>
+
+          </div>
+        `;
+      }).join('')}
     </div>
-  `).join('');
+  `;
 }
 
 /**
