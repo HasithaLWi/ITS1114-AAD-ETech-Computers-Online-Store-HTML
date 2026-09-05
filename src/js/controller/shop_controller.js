@@ -1,11 +1,11 @@
 // ============================================================
 //  src/js/controller/shop_controller.js — Shop Catalog & Multi-Filter Logic
 // ============================================================
-import { products, getStoredProducts } from '../models/data.js';
+import { products, getStoredProducts, syncProductsFromApi } from '../models/data.js';
 import { addToCart } from './cart_controller.js';
 import { viewProductDetails } from './product-details_controller.js';
-import { getCategories } from '../models/taxonomy_data.js';
-import { getBrands, getBrandBySlug } from '../models/brand_data.js';
+import { getCategories, syncCategoriesFromApi } from '../models/taxonomy_data.js';
+import { getBrands, getBrandBySlug, syncBrandsFromApi } from '../models/brand_data.js';
 
 // Module-level state for multi-selected filters
 let selectedCategorySlugs = [];
@@ -55,7 +55,11 @@ export function renderCategoryCombobox() {
   let optionsHtml = `<option value="" disabled selected>+ Select category...</option>`;
 
   categories.forEach(c => {
-    const isSelected = selectedCategorySlugs.includes(c.slug.toLowerCase());
+    const isSelected = selectedCategorySlugs.some(s => 
+      s === c.slug.toLowerCase() || 
+      s === c.id.toLowerCase() || 
+      s === c.name.toLowerCase()
+    );
     const icon = c.icon ? `${c.icon} ` : '';
     if (isSelected) {
       optionsHtml += `<option value="${c.slug}" disabled class="text-[#94a3b8] bg-[#f8fafc]">${icon}${c.name} ✓ (Selected)</option>`;
@@ -90,7 +94,11 @@ export function renderSelectedCategoryTags() {
   }
 
   tagsContainer.innerHTML = selectedCategorySlugs.map(slug => {
-    const cat = categories.find(c => c.slug.toLowerCase() === slug.toLowerCase());
+    const cat = categories.find(c => 
+      c.slug.toLowerCase() === slug.toLowerCase() || 
+      c.id.toLowerCase() === slug.toLowerCase() || 
+      c.name.toLowerCase() === slug.toLowerCase()
+    );
     const name = cat ? cat.name : slug;
     const icon = cat && cat.icon ? `${cat.icon} ` : '🏷️ ';
 
@@ -98,7 +106,7 @@ export function renderSelectedCategoryTags() {
       <span class="inline-flex items-center space-x-1.5 text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200 px-2.5 py-1 rounded-md shadow-sm transition-all hover:bg-blue-100 group">
         <span class="truncate max-w-[130px]" title="${name}">${icon}${name}</span>
         <button type="button" onclick="removeCategoryFilter('${slug}')"
-          class="text-blue-600 hover:text-blue-900 hover:bg-blue-200/60 rounded p-0.5 ml-0.5 transition-colors focus:outline-none flex items-center justify-center"
+          class="text-blue-600 hover:text-blue-900 hover:bg-blue-200/60 rounded p-0.5 ml-0.5 transition-colors focus:outline-none flex items-center justify-center cursor-pointer"
           title="Remove ${name} filter">
           <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
@@ -153,7 +161,11 @@ export function renderBrandCombobox() {
   let optionsHtml = `<option value="" disabled selected>+ Select brand...</option>`;
 
   brands.forEach(b => {
-    const isSelected = selectedBrandSlugs.includes(b.slug.toLowerCase()) || selectedBrandSlugs.includes(b.name.toLowerCase());
+    const isSelected = selectedBrandSlugs.some(s => 
+      s === b.slug.toLowerCase() || 
+      s === b.name.toLowerCase() || 
+      s === b.id.toLowerCase()
+    );
     if (isSelected) {
       optionsHtml += `<option value="${b.slug}" disabled class="text-[#94a3b8] bg-[#f8fafc]">${b.name} ✓ (Selected)</option>`;
     } else {
@@ -187,7 +199,11 @@ export function renderSelectedBrandTags() {
   }
 
   tagsContainer.innerHTML = selectedBrandSlugs.map(slug => {
-    const brand = brands.find(b => b.slug.toLowerCase() === slug.toLowerCase() || b.name.toLowerCase() === slug.toLowerCase());
+    const brand = brands.find(b => 
+      b.slug.toLowerCase() === slug.toLowerCase() || 
+      b.name.toLowerCase() === slug.toLowerCase() || 
+      b.id.toLowerCase() === slug.toLowerCase()
+    );
     const name = brand ? brand.name : slug;
 
     return `
@@ -223,11 +239,14 @@ export function initShopLogic(queryPart = '') {
   let initialCategory = '';
   let initialBrand = '';
   let initialSearch = '';
+  let initialSort = 'featured';
+
   if (queryPart) {
     const params = new URLSearchParams(queryPart);
     initialCategory = params.get('cat') || params.get('category') || '';
     initialBrand = params.get('brand') || params.get('b') || '';
     initialSearch = params.get('search') || params.get('q') || params.get('keyword') || '';
+    initialSort = params.get('sort') || params.get('order') || 'featured';
   }
 
   if (initialCategory) {
@@ -254,6 +273,10 @@ export function initShopLogic(queryPart = '') {
     headerSearchInput.value = initialSearch;
   }
 
+  if (sortSelect) {
+    sortSelect.value = initialSort || 'featured';
+  }
+
   // Populate comboboxes and active tags
   renderCategoryCombobox();
   renderSelectedCategoryTags();
@@ -278,16 +301,21 @@ export function initShopLogic(queryPart = '') {
   // Event Listeners for Live Filtering
   if (searchInput) {
     searchInput.oninput = renderFilteredProducts;
+    searchInput.onkeyup = renderFilteredProducts;
+    searchInput.onchange = renderFilteredProducts;
   }
   if (sortSelect) {
     sortSelect.onchange = renderFilteredProducts;
   }
 
   if (priceSlider) {
-    priceSlider.oninput = (e) => {
-      if (priceValueDisplay) priceValueDisplay.textContent = `Rs. ${parseInt(e.target.value).toLocaleString()}`;
+    const handlePriceChange = (e) => {
+      const val = parseInt(e.target.value || 1000000);
+      if (priceValueDisplay) priceValueDisplay.textContent = `Rs. ${val.toLocaleString()}`;
       renderFilteredProducts();
     };
+    priceSlider.oninput = handlePriceChange;
+    priceSlider.onchange = handlePriceChange;
   }
 
   if (resetBtn) {
@@ -303,8 +331,21 @@ export function initShopLogic(queryPart = '') {
     };
   }
 
-  // Initial render
+  // Initial render from cache
   renderFilteredProducts();
+
+  // Trigger live background sync from backend MySQL database
+  Promise.all([
+    syncProductsFromApi({ activeOnly: true }),
+    syncCategoriesFromApi({ activeOnly: true }),
+    syncBrandsFromApi({ activeOnly: true })
+  ]).then(() => {
+    renderCategoryCombobox();
+    renderSelectedCategoryTags();
+    renderBrandCombobox();
+    renderSelectedBrandTags();
+    renderFilteredProducts();
+  }).catch(() => {});
 }
 
 /**
@@ -321,7 +362,8 @@ export function renderFilteredProducts() {
   if (!grid) return;
 
   const allProducts = (typeof getStoredProducts === 'function' ? getStoredProducts({ activeOnly: true }) : null) || products || [];
-  const brandsList = getBrands({ activeOnly: true });
+  const categoriesList = getCategories({ includeDeleted: true });
+  const brandsList = getBrands({ includeDeleted: true });
 
   // Extract filter values
   const searchInput = document.getElementById('search-input');
@@ -329,7 +371,7 @@ export function renderFilteredProducts() {
   const sortSelect = document.getElementById('sort-select');
 
   const searchQuery = searchInput ? searchInput.value.toLowerCase().trim() : '';
-  const maxPrice = priceSlider ? parseInt(priceSlider.value) : 1000000;
+  const maxPrice = priceSlider ? parseFloat(priceSlider.value) : 1000000;
   const sortOption = sortSelect ? sortSelect.value : 'featured';
 
   // Apply filters
@@ -338,28 +380,73 @@ export function renderFilteredProducts() {
     const matchesSearch = searchQuery === '' ||
       (product.name && product.name.toLowerCase().includes(searchQuery)) ||
       (product.description && product.description.toLowerCase().includes(searchQuery)) ||
+      (product.fullDescription && product.fullDescription.toLowerCase().includes(searchQuery)) ||
       (product.category && product.category.toLowerCase().includes(searchQuery)) ||
-      (product.brand && product.brand.toLowerCase().includes(searchQuery));
+      (product.categoryName && product.categoryName.toLowerCase().includes(searchQuery)) ||
+      (product.brand && product.brand.toLowerCase().includes(searchQuery)) ||
+      (product.sku && product.sku.toLowerCase().includes(searchQuery));
 
     // 2. Category Filter (Multi-select)
-    const productCat = (product.category || '').toLowerCase();
-    const matchesCategory = selectedCategorySlugs.length === 0 ||
-      selectedCategorySlugs.includes(productCat);
+    let matchesCategory = true;
+    if (selectedCategorySlugs.length > 0) {
+      const pCat = (product.category || '').toLowerCase().trim();
+      const pCatId = (product.categoryId || '').toLowerCase().trim();
+      const pCatSlug = (product.categorySlug || '').toLowerCase().trim();
+      const pCatName = (product.categoryName || '').toLowerCase().trim();
+
+      matchesCategory = selectedCategorySlugs.some(sSlug => {
+        const normSlug = sSlug.toLowerCase().trim();
+        const catObj = categoriesList.find(c => 
+          c.slug.toLowerCase() === normSlug || 
+          c.id.toLowerCase() === normSlug || 
+          c.name.toLowerCase() === normSlug
+        );
+        const targetSlug = catObj ? catObj.slug.toLowerCase() : normSlug;
+        const targetId = catObj ? catObj.id.toLowerCase() : normSlug;
+        const targetName = catObj ? catObj.name.toLowerCase() : normSlug;
+
+        return (
+          pCat === normSlug || pCat === targetSlug || pCat === targetId || pCat === targetName ||
+          pCatId === normSlug || pCatId === targetSlug || pCatId === targetId ||
+          pCatSlug === normSlug || pCatSlug === targetSlug || pCatSlug === targetId ||
+          pCatName === normSlug || pCatName === targetSlug || pCatName === targetName ||
+          (targetName && pCat.length >= 3 && targetName.includes(pCat)) ||
+          (pCat && targetName.length >= 3 && pCat.includes(targetName))
+        );
+      });
+    }
 
     // 3. Brand Filter (Multi-select)
-    const productBrand = (product.brand || '').toLowerCase().trim();
-    const matchesBrand = selectedBrandSlugs.length === 0 ||
-      (productBrand !== '' && selectedBrandSlugs.some(bSlug => {
-        const brandObj = brandsList.find(b => b.slug.toLowerCase() === bSlug.toLowerCase() || b.name.toLowerCase() === bSlug.toLowerCase());
-        const targetName = (brandObj ? brandObj.name : bSlug).toLowerCase().trim();
-        const targetSlug = (brandObj ? brandObj.slug : bSlug).toLowerCase().trim();
-        return productBrand === targetName || productBrand === targetSlug ||
-               (productBrand.length >= 3 && targetName.includes(productBrand)) ||
-               (targetName.length >= 3 && productBrand.includes(targetName));
-      }));
+    let matchesBrand = true;
+    if (selectedBrandSlugs.length > 0) {
+      const pBrand = (product.brand || '').toLowerCase().trim();
+      const pBrandId = (product.brandId || '').toLowerCase().trim();
+      const pBrandSlug = (product.brandSlug || '').toLowerCase().trim();
+
+      matchesBrand = selectedBrandSlugs.some(bSlug => {
+        const normSlug = bSlug.toLowerCase().trim();
+        const brandObj = brandsList.find(b => 
+          b.slug.toLowerCase() === normSlug || 
+          b.id.toLowerCase() === normSlug || 
+          b.name.toLowerCase() === normSlug
+        );
+        const targetSlug = brandObj ? brandObj.slug.toLowerCase() : normSlug;
+        const targetId = brandObj ? brandObj.id.toLowerCase() : normSlug;
+        const targetName = brandObj ? brandObj.name.toLowerCase() : normSlug;
+
+        return (
+          pBrand === normSlug || pBrand === targetSlug || pBrand === targetId || pBrand === targetName ||
+          pBrandId === normSlug || pBrandId === targetSlug || pBrandId === targetId ||
+          pBrandSlug === normSlug || pBrandSlug === targetSlug || pBrandSlug === targetId ||
+          (targetName.length >= 3 && pBrand.includes(targetName)) ||
+          (pBrand.length >= 3 && targetName.includes(pBrand))
+        );
+      });
+    }
 
     // 4. Price Filter
-    const matchesPrice = Number(product.price || 0) <= maxPrice;
+    const productPrice = Number(product.price || 0);
+    const matchesPrice = !isNaN(productPrice) ? (productPrice <= maxPrice) : true;
 
     return matchesSearch && matchesCategory && matchesBrand && matchesPrice;
   });
@@ -373,6 +460,8 @@ export function renderFilteredProducts() {
     filtered.sort((a, b) => (b.rating || 0) - (a.rating || 0));
   } else if (sortOption === 'name') {
     filtered.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+  } else if (sortOption === 'newest') {
+    filtered.sort((a, b) => (b.id || 0) - (a.id || 0));
   }
 
   // Update item count UI
@@ -389,16 +478,19 @@ export function renderFilteredProducts() {
   // Update active filter tags UI (Top bar above products)
   if (activeTagsContainer) {
     let tagsHtml = '';
-    const categories = getCategories();
 
     if (selectedCategorySlugs.length > 0) {
       tagsHtml += selectedCategorySlugs.map(slug => {
-        const cat = categories.find(c => c.slug.toLowerCase() === slug.toLowerCase());
+        const cat = categoriesList.find(c => 
+          c.slug.toLowerCase() === slug.toLowerCase() || 
+          c.id.toLowerCase() === slug.toLowerCase() || 
+          c.name.toLowerCase() === slug.toLowerCase()
+        );
         const name = cat ? cat.name : slug;
         return `
           <span class="inline-flex items-center space-x-1.5 text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded font-mono shadow-sm">
             <span>📁 ${name}</span>
-            <button type="button" onclick="removeCategoryFilter('${slug}')" class="text-blue-700 hover:text-red-600 ml-0.5 font-sans" title="Remove filter">✕</button>
+            <button type="button" onclick="removeCategoryFilter('${slug}')" class="text-blue-700 hover:text-red-600 ml-0.5 font-sans cursor-pointer" title="Remove filter">✕</button>
           </span>
         `;
       }).join('');
@@ -406,11 +498,15 @@ export function renderFilteredProducts() {
 
     if (selectedBrandSlugs.length > 0) {
       tagsHtml += selectedBrandSlugs.map(slug => {
-        const brandObj = brandsList.find(b => b.slug.toLowerCase() === slug.toLowerCase() || b.name.toLowerCase() === slug.toLowerCase());
+        const brandObj = brandsList.find(b => 
+          b.slug.toLowerCase() === slug.toLowerCase() || 
+          b.name.toLowerCase() === slug.toLowerCase() || 
+          b.id.toLowerCase() === slug.toLowerCase()
+        );
         const name = brandObj ? brandObj.name : slug;
         return `
           <span class="inline-flex items-center space-x-1.5 text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 px-2 py-0.5 rounded font-mono shadow-sm">
-            <span>${name}</span>
+            <span>🏷️ ${name}</span>
             <button type="button" onclick="removeBrandFilter('${slug}')" class="text-indigo-700 hover:text-red-600 ml-0.5 font-sans cursor-pointer" title="Remove filter">✕</button>
           </span>
         `;
@@ -420,13 +516,32 @@ export function renderFilteredProducts() {
     if (maxPrice < 1000000) {
       tagsHtml += `<span class="inline-flex items-center space-x-1 text-[10px] font-bold bg-[#f1f5f9] text-blue-700 border border-[#e2e8f0] px-2 py-0.5 rounded font-mono shadow-sm">Under Rs. ${maxPrice.toLocaleString()}</span>`;
     }
+
+    if (searchQuery) {
+      tagsHtml += `<span class="inline-flex items-center space-x-1 text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200 px-2 py-0.5 rounded font-mono shadow-sm">Search: "${searchQuery}"</span>`;
+    }
+
     activeTagsContainer.innerHTML = tagsHtml;
   }
 
-  // Render cards
+  // Render product cards
   grid.innerHTML = filtered.map(product => {
     const productBrand = product.brand || '';
-    const brandObj = productBrand ? brandsList.find(b => b.name.toLowerCase() === productBrand.toLowerCase() || b.slug.toLowerCase() === productBrand.toLowerCase()) : null;
+    const brandObj = productBrand ? brandsList.find(b => 
+      b.name.toLowerCase() === productBrand.toLowerCase() || 
+      b.slug.toLowerCase() === productBrand.toLowerCase() || 
+      b.id.toLowerCase() === productBrand.toLowerCase()
+    ) : null;
+
+    const catObj = product.category ? categoriesList.find(c => 
+      c.slug.toLowerCase() === (product.category || '').toLowerCase() || 
+      c.name.toLowerCase() === (product.category || '').toLowerCase() || 
+      c.id.toLowerCase() === (product.category || '').toLowerCase()
+    ) : null;
+
+    const displayCategoryName = catObj ? catObj.name : (product.categoryName || product.category || 'Hardware');
+    const displayBrandName = brandObj ? brandObj.name : (product.brand || '');
+    const brandLogo = brandObj && (brandObj.logo || brandObj.logoUrl) ? (brandObj.logo || brandObj.logoUrl) : '';
 
     return `
       <div class="group rounded-2xl bg-white border border-[#e2e8f0] hover:border-[#cbd5e1] p-4 flex flex-col justify-between transition-all duration-200 hover:-translate-y-1 shadow-sm hover:shadow-md">
@@ -438,17 +553,17 @@ export function renderFilteredProducts() {
             <!-- Left Badges Column -->
             <div class="absolute top-2.5 left-2.5 flex flex-col gap-1.5 items-start">
               ${product.badge ? `<span class="bg-blue-600 text-white text-[9px] font-extrabold uppercase px-2 py-0.5 rounded shadow-sm">${product.badge}</span>` : ''}
-              ${productBrand ? `
+              ${displayBrandName ? `
                 <span class="inline-flex items-center space-x-1 px-2 py-0.5 rounded bg-slate-900/90 backdrop-blur-md text-white text-[9px] font-mono font-bold border border-white/20 shadow-sm">
-                  ${brandObj && brandObj.logo ? `<img src="${brandObj.logo}" alt="${productBrand}" class="w-2.5 h-2.5 object-contain inline invert brightness-200">` : `<span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span>`}
-                  <span>${productBrand}</span>
+                  ${brandLogo ? `<img src="${brandLogo}" alt="${displayBrandName}" class="w-2.5 h-2.5 object-contain inline invert brightness-200">` : `<span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span>`}
+                  <span>${displayBrandName}</span>
                 </span>
               ` : ''}
             </div>
 
             <span class="absolute top-2.5 right-2.5 bg-white/95 text-[#475569] text-[10px] font-bold px-1.5 py-0.5 rounded border border-[#e2e8f0] flex items-center space-x-1 shadow-sm">
               <span class="text-amber-500">★</span>
-              <span>${product.rating}</span>
+              <span>${product.rating || 4.8}</span>
             </span>
 
             <div class="absolute inset-0 bg-[#0f172a]/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
@@ -462,17 +577,17 @@ export function renderFilteredProducts() {
           <!-- Meta & Title -->
           <div class="flex items-center justify-between text-[10px] font-bold uppercase font-mono tracking-wider mb-1">
             <div class="flex items-center space-x-1.5 overflow-hidden">
-              <span class="text-blue-600 font-extrabold">${product.category}</span>
-              ${productBrand ? `
+              <span class="text-blue-600 font-extrabold truncate max-w-[140px]" title="Category: ${displayCategoryName}">${displayCategoryName}</span>
+              ${displayBrandName ? `
                 <span class="text-slate-300">•</span>
-                <span class="text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded text-[9px] font-mono font-bold truncate max-w-[120px]" title="Brand: ${productBrand}">${productBrand}</span>
+                <span class="text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded text-[9px] font-mono font-bold truncate max-w-[100px]" title="Brand: ${displayBrandName}">${displayBrandName}</span>
               ` : ''}
             </div>
             <span class="${product.inStock ? 'text-emerald-600' : 'text-amber-600'}">${product.inStock ? '● In Stock' : '○ Pre-order'}</span>
           </div>
           
           <h3 onclick="viewProductDetails(${product.id})" class="text-sm font-bold text-[#0f172a] mt-1 line-clamp-1 group-hover:text-blue-600 transition-colors cursor-pointer" title="${product.name}">${product.name}</h3>
-          <p class="text-xs text-[#64748b] mt-1 line-clamp-2 leading-relaxed">${product.description}</p>
+          <p class="text-xs text-[#64748b] mt-1 line-clamp-2 leading-relaxed">${product.description || product.fullDescription || ''}</p>
         </div>
         
         <!-- Footer Price & Action -->
@@ -489,7 +604,7 @@ export function renderFilteredProducts() {
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
             </button>
             
-            <button onclick="addToCart(${product.id})" class="px-3 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl shadow-sm transition-all flex items-center space-x-1 active:scale-95">
+            <button onclick="addToCart(${product.id})" class="px-3 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl shadow-sm transition-all flex items-center space-x-1 active:scale-95 cursor-pointer">
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
               </svg>
@@ -510,3 +625,4 @@ window.addBrandFilter = addBrandFilter;
 window.removeBrandFilter = removeBrandFilter;
 window.clearBrandFilters = clearBrandFilters;
 window.renderFilteredProducts = renderFilteredProducts;
+window.initShopLogic = initShopLogic;

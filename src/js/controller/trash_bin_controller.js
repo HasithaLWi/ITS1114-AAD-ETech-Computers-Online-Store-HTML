@@ -3,14 +3,14 @@
 // ============================================================
 import { getCurrentUser } from './login_controller.js';
 import { 
-  getDeletedProducts, restoreProduct, permanentlyDeleteProduct, getStoredProducts 
+  getDeletedProducts, restoreProduct, permanentlyDeleteProduct, getStoredProducts, syncProductsFromApi 
 } from '../models/data.js';
 import { 
-  getDeletedCategories, restoreCategory, permanentlyDeleteCategory,
-  getDeletedBadges, restoreBadge, permanentlyDeleteBadge 
+  getDeletedCategories, restoreCategory, permanentlyDeleteCategory, syncCategoriesFromApi,
+  getDeletedBadges, restoreBadge, permanentlyDeleteBadge, syncBadgesFromApi 
 } from '../models/taxonomy_data.js';
 import { 
-  getDeletedBrands, restoreBrand, permanentlyDeleteBrand 
+  getDeletedBrands, restoreBrand, permanentlyDeleteBrand, syncBrandsFromApi 
 } from '../models/brand_data.js';
 import { showToast } from './cart_controller.js';
 import { updateTrashSidebarBadge } from './admin_dashboard_controller.js';
@@ -33,9 +33,21 @@ export function getTrashTotalCount() {
 /**
  * Main Render Function for SuperADMIN Trash Bin Console
  */
-export function renderTrashBinTab() {
+export function renderTrashBinTab(shouldSync = true) {
   const container = document.getElementById('tab-panel-trash');
   if (!container) return;
+
+  if (shouldSync) {
+    Promise.all([
+      syncProductsFromApi({ includeDeleted: true }),
+      syncCategoriesFromApi({ includeDeleted: true }),
+      syncBrandsFromApi({ includeDeleted: true }),
+      syncBadgesFromApi({ includeDeleted: true })
+    ]).then(() => {
+      renderTrashBinTab(false);
+      updateTrashSidebarBadge();
+    }).catch(() => {});
+  }
 
   const activeUser = getCurrentUser();
 

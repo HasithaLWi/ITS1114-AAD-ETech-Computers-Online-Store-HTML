@@ -23,57 +23,60 @@ const BEHAVIOR_HISTORY_STORAGE_KEY = 'etech_product_behavior_history';
 
 export function getCategories(options = {}) {
   const { includeDeleted = false, activeOnly = false } = options;
-  const stored = localStorage.getItem(CATEGORIES_STORAGE_KEY);
+  const stored = typeof localStorage !== 'undefined' ? localStorage.getItem(CATEGORIES_STORAGE_KEY) : null;
   let list = [];
 
-  if (!stored) {
-    list = defaultCategories.map(c => ({
-      ...c,
-      categoryStatus: c.categoryStatus || c.status || 'ACTIVE',
-      status: c.categoryStatus || c.status || 'ACTIVE'
-    }));
-    saveCategories(list);
-  } else {
+  if (stored) {
     try {
       list = JSON.parse(stored);
-      if (!Array.isArray(list) || list.length === 0) {
-        list = [...defaultCategories];
-      }
+      if (!Array.isArray(list)) list = [];
     } catch (e) {
-      console.error('Failed to parse categories data:', e);
-      list = [...defaultCategories];
+      list = [];
     }
-  }
-
-  // Ensure categoryStatus is assigned
-  let shouldSave = false;
-  list = list.map(c => {
-    const currentStatus = (c.categoryStatus || c.status || 'ACTIVE').toUpperCase();
-    if (!c.categoryStatus || c.categoryStatus !== currentStatus) {
-      shouldSave = true;
-    }
-    return {
-      ...c,
-      categoryStatus: currentStatus,
-      status: currentStatus
-    };
-  });
-
-  if (shouldSave) {
-    saveCategories(list);
   }
 
   if (includeDeleted) return list;
-  if (activeOnly) return list.filter(c => c.categoryStatus === 'ACTIVE');
+  if (activeOnly) return list.filter(c => (c.categoryStatus || c.status || 'ACTIVE').toUpperCase() === 'ACTIVE');
   // Default: exclude soft-deleted categories
-  return list.filter(c => c.categoryStatus !== 'DELETED');
+  return list.filter(c => (c.categoryStatus || c.status || 'ACTIVE').toUpperCase() !== 'DELETED');
+}
+
+/**
+ * Sync categories directly from backend REST API
+ */
+export async function syncCategoriesFromApi(options = {}) {
+  try {
+    const res = await CategoriesApi.getAll();
+    let apiList = [];
+    if (Array.isArray(res)) {
+      apiList = res;
+    } else if (res && Array.isArray(res.data)) {
+      apiList = res.data;
+    }
+    const normalized = apiList.map(c => ({
+      id: c.id,
+      name: c.name || '',
+      slug: c.slug || '',
+      icon: c.icon || '🏷️',
+      description: c.description || '',
+      featured: Boolean(c.featured),
+      displayOrder: Number(c.displayOrder || 1),
+      categoryStatus: (c.categoryStatus || c.status || 'ACTIVE').toUpperCase(),
+      status: (c.categoryStatus || c.status || 'ACTIVE').toUpperCase()
+    }));
+    saveCategories(normalized);
+    return getCategories(options);
+  } catch (err) {
+    console.warn('[TaxonomyModel] Categories API sync notice:', err.message);
+    return getCategories(options);
+  }
 }
 
 /**
  * Retrieve only deleted categories for SuperADMIN Trash Bin
  */
 export function getDeletedCategories() {
-  const stored = localStorage.getItem(CATEGORIES_STORAGE_KEY);
+  const stored = typeof localStorage !== 'undefined' ? localStorage.getItem(CATEGORIES_STORAGE_KEY) : null;
   if (!stored) return [];
   try {
     const list = JSON.parse(stored);
@@ -85,7 +88,9 @@ export function getDeletedCategories() {
 }
 
 export function saveCategories(categories) {
-  localStorage.setItem(CATEGORIES_STORAGE_KEY, JSON.stringify(categories));
+  if (typeof localStorage !== 'undefined') {
+    localStorage.setItem(CATEGORIES_STORAGE_KEY, JSON.stringify(categories));
+  }
 }
 
 export function getCategoryBySlug(slug) {
@@ -217,71 +222,68 @@ export async function permanentlyDeleteCategory(slugOrId) {
 
 export function getBadges(options = {}) {
   const { includeDeleted = false, activeOnly = false } = options;
-  const stored = localStorage.getItem(BADGES_STORAGE_KEY);
+  const stored = typeof localStorage !== 'undefined' ? localStorage.getItem(BADGES_STORAGE_KEY) : null;
   let list = [];
 
-  if (!stored) {
-    list = defaultBadges.map(b => ({
-      ...b,
-      status: b.status || 'ACTIVE'
-    }));
-    saveBadges(list);
-  } else {
+  if (stored) {
     try {
       list = JSON.parse(stored);
-      if (!Array.isArray(list) || list.length === 0) {
-        list = [...defaultBadges];
-      }
+      if (!Array.isArray(list)) list = [];
     } catch (e) {
-      console.error('Failed to parse badges data:', e);
-      list = [...defaultBadges];
+      list = [];
     }
-  }
-
-  let shouldSave = false;
-  list = list.map(b => {
-    const def = defaultBadges.find(d => d.id === b.id || d.slug === b.slug) || {};
-    const isSystemDefault = def.isSystemDefault !== undefined ? def.isSystemDefault : (b.id === 'bdg-hotdeal' || b.id === 'bdg-toprated' || b.id === 'bdg-newarrival' || b.id === 'bdg-bestseller');
-    const canEdit = def.canEdit !== undefined ? def.canEdit : (b.id !== 'bdg-hotdeal');
-    const canDelete = def.canDelete !== undefined ? def.canDelete : !isSystemDefault;
-    const currentStatus = (b.status || (b.isActive !== false ? 'ACTIVE' : 'INACTIVE')).toUpperCase();
-
-    if (!b.status || b.status !== currentStatus) {
-      shouldSave = true;
-    }
-
-    return {
-      ...b,
-      color: b.color || def.color || 'blue',
-      bgClass: b.bgClass || def.bgClass || `bg-${b.color || 'blue'}-50`,
-      textClass: b.textClass || def.textClass || `text-${b.color || 'blue'}-700`,
-      borderClass: b.borderClass || def.borderClass || `border-${b.color || 'blue'}-200`,
-      colorHex: b.colorHex || def.colorHex || '#2563eb',
-      ruleType: def.ruleType || b.ruleType || 'automatic',
-      isSystemDefault,
-      canEdit,
-      canDelete,
-      status: currentStatus,
-      isActive: currentStatus === 'ACTIVE',
-      thresholds: b.thresholds || {}
-    };
-  });
-
-  if (shouldSave) {
-    saveBadges(list);
   }
 
   if (includeDeleted) return list;
-  if (activeOnly) return list.filter(b => b.status === 'ACTIVE');
+  if (activeOnly) return list.filter(b => (b.status || (b.isActive !== false ? 'ACTIVE' : 'INACTIVE')).toUpperCase() === 'ACTIVE');
   // Default: exclude soft-deleted badges
-  return list.filter(b => b.status !== 'DELETED');
+  return list.filter(b => (b.status || '').toUpperCase() !== 'DELETED');
+}
+
+/**
+ * Sync badges directly from backend REST API
+ */
+export async function syncBadgesFromApi(options = {}) {
+  try {
+    const res = await BadgesApi.getAll();
+    let apiList = [];
+    if (Array.isArray(res)) {
+      apiList = res;
+    } else if (res && Array.isArray(res.data)) {
+      apiList = res.data;
+    }
+    const normalized = apiList.map(b => ({
+      id: b.id,
+      name: b.name || '',
+      slug: b.slug || '',
+      badgeType: b.badgeType || 'general',
+      description: b.description || '',
+      color: b.color || 'blue',
+      bgClass: b.bgClass || `bg-${b.color || 'blue'}-50`,
+      textClass: b.textClass || `text-${b.color || 'blue'}-700`,
+      borderClass: b.borderClass || `border-${b.color || 'blue'}-200`,
+      colorHex: b.colorHex || '#2563eb',
+      ruleType: b.ruleType || 'automatic',
+      isSystemDefault: Boolean(b.isSystemDefault),
+      canEdit: b.canEdit !== undefined ? b.canEdit : true,
+      canDelete: b.canDelete !== undefined ? b.canDelete : true,
+      status: (b.status || (b.isActive !== false ? 'ACTIVE' : 'INACTIVE')).toUpperCase(),
+      isActive: (b.status || '').toUpperCase() === 'ACTIVE' || b.isActive === true,
+      thresholds: b.thresholds || {}
+    }));
+    saveBadges(normalized);
+    return getBadges(options);
+  } catch (err) {
+    console.warn('[TaxonomyModel] Badges API sync notice:', err.message);
+    return getBadges(options);
+  }
 }
 
 /**
  * Retrieve only deleted badges for SuperADMIN Trash Bin
  */
 export function getDeletedBadges() {
-  const stored = localStorage.getItem(BADGES_STORAGE_KEY);
+  const stored = typeof localStorage !== 'undefined' ? localStorage.getItem(BADGES_STORAGE_KEY) : null;
   if (!stored) return [];
   try {
     const list = JSON.parse(stored);
@@ -293,7 +295,9 @@ export function getDeletedBadges() {
 }
 
 export function saveBadges(badges) {
-  localStorage.setItem(BADGES_STORAGE_KEY, JSON.stringify(badges));
+  if (typeof localStorage !== 'undefined') {
+    localStorage.setItem(BADGES_STORAGE_KEY, JSON.stringify(badges));
+  }
 }
 
 export function getBadgeById(id) {

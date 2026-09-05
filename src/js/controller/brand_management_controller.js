@@ -3,7 +3,7 @@
 // ============================================================
 import {
   getBrands, getBrandById, getBrandBySlug, saveBrand, deleteBrand,
-  toggleBrandFeatured, getBrandProductCount, updateBrandStatus
+  toggleBrandFeatured, getBrandProductCount, updateBrandStatus, syncBrandsFromApi
 } from '../models/brand_data.js';
 import { getCategories } from '../models/taxonomy_data.js';
 import { getStoredProducts } from '../models/data.js';
@@ -39,9 +39,15 @@ const BRAND_LOGO_PRESETS = [
  * 1. RENDER BRANDS TAB OVERVIEW
  * ============================================================
  */
-export function renderBrandsTab() {
+export function renderBrandsTab(shouldSync = true) {
   const container = document.getElementById('tab-panel-brands');
   if (!container) return;
+
+  if (shouldSync) {
+    syncBrandsFromApi().then(() => {
+      renderBrandsTab(false);
+    }).catch(() => {});
+  }
 
   // By default, exclude soft-deleted brands
   const brands = getBrands();

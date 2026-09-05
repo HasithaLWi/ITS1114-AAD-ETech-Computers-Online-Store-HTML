@@ -16,72 +16,62 @@ export const BRANDS_STORAGE_KEY = 'etech_brands_data';
  */
 export function getBrands(options = {}) {
   const { includeDeleted = false, activeOnly = false } = options;
-  const raw = localStorage.getItem(BRANDS_STORAGE_KEY);
+  const raw = typeof localStorage !== 'undefined' ? localStorage.getItem(BRANDS_STORAGE_KEY) : null;
   let list = [];
-  let shouldSave = false;
 
-  if (!raw) {
-    list = DEFAULT_BRANDS.map(b => ({
-      ...b,
-      status: b.status || (b.active !== false ? 'ACTIVE' : 'INACTIVE')
-    }));
-    localStorage.setItem(BRANDS_STORAGE_KEY, JSON.stringify(list));
-    return list;
-  }
-
-  try {
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed) || parsed.length === 0) {
-      list = DEFAULT_BRANDS.map(b => ({
-        ...b,
-        status: b.status || (b.active !== false ? 'ACTIVE' : 'INACTIVE')
-      }));
-      shouldSave = true;
-    } else {
-      list = parsed;
+  if (raw) {
+    try {
+      list = JSON.parse(raw);
+      if (!Array.isArray(list)) list = [];
+    } catch (e) {
+      list = [];
     }
-
-    // Self-healing migration for logo URLs & status
-    list = list.map(b => {
-      const defaultMatch = DEFAULT_BRANDS.find(d => d.slug === b.slug || d.id === b.id);
-      let logo = b.logo;
-      if (defaultMatch && b.logo && b.logo.includes('wikimedia.org')) {
-        logo = defaultMatch.logo;
-        shouldSave = true;
-      }
-      const currentStatus = (b.status || (b.active !== false ? 'ACTIVE' : 'INACTIVE')).toUpperCase();
-      if (!b.status || b.status !== currentStatus) {
-        shouldSave = true;
-      }
-
-      return {
-        ...b,
-        logo: logo,
-        logoUrl: b.logoUrl || logo,
-        status: currentStatus,
-        active: currentStatus === 'ACTIVE'
-      };
-    });
-
-    if (shouldSave) {
-      localStorage.setItem(BRANDS_STORAGE_KEY, JSON.stringify(list));
-    }
-  } catch (e) {
-    console.error("Error reading brands from storage:", e);
-    list = [...DEFAULT_BRANDS];
   }
 
   if (includeDeleted) return list;
-  if (activeOnly) return list.filter(b => b.status === 'ACTIVE');
+  if (activeOnly) return list.filter(b => (b.status || (b.active !== false ? 'ACTIVE' : 'INACTIVE')).toUpperCase() === 'ACTIVE');
   // Default: Exclude soft-deleted brands
-  return list.filter(b => b.status !== 'DELETED');
+  return list.filter(b => (b.status || '').toUpperCase() !== 'DELETED');
+}
+
+/**
+ * Sync brands directly from backend REST API
+ */
+export async function syncBrandsFromApi(options = {}) {
+  try {
+    const res = await BrandsApi.getAll();
+    let apiList = [];
+    if (Array.isArray(res)) {
+      apiList = res;
+    } else if (res && Array.isArray(res.data)) {
+      apiList = res.data;
+    }
+    const normalized = apiList.map(b => ({
+      id: b.id,
+      name: b.name || '',
+      slug: b.slug || '',
+      logo: b.logo || b.logoUrl || '',
+      logoUrl: b.logoUrl || b.logo || '',
+      country: b.country || '',
+      website: b.website || '',
+      description: b.description || '',
+      featured: Boolean(b.featured),
+      status: (b.status || (b.active !== false ? 'ACTIVE' : 'INACTIVE')).toUpperCase(),
+      active: (b.status || '').toUpperCase() === 'ACTIVE' || b.active === true
+    }));
+    saveBrands(normalized);
+    return getBrands(options);
+  } catch (err) {
+    console.warn('[BrandModel] Brands API sync notice:', err.message);
+    return getBrands(options);
+  }
 }
 
 /**
  * Retrieve only deleted brands for SuperADMIN Trash Bin
  */
 export function getDeletedBrands() {
-  const raw = localStorage.getItem(BRANDS_STORAGE_KEY);
+  const raw = typeof localStorage !== 'undefined' ? localStorage.getItem(BRANDS_STORAGE_KEY) : null;
   if (!raw) return [];
   try {
     const list = JSON.parse(raw);
@@ -96,7 +86,9 @@ export function getDeletedBrands() {
  * Save the entire brands array to storage
  */
 export function saveBrands(brandsList) {
-  localStorage.setItem(BRANDS_STORAGE_KEY, JSON.stringify(brandsList));
+  if (typeof localStorage !== 'undefined') {
+    localStorage.setItem(BRANDS_STORAGE_KEY, JSON.stringify(brandsList));
+  }
 }
 
 /**

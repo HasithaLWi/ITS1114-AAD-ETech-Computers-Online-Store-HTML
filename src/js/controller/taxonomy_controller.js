@@ -2,8 +2,8 @@
 //  taxonomy_controller.js — Categories & Badges Management Controller
 // ============================================================
 import { 
-  getCategories, saveCategory, deleteCategory, getCategoryBySlug, updateCategoryStatus,
-  getBadges, saveBadge, deleteBadge, getBadgeById, updateBadgeStatus,
+  getCategories, saveCategory, deleteCategory, getCategoryBySlug, updateCategoryStatus, syncCategoriesFromApi,
+  getBadges, saveBadge, deleteBadge, getBadgeById, updateBadgeStatus, syncBadgesFromApi,
   runAutoBadgeAssignment, getBadgeColorClass, getBadgeThresholdSummary,
   getProductBehaviorHistory, recordProductBehaviorEvent
 } from '../models/taxonomy_data.js';
@@ -17,9 +17,15 @@ import { updateTrashSidebarBadge } from './admin_dashboard_controller.js';
  * TAB: CATEGORIES & BADGES (TAXONOMY MANAGEMENT)
  * ============================================================
  */
-export function renderTaxonomyTab() {
+export function renderTaxonomyTab(shouldSync = true) {
   const container = document.getElementById('tab-panel-taxonomy');
   if (!container) return;
+
+  if (shouldSync) {
+    Promise.all([syncCategoriesFromApi(), syncBadgesFromApi()]).then(() => {
+      renderTaxonomyTab(false);
+    }).catch(() => {});
+  }
 
   // By default, exclude soft-deleted categories & badges
   const categories = getCategories();

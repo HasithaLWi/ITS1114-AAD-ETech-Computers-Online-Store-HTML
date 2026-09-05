@@ -3,7 +3,7 @@
 // ============================================================
 import { getBranches } from './branch_controller.js';
 import { 
-  getStoredProducts, saveProduct, deleteProduct, getProductById, updateProductStatus 
+  getStoredProducts, saveProduct, deleteProduct, getProductById, updateProductStatus, syncProductsFromApi 
 } from '../models/data.js';
 import { getCurrentUser } from './login_controller.js';
 import { getCategories, getBadges } from '../models/taxonomy_data.js';
@@ -18,7 +18,7 @@ let productSearchQuery = '';
  * TAB: PRODUCT MANAGEMENT (STAFF & ADMIN)
  * ============================================================
  */
-export function renderProductsTab() {
+export function renderProductsTab(shouldSync = true) {
   const tbody = document.getElementById('products-tbody');
   if (!tbody) return;
 
@@ -55,82 +55,93 @@ export function renderProductsTab() {
     productSearchQuery = searchInput.value.toLowerCase().trim();
   }
 
-  if (productSearchQuery) {
-    products = products.filter(p => 
-      p.name.toLowerCase().includes(productSearchQuery) ||
-      (p.sku && p.sku.toLowerCase().includes(productSearchQuery)) ||
-      (p.category && p.category.toLowerCase().includes(productSearchQuery)) ||
-      (p.brand && p.brand.toLowerCase().includes(productSearchQuery))
-    );
-  }
+  const renderRows = (productList) => {
+    let filtered = productList || [];
+    if (productSearchQuery) {
+      filtered = filtered.filter(p => 
+        p.name.toLowerCase().includes(productSearchQuery) ||
+        (p.sku && p.sku.toLowerCase().includes(productSearchQuery)) ||
+        (p.category && p.category.toLowerCase().includes(productSearchQuery)) ||
+        (p.brand && p.brand.toLowerCase().includes(productSearchQuery))
+      );
+    }
 
-  if (products.length === 0) {
-    tbody.innerHTML = `
-      <tr>
-        <td colspan="7" class="py-8 text-center text-[#64748b] text-xs">
-          ${productSearchQuery ? 'No catalog items matched your search query.' : 'No active products found in inventory.'}
-        </td>
-      </tr>
-    `;
-    return;
-  }
+    if (filtered.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="7" class="py-8 text-center text-[#64748b] text-xs">
+            ${productSearchQuery ? 'No catalog items matched your search query.' : 'No active products found in database.'}
+          </td>
+        </tr>
+      `;
+      return;
+    }
 
-  tbody.innerHTML = products.map(p => {
-    const status = (p.productStatus || p.status || 'ACTIVE').toUpperCase();
-    const isActive = status === 'ACTIVE';
+    tbody.innerHTML = filtered.map(p => {
+      const status = (p.productStatus || p.status || 'ACTIVE').toUpperCase();
+      const isActive = status === 'ACTIVE';
 
-    return `
-      <tr class="hover:bg-[#f8fafc] transition-colors">
-        <td class="py-3 px-3.5">
-          <div class="flex items-center space-x-2.5">
-            <img src="${p.image}" class="w-9 h-9 object-cover rounded bg-[#f8fafc] border border-[#e2e8f0] flex-shrink-0">
-            <div>
-              <p class="font-bold text-[#0f172a] text-xs line-clamp-1">${p.name}</p>
-              <p class="text-[10px] text-blue-600 font-mono">${p.sku}</p>
+      return `
+        <tr class="hover:bg-[#f8fafc] transition-colors">
+          <td class="py-3 px-3.5">
+            <div class="flex items-center space-x-2.5">
+              <img src="${p.image || 'https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?auto=format&fit=crop&w=600&q=80'}" class="w-9 h-9 object-cover rounded bg-[#f8fafc] border border-[#e2e8f0] flex-shrink-0">
+              <div>
+                <p class="font-bold text-[#0f172a] text-xs line-clamp-1">${p.name}</p>
+                <p class="text-[10px] text-blue-600 font-mono">${p.sku || p.id}</p>
+              </div>
             </div>
-          </div>
-        </td>
-        <td class="py-3 px-3.5 uppercase text-[10px] font-mono font-bold text-blue-600">${p.category}</td>
-        <td class="py-3 px-3.5 font-bold text-[#0f172a] font-mono text-xs">Rs. ${(p.price || 0).toLocaleString()}</td>
-        <td class="py-3 px-3.5">
-          <div class="flex flex-wrap gap-1">
-            ${branches.map(b => {
-              const qty = (p.branchStock && p.branchStock[b.id]) || 0;
-              return `
-                <span class="px-1.5 py-0.5 rounded text-[9px] font-mono border ${qty > 0 ? 'bg-[#f8fafc] text-[#0f172a] border-[#e2e8f0]' : 'bg-rose-50 text-rose-700 border-rose-200'}">
-                  <strong class="text-blue-600">${b.city}:</strong> ${qty}
-                </span>
-              `;
-            }).join('')}
-          </div>
-        </td>
-        <td class="py-3 px-3.5">
-          <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold ${p.totalStock > 0 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200'}">
-            ${p.totalStock || 0} units
-          </span>
-        </td>
-        <!-- 1-Click Status Switcher (ACTIVE / INACTIVE) -->
-        <td class="py-3 px-3.5">
-          <button type="button" onclick="toggleProductStatus(${p.id})"
-            title="Click to toggle between ACTIVE and INACTIVE"
-            class="px-2.5 py-1 rounded-full text-[10px] font-mono font-extrabold uppercase transition-all flex items-center space-x-1.5 shadow-2xs cursor-pointer ${isActive ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100' : 'bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100'}">
-            <span class="w-1.5 h-1.5 rounded-full ${isActive ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}"></span>
-            <span>${status}</span>
-          </button>
-        </td>
-        <td class="py-3 px-3.5 text-right">
-          <div class="flex items-center justify-end space-x-1.5">
-            <button onclick="editProduct(${p.id})" class="p-1.5 bg-[#f8fafc] hover:bg-[#f1f5f9] text-blue-600 rounded border border-[#e2e8f0] transition-colors shadow-sm" title="Edit Product">
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+          </td>
+          <td class="py-3 px-3.5 uppercase text-[10px] font-mono font-bold text-blue-600">${p.category}</td>
+          <td class="py-3 px-3.5 font-bold text-[#0f172a] font-mono text-xs">Rs. ${(p.price || 0).toLocaleString()}</td>
+          <td class="py-3 px-3.5">
+            <div class="flex flex-wrap gap-1">
+              ${branches.map(b => {
+                const qty = (p.branchStock && p.branchStock[b.id]) || 0;
+                return `
+                  <span class="px-1.5 py-0.5 rounded text-[9px] font-mono border ${qty > 0 ? 'bg-[#f8fafc] text-[#0f172a] border-[#e2e8f0]' : 'bg-rose-50 text-rose-700 border-rose-200'}">
+                    <strong class="text-blue-600">${b.city}:</strong> ${qty}
+                  </span>
+                `;
+              }).join('')}
+            </div>
+          </td>
+          <td class="py-3 px-3.5">
+            <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold ${(p.totalStock || 0) > 0 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200'}">
+              ${p.totalStock || 0} units
+            </span>
+          </td>
+          <!-- 1-Click Status Switcher (ACTIVE / INACTIVE) -->
+          <td class="py-3 px-3.5">
+            <button type="button" onclick="toggleProductStatus(${p.id})"
+              title="Click to toggle between ACTIVE and INACTIVE"
+              class="px-2.5 py-1 rounded-full text-[10px] font-mono font-extrabold uppercase transition-all flex items-center space-x-1.5 shadow-2xs cursor-pointer ${isActive ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100' : 'bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100'}">
+              <span class="w-1.5 h-1.5 rounded-full ${isActive ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}"></span>
+              <span>${status}</span>
             </button>
-            <button onclick="confirmDeleteProduct(${p.id})" class="p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded transition-colors shadow-sm" title="Soft Delete (Move to Trash Bin)">
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-            </button>
-          </div>
-        </td>
-      </tr>
-    `;
-  }).join('');
+          </td>
+          <td class="py-3 px-3.5 text-right">
+            <div class="flex items-center justify-end space-x-1.5">
+              <button onclick="editProduct(${p.id})" class="p-1.5 bg-[#f8fafc] hover:bg-[#f1f5f9] text-blue-600 rounded border border-[#e2e8f0] transition-colors shadow-sm" title="Edit Product">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+              </button>
+              <button onclick="confirmDeleteProduct(${p.id})" class="p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded transition-colors shadow-sm" title="Soft Delete (Move to Trash Bin)">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+              </button>
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  };
+
+  renderRows(products);
+
+  if (shouldSync) {
+    syncProductsFromApi().then(liveList => {
+      renderRows(liveList || getStoredProducts());
+    }).catch(() => {});
+  }
 }
 
 /**

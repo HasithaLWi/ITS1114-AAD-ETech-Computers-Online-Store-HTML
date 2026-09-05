@@ -1,5 +1,5 @@
 // ETech Computers - Single Page Section Toggle Router & Global App Logic
-import { products, getProductById, getFeaturedProducts, getNewArrivalProducts } from '../models/data.js';
+import { products, getProductById, getFeaturedProducts, getNewArrivalProducts, syncProductsFromApi } from '../models/data.js';
 import { getHomeDealBanner, getHomeBannerRemainingTime, isHomeDealBannerActive } from '../models/deals_data.js';
 import { legalPolicies, getPolicyData, getStoredPolicies } from '../models/policy-data.js';
 import { getCurrentUser, isLoggedIn, logoutUser } from '../controller/login_controller.js';
@@ -10,9 +10,10 @@ import {
 } from '../controller/order_management_controller.js';
 import { initCartLogic, initCheckoutLogic, updateCartBadge, addToCart, getCart, saveCart, showToast } from '../controller/cart_controller.js';
 import { renderProductDetailsPage, viewProductDetails } from '../controller/product-details_controller.js';
-import { initShopLogic } from '../controller/shop_controller.js';
+import { initShopLogic, renderFilteredProducts } from '../controller/shop_controller.js';
 import { initHotDealsLogic } from '../controller/hot_deal_controller.js';
-import { getFeaturedBrands } from '../models/brand_data.js';
+import { getFeaturedBrands, syncBrandsFromApi } from '../models/brand_data.js';
+import { syncCategoriesFromApi, syncBadgesFromApi } from '../models/taxonomy_data.js';
 import { renderLoginPage } from './login/login.js';
 import { renderAdminPage } from './administrator/administrator.js';
 import { renderAboutPage } from './about/about.js';
@@ -29,6 +30,17 @@ window.addEventListener('hashchange', () => {
  * Initialize SPA application
  */
 export function initApp() {
+  // Sync live backend data from MySQL
+  Promise.all([
+    syncProductsFromApi({ activeOnly: true }),
+    syncCategoriesFromApi({ activeOnly: true }),
+    syncBrandsFromApi({ activeOnly: true }),
+    syncBadgesFromApi({ activeOnly: true })
+  ]).then(() => {
+    if (typeof renderHomeNewArrivalsCarousel === 'function') renderHomeNewArrivalsCarousel();
+    if (typeof renderHomeFeaturedProducts === 'function') renderHomeFeaturedProducts();
+  }).catch(() => {});
+
   handleRoute();
   updateCartBadge();
   updateHeaderAuthUI();

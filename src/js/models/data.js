@@ -1,15 +1,14 @@
 // ============================================================
 //  src/js/models/data.js — Product Inventory Model & Storage Layer
 // ============================================================
-import { DEFAULT_PRODUCTS, DEFAULT_BRANCH_ALLOCATION } from '../../data/products.js';
 import { ProductsApi } from '../api/productsApi.js';
 
-export const products = DEFAULT_PRODUCTS;
+export const products = [];
 
 const PRODUCTS_STORAGE_KEY = 'etech_products';
 
 /**
- * Get all stored products from localStorage (or seed default)
+ * Get all stored products from localStorage cache
  * @param {object} options
  * @param {boolean} [options.includeDeleted=false] - If true, returns deleted items too
  * @param {boolean} [options.activeOnly=false] - If true, returns only ACTIVE items
@@ -17,68 +16,16 @@ const PRODUCTS_STORAGE_KEY = 'etech_products';
  */
 export function getStoredProducts(options = {}) {
     const { includeDeleted = false, activeOnly = false } = options;
-    const raw = localStorage.getItem(PRODUCTS_STORAGE_KEY);
+    const raw = typeof localStorage !== 'undefined' ? localStorage.getItem(PRODUCTS_STORAGE_KEY) : null;
     let list = [];
-    let shouldSave = false;
 
-    if (!raw) {
-        // Hydrate default products with branch stock & default ACTIVE status
-        list = products.map(p => {
-            const stockMap = DEFAULT_BRANCH_ALLOCATION[p.id] || { "BR-COL": 10, "BR-GAL": 5, "BR-MAT": 3, "BR-KAN": 4 };
-            const totalStock = Object.values(stockMap).reduce((a, b) => a + b, 0);
-            return {
-                ...p,
-                brand: p.brand || 'ASUS',
-                productStatus: p.productStatus || p.status || 'ACTIVE',
-                branchStock: stockMap,
-                totalStock: totalStock,
-                inStock: totalStock > 0,
-                discount: p.originalPrice ? Math.round(((p.originalPrice - p.price) / p.originalPrice) * 100) : 0,
-                alertEnabled: p.alertEnabled !== undefined ? p.alertEnabled : true,
-                lowStockMargin: p.lowStockMargin !== undefined ? parseInt(p.lowStockMargin) : 5
-            };
-        });
-        localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(list));
-    } else {
+    if (raw) {
         try {
             list = JSON.parse(raw);
-            if (!Array.isArray(list) || list.length === 0) {
-                list = [...products];
-                shouldSave = true;
-            }
+            if (!Array.isArray(list)) list = [];
         } catch (e) {
-            list = [...products];
-            shouldSave = true;
+            list = [];
         }
-    }
-
-    // Always ensure every product has a valid brand, category, and productStatus synced
-    list = list.map(p => {
-        const def = products.find(dp => dp.id === p.id || (dp.name && p.name && dp.name.toLowerCase() === p.name.toLowerCase()));
-        const fallbackBrand = def && def.brand ? def.brand : 'ASUS';
-        
-        let currentBrand = p.brand;
-        if (!currentBrand || currentBrand.trim() === '') {
-            currentBrand = fallbackBrand;
-            shouldSave = true;
-        }
-
-        const currentStatus = (p.productStatus || p.status || 'ACTIVE').toUpperCase();
-        if (!p.productStatus || p.productStatus !== currentStatus) {
-            shouldSave = true;
-        }
-
-        return {
-            ...p,
-            brand: currentBrand,
-            productStatus: currentStatus,
-            alertEnabled: p.alertEnabled !== undefined ? p.alertEnabled : true,
-            lowStockMargin: p.lowStockMargin !== undefined ? parseInt(p.lowStockMargin) : 5
-        };
-    });
-
-    if (shouldSave) {
-        localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(list));
     }
 
     // Filter based on requested status scope
@@ -86,10 +33,10 @@ export function getStoredProducts(options = {}) {
         return list;
     }
     if (activeOnly) {
-        return list.filter(p => p.productStatus === 'ACTIVE');
+        return list.filter(p => (p.productStatus || p.status || 'ACTIVE').toUpperCase() === 'ACTIVE');
     }
     // Standard default: Exclude soft-deleted products
-    return list.filter(p => p.productStatus !== 'DELETED');
+    return list.filter(p => (p.productStatus || p.status || 'ACTIVE').toUpperCase() !== 'DELETED');
 }
 
 /**
@@ -97,7 +44,7 @@ export function getStoredProducts(options = {}) {
  * @returns {Array}
  */
 export function getDeletedProducts() {
-    const raw = localStorage.getItem(PRODUCTS_STORAGE_KEY);
+    const raw = typeof localStorage !== 'undefined' ? localStorage.getItem(PRODUCTS_STORAGE_KEY) : null;
     if (!raw) return [];
     try {
         const list = JSON.parse(raw);
@@ -112,7 +59,9 @@ export function getDeletedProducts() {
  * Save full products array to localStorage
  */
 export function saveStoredProducts(productsList) {
-    localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(productsList));
+    if (typeof localStorage !== 'undefined') {
+        localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(productsList));
+    }
 }
 
 /**
@@ -235,27 +184,37 @@ export async function saveProduct(productData) {
     const totalStock = Object.values(branchStock).reduce((sum, v) => sum + parseInt(v || 0), 0);
     const productStatus = (productData.productStatus || productData.status || (index > -1 ? all[index].productStatus : 'ACTIVE')).toUpperCase();
 
+    const cachedCategories = getCachedCategories();
+    const cachedBrands = getCachedBrands();
+    const cachedBadges = getCachedBadges();
+    const brandInfo = resolveBrandInfo(productData, cachedBrands);
+    const categoryInfo = resolveCategoryInfo(productData, cachedCategories);
+    const badgeInfo = resolveBadgeInfo(productData, cachedBadges);
+
     const formattedProduct = {
         id: productData.id ? parseInt(productData.id) : (all.length > 0 ? Math.max(...all.map(p => p.id)) + 1 : 1),
         name: productData.name,
-        category: productData.category,
-        categoryId: productData.categoryId || `cat-${productData.category}`,
-        brand: productData.brand || 'ASUS',
-        brandId: productData.brandId || `brd-${(productData.brand || 'asus').toLowerCase()}`,
+        category: categoryInfo.category,
+        categoryId: categoryInfo.categoryId,
+        categorySlug: categoryInfo.categorySlug,
+        categoryName: categoryInfo.categoryName,
+        brand: brandInfo.brand,
+        brandId: brandInfo.brandId,
+        brandSlug: brandInfo.brandSlug,
         price: parseFloat(productData.price),
         originalPrice: parseFloat(productData.originalPrice || productData.price),
         rating: parseFloat(productData.rating || 4.8),
-        reviews: parseInt(productData.reviews || 10),
-        reviewsCount: parseInt(productData.reviews || 10),
+        reviews: parseInt(productData.reviews || productData.reviewsCount || 10),
+        reviewsCount: parseInt(productData.reviewsCount || productData.reviews || 10),
         image: mainImg,
         images: imagesArr.length > 0 ? imagesArr : [mainImg],
         description: productData.description || "",
         fullDescription: productData.fullDescription || productData.description || "",
-        sku: productData.sku || `ETC-${(productData.category || 'GEN').toUpperCase()}-${Math.floor(1000 + Math.random() * 9000)}`,
-        badge: productData.badge || "",
-        badgeId: productData.badgeId || (productData.badge ? `bdg-${productData.badge.toLowerCase().replace(/[^a-z0-9]+/g, '')}` : ""),
+        sku: productData.sku || `ETC-${(categoryInfo.categorySlug || 'GEN').toUpperCase()}-${Math.floor(1000 + Math.random() * 9000)}`,
+        badge: badgeInfo.badge,
+        badgeId: badgeInfo.badgeId,
         warranty: productData.warranty || "1-Year Warranty",
-        specs: productData.specs || { "Category": productData.category },
+        specs: productData.specs || { "Category": categoryInfo.categoryName },
         features: productData.features || ["High Performance Tech Hardware"],
         branchStock: branchStock,
         totalStock: totalStock,
@@ -373,18 +332,229 @@ export function transferBranchStock(productId, fromBranchId, toBranchId, transfe
     return { success: false, message: 'Invalid transfer parameters.' };
 }
 
+function getCachedCategories() {
+    try {
+        const raw = typeof localStorage !== 'undefined' ? localStorage.getItem('etech_categories_data') : null;
+        return raw ? JSON.parse(raw) : [];
+    } catch (e) {
+        return [];
+    }
+}
+
+function getCachedBrands() {
+    try {
+        const raw = typeof localStorage !== 'undefined' ? localStorage.getItem('etech_brands_data') : null;
+        return raw ? JSON.parse(raw) : [];
+    } catch (e) {
+        return [];
+    }
+}
+
+function getCachedBadges() {
+    try {
+        const raw = typeof localStorage !== 'undefined' ? localStorage.getItem('etech_badges_data') : null;
+        return raw ? JSON.parse(raw) : [];
+    } catch (e) {
+        return [];
+    }
+}
+
+function resolveBrandInfo(p, cachedBrands) {
+    const list = Array.isArray(cachedBrands) ? cachedBrands : [];
+    if (p.brand && typeof p.brand === 'string' && p.brand.trim() !== '') {
+        const trimmed = p.brand.trim();
+        const found = list.find(b => 
+            b.name?.toLowerCase() === trimmed.toLowerCase() || 
+            b.slug?.toLowerCase() === trimmed.toLowerCase() || 
+            b.id?.toLowerCase() === trimmed.toLowerCase()
+        );
+        return {
+            brand: found ? found.name : trimmed,
+            brandId: found ? found.id : (p.brandId || `brd-${trimmed.toLowerCase().replace(/[^a-z0-9]+/g, '')}`),
+            brandSlug: found ? found.slug : trimmed.toLowerCase().replace(/[^a-z0-9]+/g, '-')
+        };
+    }
+    if (p.brandId && typeof p.brandId === 'string' && p.brandId.trim() !== '') {
+        const trimmedId = p.brandId.trim();
+        const found = list.find(b => 
+            b.id?.toLowerCase() === trimmedId.toLowerCase() || 
+            b.slug?.toLowerCase() === trimmedId.toLowerCase() ||
+            b.name?.toLowerCase() === trimmedId.toLowerCase()
+        );
+        if (found) {
+            return {
+                brand: found.name,
+                brandId: found.id,
+                brandSlug: found.slug
+            };
+        }
+        const raw = trimmedId.replace(/^brd-/, '');
+        const capitalized = raw.length <= 4 ? raw.toUpperCase() : (raw.charAt(0).toUpperCase() + raw.slice(1));
+        return {
+            brand: capitalized,
+            brandId: trimmedId,
+            brandSlug: raw.toLowerCase()
+        };
+    }
+    return {
+        brand: 'ASUS',
+        brandId: 'brd-asus',
+        brandSlug: 'asus'
+    };
+}
+
+function resolveCategoryInfo(p, cachedCategories) {
+    const list = Array.isArray(cachedCategories) ? cachedCategories : [];
+    if (p.category && typeof p.category === 'string' && p.category.trim() !== '') {
+        const trimmed = p.category.trim();
+        const found = list.find(c => 
+            c.slug?.toLowerCase() === trimmed.toLowerCase() || 
+            c.id?.toLowerCase() === trimmed.toLowerCase() || 
+            c.name?.toLowerCase() === trimmed.toLowerCase()
+        );
+        return {
+            category: found ? found.slug : trimmed.toLowerCase(),
+            categoryId: found ? found.id : (p.categoryId || `cat-${trimmed.toLowerCase().replace(/[^a-z0-9]+/g, '')}`),
+            categorySlug: found ? found.slug : trimmed.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+            categoryName: found ? found.name : trimmed
+        };
+    }
+    if (p.categoryId && typeof p.categoryId === 'string' && p.categoryId.trim() !== '') {
+        const trimmedId = p.categoryId.trim();
+        const found = list.find(c => 
+            c.id?.toLowerCase() === trimmedId.toLowerCase() || 
+            c.slug?.toLowerCase() === trimmedId.toLowerCase() ||
+            c.name?.toLowerCase() === trimmedId.toLowerCase()
+        );
+        if (found) {
+            return {
+                category: found.slug,
+                categoryId: found.id,
+                categorySlug: found.slug,
+                categoryName: found.name
+            };
+        }
+        const raw = trimmedId.replace(/^cat-/, '');
+        return {
+            category: raw.toLowerCase(),
+            categoryId: trimmedId,
+            categorySlug: raw.toLowerCase(),
+            categoryName: raw.charAt(0).toUpperCase() + raw.slice(1)
+        };
+    }
+    return {
+        category: 'laptops',
+        categoryId: 'cat-laptops',
+        categorySlug: 'laptops',
+        categoryName: 'Laptops & Notebooks'
+    };
+}
+
+function resolveBadgeInfo(p, cachedBadges) {
+    const list = Array.isArray(cachedBadges) ? cachedBadges : [];
+    if (p.badge && typeof p.badge === 'string' && p.badge.trim() !== '') {
+        const trimmed = p.badge.trim();
+        const found = list.find(b => 
+            b.name?.toLowerCase() === trimmed.toLowerCase() || 
+            b.slug?.toLowerCase() === trimmed.toLowerCase() || 
+            b.id?.toLowerCase() === trimmed.toLowerCase()
+        );
+        return {
+            badge: found ? found.name : trimmed,
+            badgeId: found ? found.id : (p.badgeId || `bdg-${trimmed.toLowerCase().replace(/[^a-z0-9]+/g, '')}`)
+        };
+    }
+    if (p.badgeId && typeof p.badgeId === 'string' && p.badgeId.trim() !== '') {
+        const trimmedId = p.badgeId.trim();
+        const found = list.find(b => 
+            b.id?.toLowerCase() === trimmedId.toLowerCase() || 
+            b.slug?.toLowerCase() === trimmedId.toLowerCase() ||
+            b.name?.toLowerCase() === trimmedId.toLowerCase()
+        );
+        if (found) {
+            return {
+                badge: found.name,
+                badgeId: found.id
+            };
+        }
+        const badgeMap = {
+            'bdg-toprated': 'Top Rated',
+            'bdg-bestseller': 'Bestseller',
+            'bdg-hotdeal': 'Hot Deal',
+            'bdg-new': 'New Arrival'
+        };
+        return {
+            badge: badgeMap[trimmedId.toLowerCase()] || trimmedId.replace(/^bdg-/, ''),
+            badgeId: trimmedId
+        };
+    }
+    return {
+        badge: '',
+        badgeId: ''
+    };
+}
+
 /**
  * Fetch and sync products from backend API into local storage
  */
-export async function syncProductsFromApi() {
+export async function syncProductsFromApi(options = {}) {
     try {
-        const liveProducts = await ProductsApi.getAll();
-        if (Array.isArray(liveProducts) && liveProducts.length > 0) {
-            saveStoredProducts(liveProducts);
-            return liveProducts;
+        const res = await ProductsApi.getAll();
+        let apiList = [];
+        if (Array.isArray(res)) {
+            apiList = res;
+        } else if (res && Array.isArray(res.data)) {
+            apiList = res.data;
         }
+
+        const cachedCategories = getCachedCategories();
+        const cachedBrands = getCachedBrands();
+        const cachedBadges = getCachedBadges();
+
+        const normalized = apiList.map(p => {
+            const brandInfo = resolveBrandInfo(p, cachedBrands);
+            const categoryInfo = resolveCategoryInfo(p, cachedCategories);
+            const badgeInfo = resolveBadgeInfo(p, cachedBadges);
+
+            return {
+                id: p.id,
+                name: p.name || p.title || '',
+                brand: brandInfo.brand,
+                brandId: brandInfo.brandId,
+                brandSlug: brandInfo.brandSlug,
+                category: categoryInfo.category,
+                categoryId: categoryInfo.categoryId,
+                categorySlug: categoryInfo.categorySlug,
+                categoryName: categoryInfo.categoryName,
+                price: Number(p.price || 0),
+                originalPrice: p.originalPrice ? Number(p.originalPrice) : null,
+                rating: Number(p.rating || 4.8),
+                reviews: Number(p.reviews || p.reviewsCount || 0),
+                reviewsCount: Number(p.reviewsCount || p.reviews || 0),
+                image: p.image || (Array.isArray(p.images) && p.images[0]) || '',
+                images: Array.isArray(p.images) && p.images.length > 0 ? p.images : (p.image ? [p.image] : []),
+                description: p.description || '',
+                fullDescription: p.fullDescription || p.description || '',
+                inStock: p.inStock !== undefined ? p.inStock : ((p.totalStock || 0) > 0),
+                totalStock: Number(p.totalStock || 0),
+                branchStock: p.branchStock || {},
+                badge: badgeInfo.badge,
+                badgeId: badgeInfo.badgeId,
+                sku: p.sku || '',
+                warranty: p.warranty || '1-Year Warranty',
+                specs: p.specs || {},
+                features: Array.isArray(p.features) ? p.features : [],
+                productStatus: (p.productStatus || p.status || 'ACTIVE').toUpperCase(),
+                status: (p.productStatus || p.status || 'ACTIVE').toUpperCase(),
+                alertEnabled: p.alertEnabled !== undefined ? p.alertEnabled : true,
+                lowStockMargin: p.lowStockMargin !== undefined ? parseInt(p.lowStockMargin) : 5
+            };
+        });
+
+        saveStoredProducts(normalized);
+        return getStoredProducts(options);
     } catch (err) {
-        console.warn('[DataModel] Live API sync offline, using local storage products.');
+        console.warn('[DataModel] Live API sync notice:', err.message);
+        return getStoredProducts(options);
     }
-    return getStoredProducts();
 }
