@@ -3,12 +3,12 @@
 // ============================================================
 import {
   getBrands, getBrandById, getBrandBySlug, saveBrand, deleteBrand,
-  toggleBrandFeatured, getBrandProductCount
+  toggleBrandFeatured, getBrandProductCount, updateBrandStatus
 } from '../models/brand_data.js';
 import { getCategories } from '../models/taxonomy_data.js';
 import { getStoredProducts } from '../models/data.js';
 import { showToast } from './cart_controller.js';
-import { switchAdminTab } from './admin_dashboard_controller.js';
+import { switchAdminTab, updateTrashSidebarBadge } from './admin_dashboard_controller.js';
 
 let currentEditingBrandId = null;
 let brandSearchQuery = '';
@@ -43,12 +43,12 @@ export function renderBrandsTab() {
   const container = document.getElementById('tab-panel-brands');
   if (!container) return;
 
+  // By default, exclude soft-deleted brands
   const brands = getBrands();
-  const allProducts = (typeof getStoredProducts === 'function' ? getStoredProducts() : null) || [];
 
   // Metrics
   const totalBrands = brands.length;
-  const activeBrandsCount = brands.filter(b => b.active !== false).length;
+  const activeBrandsCount = brands.filter(b => b.status === 'ACTIVE' || b.active !== false).length;
   const featuredBrandsCount = brands.filter(b => b.featured).length;
   const assignedProductsCount = brands.reduce((sum, b) => sum + getBrandProductCount(b.name), 0);
 
@@ -85,7 +85,7 @@ export function renderBrandsTab() {
             </div>
             <div>
               <h2 class="text-xl font-extrabold text-[#0f172a] tracking-tight">Hardware Brands Management</h2>
-              <p class="text-xs text-[#64748b] mt-0.5">Control partner manufacturers, official logos, origin data, and homepage showcase positioning.</p>
+              <p class="text-xs text-[#64748b] mt-0.5">Control partner manufacturers, official logos, status lifecycle, and homepage showcase positioning.</p>
             </div>
           </div>
         </div>
@@ -185,20 +185,21 @@ export function renderBrandsTab() {
                 <th class="py-3.5 px-4">Origin & Website</th>
                 <th class="py-3.5 px-4 text-center">Store Products</th>
                 <th class="py-3.5 px-4 text-center">Featured on Home</th>
+                <th class="py-3.5 px-4 text-center">Status</th>
                 <th class="py-3.5 px-4 text-right">Actions</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-[#e2e8f0]">
               ${filteredBrands.length === 0 ? `
                 <tr>
-                  <td colspan="5" class="py-12 text-center text-[#64748b]">
+                  <td colspan="6" class="py-12 text-center text-[#64748b]">
                     <div class="max-w-xs mx-auto space-y-2">
                       <div class="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 border border-blue-200 flex items-center justify-center mx-auto">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
                       </div>
                       <p class="font-bold text-[#0f172a] text-sm">No hardware brands found</p>
                       <p class="text-xs text-[#64748b]">Try adjusting your search terms or register a new brand.</p>
-                      <button onclick="openBrandFormPage(null)" class="mt-2 px-3.5 py-1.5 bg-blue-600 text-white rounded-xl text-xs font-bold">
+                      <button onclick="openBrandFormPage(null)" class="mt-2 px-3.5 py-1.5 bg-blue-600 text-white rounded-xl text-xs font-bold cursor-pointer">
                         + Register New Brand
                       </button>
                     </div>
@@ -207,6 +208,9 @@ export function renderBrandsTab() {
               ` : filteredBrands.map(brand => {
                 const productCount = getBrandProductCount(brand.name);
                 const initials = (brand.name || 'BR').substring(0, 2).toUpperCase();
+                const status = (brand.status || (brand.active !== false ? 'ACTIVE' : 'INACTIVE')).toUpperCase();
+                const isActive = status === 'ACTIVE';
+
                 return `
                   <tr class="hover:bg-[#f8fafc]/80 transition-colors group">
                     
@@ -260,8 +264,18 @@ export function renderBrandsTab() {
                     <!-- Featured Toggle -->
                     <td class="py-3 px-4 text-center">
                       <button type="button" onclick="handleToggleBrandFeatured('${brand.id}')"
-                        class="px-2.5 py-1 rounded-full text-[10px] font-mono font-bold border transition-all ${brand.featured ? 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100' : 'bg-slate-50 text-slate-400 border-slate-200 hover:bg-slate-100'}">
+                        class="px-2.5 py-1 rounded-full text-[10px] font-mono font-bold border transition-all cursor-pointer ${brand.featured ? 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100' : 'bg-slate-50 text-slate-400 border-slate-200 hover:bg-slate-100'}">
                         ${brand.featured ? '● Featured' : '○ Standard'}
+                      </button>
+                    </td>
+
+                    <!-- 1-Click Status Switcher (ACTIVE / INACTIVE) -->
+                    <td class="py-3 px-4 text-center">
+                      <button type="button" onclick="toggleBrandStatus('${brand.id}')"
+                        title="Click to toggle between ACTIVE and INACTIVE"
+                        class="px-2.5 py-1 rounded-full text-[10px] font-mono font-extrabold uppercase transition-all inline-flex items-center space-x-1.5 shadow-2xs cursor-pointer ${isActive ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100' : 'bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100'}">
+                        <span class="w-1.5 h-1.5 rounded-full ${isActive ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}"></span>
+                        <span>${status}</span>
                       </button>
                     </td>
 
@@ -275,13 +289,13 @@ export function renderBrandsTab() {
                         </a>
 
                         <button type="button" onclick="openBrandFormPage('${brand.id}')" title="Edit Brand Details"
-                          class="px-2.5 py-1 text-xs font-bold text-blue-600 hover:bg-blue-50 rounded-lg transition-colors border border-blue-200 flex items-center space-x-1">
+                          class="px-2.5 py-1 text-xs font-bold text-blue-600 hover:bg-blue-50 rounded-lg transition-colors border border-blue-200 flex items-center space-x-1 cursor-pointer">
                           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                           <span>Edit</span>
                         </button>
 
-                        <button type="button" onclick="handleDeleteBrand('${brand.id}', '${brand.name.replace(/'/g, "\\'")}')" title="Delete Brand"
-                          class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors border border-transparent hover:border-rose-200">
+                        <button type="button" onclick="handleDeleteBrand('${brand.id}', '${brand.name.replace(/'/g, "\\'")}')" title="Soft Delete (Move to Trash Bin)"
+                          class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors border border-transparent hover:border-rose-200 cursor-pointer">
                           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                         </button>
 
@@ -299,6 +313,21 @@ export function renderBrandsTab() {
 
     </div>
   `;
+}
+
+/**
+ * 1-Click Status Toggler for Brand (ACTIVE <-> INACTIVE)
+ */
+export async function toggleBrandStatus(brandId) {
+  const brand = getBrandById(brandId);
+  if (!brand) return;
+
+  const currentStatus = (brand.status || (brand.active !== false ? 'ACTIVE' : 'INACTIVE')).toUpperCase();
+  const nextStatus = currentStatus === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
+
+  await updateBrandStatus(brandId, nextStatus);
+  showToast(`Brand "${brand.name}" status changed to ${nextStatus}.`, 'info');
+  renderBrandsTab();
 }
 
 /**
@@ -348,119 +377,75 @@ export function openBrandFormPage(brandId = null) {
               </span>
               ${brand && brand.featured ? `<span class="text-[10px] font-mono font-bold bg-amber-50 text-amber-700 px-2 py-0.5 rounded border border-amber-200">FEATURED</span>` : ''}
             </div>
-            <h2 class="text-xl font-extrabold text-[#0f172a] tracking-tight mt-0.5">
-              ${isEdit ? `Edit Brand: ${brand.name}` : 'Register New Hardware Brand'}
+            <h2 class="text-xl font-extrabold text-[#0f172a] tracking-tight">
+              ${isEdit ? `Edit Partner: ${brand.name}` : 'Register Official Manufacturer Partner'}
             </h2>
-            <p class="text-xs text-[#64748b]">Configure official manufacturer profile, high-res logo vector, origin data, and storefront integration.</p>
           </div>
         </div>
 
-        <div class="flex items-center space-x-2.5">
+        <div class="flex items-center space-x-3">
           <button type="button" onclick="closeBrandFormPage()"
-            class="px-4 py-2.5 rounded-xl bg-white hover:bg-slate-50 text-[#475569] border border-[#e2e8f0] text-xs font-bold transition-all shadow-sm cursor-pointer">
+            class="px-4 py-2 rounded-xl bg-[#f8fafc] hover:bg-[#f1f5f9] text-[#475569] font-bold text-xs border border-[#e2e8f0] transition-colors cursor-pointer">
             Cancel
           </button>
+
           <button type="button" onclick="triggerBrandFormSubmit()"
-            class="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-all shadow-md flex items-center space-x-2 active:scale-95 cursor-pointer">
+            class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-xs shadow-md transition-all flex items-center space-x-1.5 cursor-pointer">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-            <span>${isEdit ? 'Save Changes' : 'Register Brand'}</span>
+            <span>${isEdit ? 'Save Changes' : 'Publish Brand Profile'}</span>
           </button>
         </div>
 
       </div>
 
-      <!-- Main Form Grid (Dual Column) -->
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      <!-- Main 2-Column Workspace Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
         
-        <!-- Left Column: Form Fields (7 Cols) -->
+        <!-- Left 7 Columns: Complete Form Inputs -->
         <div class="lg:col-span-7 space-y-6">
           
           <form id="full-brand-form" onsubmit="handleSaveBrandFormPage(event)" class="space-y-6">
             
-            <!-- Section 1: Brand Identity & Origin -->
-            <div class="bg-white border border-[#e2e8f0] rounded-2xl p-5 sm:p-6 shadow-sm space-y-4">
-              <div class="border-b border-[#e2e8f0] pb-3">
-                <h3 class="text-xs font-extrabold text-[#0f172a] uppercase tracking-wider flex items-center space-x-2">
-                  <span class="w-2 h-2 rounded-full bg-blue-600"></span>
-                  <span>1. Brand Identity & Headquarters</span>
-                </h3>
-                <p class="text-[11px] text-[#64748b] mt-0.5">Core company identification and global headquarters origin.</p>
-              </div>
-
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-                
-                <div>
-                  <label class="block font-bold text-[#0f172a] mb-1">Brand Name *</label>
-                  <input type="text" id="bf-brand-name" required value="${brand ? brand.name : ''}" placeholder="e.g. ASUS, Intel, Corsair"
-                    oninput="handleBrandNameInput(this.value)"
-                    class="w-full px-3.5 py-2 rounded-xl bg-[#f8fafc] border border-[#e2e8f0] text-[#0f172a] font-bold focus:border-blue-600 focus:outline-none">
-                </div>
-
-                <div>
-                  <label class="block font-bold text-[#0f172a] mb-1">URL Slug</label>
-                  <input type="text" id="bf-brand-slug" value="${brand ? brand.slug : ''}" placeholder="e.g. asus"
-                    class="w-full px-3.5 py-2 rounded-xl bg-slate-100 border border-[#e2e8f0] text-blue-600 font-mono font-bold text-xs focus:border-blue-600 focus:outline-none">
-                </div>
-
-                <div>
-                  <label class="block font-bold text-[#0f172a] mb-1">Country of Origin</label>
-                  <input type="text" id="bf-brand-country" value="${brand ? (brand.country || 'USA') : 'Taiwan'}" placeholder="e.g. Taiwan, USA, South Korea, Switzerland"
-                    oninput="updateBrandLivePreview()"
-                    class="w-full px-3.5 py-2 rounded-xl bg-[#f8fafc] border border-[#e2e8f0] text-[#0f172a] font-semibold focus:border-blue-600 focus:outline-none">
-                </div>
-
-                <div>
-                  <label class="block font-bold text-[#0f172a] mb-1">Founded Year</label>
-                  <input type="text" id="bf-brand-founded" value="${brand ? (brand.founded || '') : '1989'}" placeholder="e.g. 1989"
-                    oninput="updateBrandLivePreview()"
-                    class="w-full px-3.5 py-2 rounded-xl bg-[#f8fafc] border border-[#e2e8f0] text-[#0f172a] font-mono font-bold focus:border-blue-600 focus:outline-none">
-                </div>
-
-                <div class="sm:col-span-2">
-                  <label class="block font-bold text-[#0f172a] mb-1">Official Website URL</label>
-                  <input type="url" id="bf-brand-website" value="${brand ? (brand.website || '') : ''}" placeholder="https://www.asus.com"
-                    oninput="updateBrandLivePreview()"
-                    class="w-full px-3.5 py-2 rounded-xl bg-[#f8fafc] border border-[#e2e8f0] text-blue-600 font-mono text-xs focus:border-blue-600 focus:outline-none">
-                </div>
-
-                <div class="sm:col-span-2">
-                  <label class="block font-bold text-[#0f172a] mb-1">Slogan / Tagline</label>
-                  <input type="text" id="bf-brand-tagline" value="${brand ? (brand.tagline || '') : ''}" placeholder="e.g. In Search of Incredible"
-                    oninput="updateBrandLivePreview()"
-                    class="w-full px-3.5 py-2 rounded-xl bg-[#f8fafc] border border-[#e2e8f0] text-[#0f172a] font-semibold text-xs focus:border-blue-600 focus:outline-none">
-                </div>
-
-              </div>
-            </div>
-
-            <!-- Section 2: Logo & Visual Brand Identity -->
-            <div class="bg-white border border-[#e2e8f0] rounded-2xl p-5 sm:p-6 shadow-sm space-y-4">
-              <div class="border-b border-[#e2e8f0] pb-3">
-                <h3 class="text-xs font-extrabold text-[#0f172a] uppercase tracking-wider flex items-center space-x-2">
-                  <span class="w-2 h-2 rounded-full bg-indigo-600"></span>
-                  <span>2. Official Brand Logo</span>
-                </h3>
-                <p class="text-[11px] text-[#64748b] mt-0.5">High-resolution vector SVG or transparent PNG manufacturer logo.</p>
-              </div>
+            <!-- Section 1: Basic Identity & Logo -->
+            <div class="bg-white border border-[#e2e8f0] rounded-2xl p-6 shadow-sm space-y-4">
+              <h3 class="text-xs font-mono font-bold text-[#64748b] uppercase tracking-wider border-b border-[#e2e8f0] pb-3 flex items-center space-x-2">
+                <span class="w-2 h-2 rounded-full bg-blue-600"></span>
+                <span>1. Brand Identity & Official Logo</span>
+              </h3>
 
               <div class="space-y-4 text-xs">
                 
-                <div>
-                  <label class="block font-bold text-[#0f172a] mb-1">Logo Image URL (SVG / PNG / WebP)</label>
-                  <input type="url" id="bf-brand-logo" value="${brand ? (brand.logo || '') : ''}" placeholder="https://upload.wikimedia.org/.../ASUS_Logo.svg"
-                    oninput="updateBrandLivePreview()"
-                    class="w-full px-3.5 py-2.5 rounded-xl bg-[#f8fafc] border border-[#e2e8f0] text-blue-600 font-mono text-xs focus:border-blue-600 focus:outline-none">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-[#475569] font-bold mb-1">Manufacturer Brand Name *</label>
+                    <input type="text" id="bf-brand-name" required value="${brand ? brand.name : ''}"
+                      placeholder="e.g. ASUS" oninput="handleBrandNameInput(this.value)"
+                      class="w-full px-3.5 py-2.5 rounded-xl bg-[#f8fafc] border border-[#e2e8f0] text-[#0f172a] font-bold text-sm focus:border-blue-600 focus:outline-none">
+                  </div>
+
+                  <div>
+                    <label class="block text-[#475569] font-bold mb-1">Store URL Slug *</label>
+                    <input type="text" id="bf-brand-slug" required value="${brand ? brand.slug : ''}"
+                      placeholder="e.g. asus" oninput="updateBrandLivePreview()"
+                      class="w-full px-3.5 py-2.5 rounded-xl bg-[#f8fafc] border border-[#e2e8f0] text-blue-600 font-mono font-bold text-xs focus:border-blue-600 focus:outline-none">
+                  </div>
                 </div>
 
-                <!-- Quick Presets for Leading Brands -->
                 <div>
-                  <label class="block text-[10px] font-mono font-bold uppercase text-[#64748b] mb-1.5">Quick-Apply Logo Presets for Top Hardware Brands:</label>
+                  <label class="block text-[#475569] font-bold mb-1">Logo Web URL (SVG / PNG)</label>
+                  <input type="url" id="bf-brand-logo" value="${brand ? (brand.logo || brand.logoUrl || '') : ''}"
+                    placeholder="https://cdn.jsdelivr.net/... or direct image link" oninput="updateBrandLivePreview()"
+                    class="w-full px-3.5 py-2.5 rounded-xl bg-[#f8fafc] border border-[#e2e8f0] text-[#0f172a] font-mono text-xs focus:border-blue-600 focus:outline-none">
+                </div>
+
+                <!-- Quick Logo Presets -->
+                <div class="space-y-1.5 pt-1">
+                  <span class="text-[10px] text-[#64748b] font-bold uppercase tracking-wider block">Or Pick from Verified Tech Maker Presets:</span>
                   <div class="flex flex-wrap gap-1.5">
                     ${BRAND_LOGO_PRESETS.map(preset => `
                       <button type="button" onclick="applyBrandPreset('${preset.name}', '${preset.url}', '${preset.country}', '${preset.founded}')"
-                        class="px-2.5 py-1 rounded-lg bg-[#f8fafc] hover:bg-blue-50 hover:text-blue-700 border border-[#e2e8f0] text-[11px] font-semibold transition-all flex items-center space-x-1.5 cursor-pointer">
-                        <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
-                        <span>${preset.name}</span>
+                        class="px-2.5 py-1 rounded-lg bg-[#f8fafc] hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 border border-[#e2e8f0] text-[10px] font-bold font-mono transition-all cursor-pointer">
+                        ${preset.name}
                       </button>
                     `).join('')}
                   </div>
@@ -469,120 +454,142 @@ export function openBrandFormPage(brandId = null) {
               </div>
             </div>
 
-            <!-- Section 3: Brand Story & Description -->
-            <div class="bg-white border border-[#e2e8f0] rounded-2xl p-5 sm:p-6 shadow-sm space-y-4">
-              <div class="border-b border-[#e2e8f0] pb-3">
-                <h3 class="text-xs font-extrabold text-[#0f172a] uppercase tracking-wider flex items-center space-x-2">
-                  <span class="w-2 h-2 rounded-full bg-emerald-600"></span>
-                  <span>3. Brand Story & Overview</span>
-                </h3>
-                <p class="text-[11px] text-[#64748b] mt-0.5">Shown to customers on the brand showcase and product details pages.</p>
-              </div>
+            <!-- Section 2: Origin, Headquarters & Metadata -->
+            <div class="bg-white border border-[#e2e8f0] rounded-2xl p-6 shadow-sm space-y-4">
+              <h3 class="text-xs font-mono font-bold text-[#64748b] uppercase tracking-wider border-b border-[#e2e8f0] pb-3 flex items-center space-x-2">
+                <span class="w-2 h-2 rounded-full bg-emerald-600"></span>
+                <span>2. Corporate Origin & External Portal</span>
+              </h3>
 
-              <div class="text-xs">
-                <label class="block font-bold text-[#0f172a] mb-1">Company Description</label>
-                <textarea id="bf-brand-desc" rows="3" placeholder="Describe the brand's engineering specialty, hardware history, and market leadership..."
-                  oninput="updateBrandLivePreview()"
-                  class="w-full px-3.5 py-2.5 rounded-xl bg-[#f8fafc] border border-[#e2e8f0] text-[#0f172a] text-xs font-medium focus:border-blue-600 focus:outline-none leading-relaxed">${brand ? (brand.description || '') : ''}</textarea>
+              <div class="space-y-4 text-xs">
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-[#475569] font-bold mb-1">Country of Origin / HQ</label>
+                    <input type="text" id="bf-brand-country" value="${brand ? brand.country : 'Taiwan'}"
+                      placeholder="e.g. Taiwan, USA, Japan" oninput="updateBrandLivePreview()"
+                      class="w-full px-3.5 py-2.5 rounded-xl bg-[#f8fafc] border border-[#e2e8f0] text-[#0f172a] focus:border-blue-600 focus:outline-none">
+                  </div>
+
+                  <div>
+                    <label class="block text-[#475569] font-bold mb-1">Founded Year</label>
+                    <input type="text" id="bf-brand-founded" value="${brand ? (brand.founded || brand.foundedYear || '') : '1989'}"
+                      placeholder="e.g. 1989" oninput="updateBrandLivePreview()"
+                      class="w-full px-3.5 py-2.5 rounded-xl bg-[#f8fafc] border border-[#e2e8f0] text-[#0f172a] font-mono focus:border-blue-600 focus:outline-none">
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block text-[#475569] font-bold mb-1">Official Global Website Link</label>
+                  <input type="url" id="bf-brand-website" value="${brand ? (brand.website || brand.websiteUrl || '') : 'https://www.asus.com'}"
+                    placeholder="https://www.brand.com" oninput="updateBrandLivePreview()"
+                    class="w-full px-3.5 py-2.5 rounded-xl bg-[#f8fafc] border border-[#e2e8f0] text-[#0f172a] font-mono text-xs focus:border-blue-600 focus:outline-none">
+                </div>
+
+                <div>
+                  <label class="block text-[#475569] font-bold mb-1">Brand Tagline / Slogan</label>
+                  <input type="text" id="bf-brand-tagline" value="${brand ? brand.tagline : 'In Search of Incredible'}"
+                    placeholder="e.g. For Those Who Dare" oninput="updateBrandLivePreview()"
+                    class="w-full px-3.5 py-2.5 rounded-xl bg-[#f8fafc] border border-[#e2e8f0] text-[#0f172a] italic focus:border-blue-600 focus:outline-none">
+                </div>
+
+                <div>
+                  <label class="block text-[#475569] font-bold mb-1">Catalog Description & Hardware Specialties</label>
+                  <textarea id="bf-brand-desc" rows="3" oninput="updateBrandLivePreview()"
+                    placeholder="Describe what hardware lines this brand provides in our store..."
+                    class="w-full px-3.5 py-2.5 rounded-xl bg-[#f8fafc] border border-[#e2e8f0] text-[#0f172a] focus:border-blue-600 focus:outline-none leading-relaxed">${brand ? brand.description : ''}</textarea>
+                </div>
+
               </div>
             </div>
 
-            <!-- Section 4: Storefront Placement & Visibility -->
-            <div class="bg-white border border-[#e2e8f0] rounded-2xl p-5 sm:p-6 shadow-sm space-y-4">
-              <div class="border-b border-[#e2e8f0] pb-3">
-                <h3 class="text-xs font-extrabold text-[#0f172a] uppercase tracking-wider flex items-center space-x-2">
-                  <span class="w-2 h-2 rounded-full bg-amber-600"></span>
-                  <span>4. Storefront Placement & Visibility</span>
-                </h3>
-                <p class="text-[11px] text-[#64748b] mt-0.5">Control homepage showcase presence and filter options.</p>
-              </div>
+            <!-- Section 3: Storefront Placement & Lifecycle Status -->
+            <div class="bg-white border border-[#e2e8f0] rounded-2xl p-6 shadow-sm space-y-4">
+              <h3 class="text-xs font-mono font-bold text-[#64748b] uppercase tracking-wider border-b border-[#e2e8f0] pb-3 flex items-center space-x-2">
+                <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                <span>3. Placement & Lifecycle Status</span>
+              </h3>
 
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-                
-                <div class="flex items-center justify-between p-3.5 rounded-xl border border-[#e2e8f0] bg-[#f8fafc]">
-                  <div>
-                    <span class="font-bold text-[#0f172a] block">Featured on Homepage</span>
-                    <span class="text-[11px] text-[#64748b]">Showcase logo on the home page brands strip</span>
-                  </div>
-                  <input type="checkbox" id="bf-brand-featured" ${brand && brand.featured ? 'checked' : ''} onchange="updateBrandLivePreview()"
-                    class="w-5 h-5 rounded text-blue-600 focus:ring-blue-500 cursor-pointer">
-                </div>
-
-                <div class="flex items-center justify-between p-3.5 rounded-xl border border-[#e2e8f0] bg-[#f8fafc]">
-                  <div>
-                    <span class="font-bold text-[#0f172a] block">Active Status</span>
-                    <span class="text-[11px] text-[#64748b]">Available for catalog filtering & products</span>
-                  </div>
-                  <input type="checkbox" id="bf-brand-active" ${brand ? (brand.active !== false ? 'checked' : '') : 'checked'} onchange="updateBrandLivePreview()"
-                    class="w-5 h-5 rounded text-blue-600 focus:ring-blue-500 cursor-pointer">
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+                <div>
+                  <label class="block text-[#475569] font-bold mb-1">Display Sort Order</label>
+                  <input type="number" id="bf-brand-order" value="${brand ? brand.displayOrder : 1}" min="1" max="99"
+                    class="w-full px-3.5 py-2.5 rounded-xl bg-[#f8fafc] border border-[#e2e8f0] text-[#0f172a] font-mono font-bold focus:border-blue-600 focus:outline-none">
                 </div>
 
                 <div class="sm:col-span-2">
-                  <label class="block font-bold text-[#0f172a] mb-1">Display Sort Priority</label>
-                  <input type="number" id="bf-brand-order" min="1" max="99" value="${brand ? (brand.displayOrder || 1) : 1}" oninput="updateBrandLivePreview()"
-                    class="w-32 px-3 py-2 rounded-xl bg-[#f8fafc] border border-[#e2e8f0] text-xs font-mono font-bold">
-                  <span class="text-[10px] text-[#64748b] ml-2">Lower numbers appear first on storefront.</span>
+                  <label class="block text-[#475569] font-bold mb-1">Lifecycle Status *</label>
+                  <select id="bf-brand-status" class="w-full px-3.5 py-2.5 rounded-xl bg-[#f8fafc] border border-[#e2e8f0] text-[#0f172a] font-bold focus:border-blue-600 focus:outline-none">
+                    <option value="ACTIVE" ${!brand || brand.status === 'ACTIVE' || brand.active !== false ? 'selected' : ''}>ACTIVE (Storefront Visible)</option>
+                    <option value="INACTIVE" ${brand && (brand.status === 'INACTIVE' || brand.active === false) ? 'selected' : ''}>INACTIVE (Hidden from Storefront)</option>
+                  </select>
                 </div>
-
               </div>
+
+              <div class="pt-2 border-t border-[#e2e8f0]">
+                <label class="flex items-center space-x-2.5 cursor-pointer">
+                  <input type="checkbox" id="bf-brand-featured" ${brand && brand.featured ? 'checked' : ''} onchange="updateBrandLivePreview()"
+                    class="rounded text-blue-600 focus:ring-0 w-4 h-4">
+                  <span class="text-xs font-bold text-[#0f172a]">Feature on Homepage Brand Showcase</span>
+                </label>
+              </div>
+
+            </div>
+
+            <!-- Bottom Action Footer -->
+            <div class="flex items-center justify-end space-x-3 pt-2">
+              <button type="button" onclick="closeBrandFormPage()"
+                class="px-5 py-2.5 rounded-xl bg-[#f8fafc] hover:bg-[#f1f5f9] text-[#475569] font-bold text-xs border border-[#e2e8f0] transition-colors cursor-pointer">
+                Cancel
+              </button>
+
+              <button type="submit"
+                class="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-xs shadow-md transition-all cursor-pointer">
+                ${isEdit ? 'Save Changes' : 'Publish Brand Profile'}
+              </button>
             </div>
 
           </form>
 
         </div>
 
-        <!-- Right Column: Interactive Live Preview & Connected Products (5 Cols) -->
-        <div class="lg:col-span-5 space-y-6 sticky top-24">
+        <!-- Right 5 Columns: Live Storefront Card Preview & Linked Catalog -->
+        <div class="lg:col-span-5 space-y-6">
           
-          <!-- Live Preview Card -->
-          <div class="bg-white border border-[#e2e8f0] rounded-2xl p-5 sm:p-6 shadow-sm space-y-4">
-            <div class="flex items-center justify-between border-b border-[#e2e8f0] pb-3">
-              <h3 class="text-xs font-mono font-bold text-[#64748b] uppercase tracking-wider">
-                Storefront Live Brand Preview
-              </h3>
-              <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-blue-50 text-blue-700 border border-blue-200">
-                REAL-TIME
-              </span>
-            </div>
-
-            <!-- Preview Card Container -->
-            <div id="brand-live-preview-card" class="space-y-4">
-              <!-- Dynamically populated by updateBrandLivePreview() -->
-            </div>
-          </div>
-
-          <!-- Connected Catalog Products -->
-          <div class="bg-white border border-[#e2e8f0] rounded-2xl p-5 sm:p-6 shadow-sm space-y-3">
-            <div class="flex items-center justify-between border-b border-[#e2e8f0] pb-3">
-              <h3 class="text-xs font-extrabold text-[#0f172a] uppercase tracking-wider flex items-center space-x-1.5">
-                <span>📦</span>
-                <span>Associated Catalog Products (${associatedProducts.length})</span>
-              </h3>
-              <span class="text-[10px] font-mono text-blue-600 bg-blue-50 px-2 py-0.5 rounded border border-blue-200 font-bold">
-                LIVE CATALOG
-              </span>
-            </div>
-
-            ${associatedProducts.length === 0 ? `
-              <div class="text-center py-6 bg-[#f8fafc] rounded-xl border border-dashed border-[#e2e8f0] text-xs text-[#64748b]">
-                No store products currently assigned to this brand.
+          <div class="sticky top-24 space-y-6">
+            
+            <div class="space-y-2">
+              <span class="text-[10px] font-mono font-bold text-[#64748b] uppercase tracking-wider block">Real-time Storefront Showcase Card:</span>
+              <div id="brand-live-preview-card">
+                <!-- Dynamically rendered -->
               </div>
-            ` : `
-              <div class="max-h-60 overflow-y-auto space-y-2 pr-1 divide-y divide-slate-100">
-                ${associatedProducts.map(p => `
-                  <div class="pt-2 flex items-center justify-between text-xs">
-                    <div class="flex items-center space-x-2.5 min-w-0 flex-1 pr-2">
-                      <img src="${p.image}" alt="${p.name}" class="w-8 h-8 rounded-lg bg-white border border-[#e2e8f0] p-0.5 object-contain flex-shrink-0">
-                      <div class="min-w-0 flex-1">
-                        <h4 class="font-bold text-[#0f172a] truncate" title="${p.name}">${p.name}</h4>
-                        <span class="text-[10px] font-mono text-[#64748b]">${p.sku} | Stock: ${p.totalStock}</span>
+            </div>
+
+            ${isEdit ? `
+              <div class="bg-white border border-[#e2e8f0] rounded-2xl p-5 shadow-sm space-y-3">
+                <div class="flex items-center justify-between border-b border-[#e2e8f0] pb-2.5">
+                  <h4 class="text-xs font-bold text-[#0f172a] uppercase font-mono">Assigned Catalog Products</h4>
+                  <span class="px-2 py-0.5 rounded bg-blue-50 text-blue-700 text-[10px] font-mono font-bold">${associatedProducts.length} Items</span>
+                </div>
+                
+                ${associatedProducts.length === 0 ? `
+                  <p class="text-xs text-[#64748b] italic py-2">No catalog products currently assigned to this brand.</p>
+                ` : `
+                  <div class="space-y-2 max-h-56 overflow-y-auto pr-1">
+                    ${associatedProducts.map(p => `
+                      <div class="flex items-center space-x-2.5 p-2 rounded-xl bg-[#f8fafc] border border-[#e2e8f0] text-xs">
+                        <img src="${p.image}" class="w-8 h-8 rounded-lg object-cover bg-white border border-[#e2e8f0] flex-shrink-0">
+                        <div class="min-w-0 flex-1">
+                          <p class="font-bold text-[#0f172a] truncate">${p.name}</p>
+                          <p class="text-[10px] text-blue-600 font-mono">Rs. ${(p.price || 0).toLocaleString()} • ${p.sku}</p>
+                        </div>
                       </div>
-                    </div>
-                    <span class="font-mono font-extrabold text-blue-600 whitespace-nowrap">Rs. ${Number(p.price).toLocaleString()}</span>
+                    `).join('')}
                   </div>
-                `).join('')}
+                `}
               </div>
-            `}
+            ` : ''}
+
           </div>
 
         </div>
@@ -592,13 +599,9 @@ export function openBrandFormPage(brandId = null) {
     </div>
   `;
 
-  // Initial preview render
   updateBrandLivePreview();
 }
 
-/**
- * Handle auto-generating slug on brand name typing
- */
 export function handleBrandNameInput(name) {
   const slugInput = document.getElementById('bf-brand-slug');
   if (slugInput && name) {
@@ -607,9 +610,6 @@ export function handleBrandNameInput(name) {
   updateBrandLivePreview();
 }
 
-/**
- * Apply Brand Logo Preset
- */
 export function applyBrandPreset(name, url, country, founded) {
   const nameEl = document.getElementById('bf-brand-name');
   const slugEl = document.getElementById('bf-brand-slug');
@@ -626,9 +626,6 @@ export function applyBrandPreset(name, url, country, founded) {
   updateBrandLivePreview();
 }
 
-/**
- * Updates the right-hand live preview card
- */
 export function updateBrandLivePreview() {
   const container = document.getElementById('brand-live-preview-card');
   if (!container) return;
@@ -697,9 +694,6 @@ export function updateBrandLivePreview() {
   `;
 }
 
-/**
- * Trigger form submission
- */
 export function triggerBrandFormSubmit() {
   const form = document.getElementById('full-brand-form');
   if (form) {
@@ -713,9 +707,6 @@ export function triggerBrandFormSubmit() {
   }
 }
 
-/**
- * Close Brand Form Page
- */
 export function closeBrandFormPage() {
   const formPanel = document.getElementById('tab-panel-brand-form');
   if (formPanel) formPanel.classList.add('hidden');
@@ -726,10 +717,7 @@ export function closeBrandFormPage() {
   renderBrandsTab();
 }
 
-/**
- * Handle Save Brand Form
- */
-export function handleSaveBrandFormPage(event) {
+export async function handleSaveBrandFormPage(event) {
   if (event) event.preventDefault();
 
   const name = document.getElementById('bf-brand-name').value.trim();
@@ -746,7 +734,7 @@ export function handleSaveBrandFormPage(event) {
   const tagline = document.getElementById('bf-brand-tagline').value.trim();
   const description = document.getElementById('bf-brand-desc').value.trim();
   const featured = document.getElementById('bf-brand-featured').checked;
-  const active = document.getElementById('bf-brand-active').checked;
+  const status = document.getElementById('bf-brand-status')?.value || 'ACTIVE';
   const displayOrder = Number(document.getElementById('bf-brand-order').value) || 1;
 
   const brandData = {
@@ -754,17 +742,21 @@ export function handleSaveBrandFormPage(event) {
     name: name,
     slug: slug,
     logo: logo,
+    logoUrl: logo,
     country: country,
     founded: founded,
+    foundedYear: founded,
     website: website,
+    websiteUrl: website,
     tagline: tagline,
     description: description,
     featured: featured,
-    active: active,
+    status: status,
+    active: status === 'ACTIVE',
     displayOrder: displayOrder
   };
 
-  const result = saveBrand(brandData);
+  const result = await saveBrand(brandData);
   if (result.success) {
     showToast(result.message, 'success');
     closeBrandFormPage();
@@ -773,9 +765,6 @@ export function handleSaveBrandFormPage(event) {
   }
 }
 
-/**
- * Filter handlers
- */
 export function handleBrandSearch(query) {
   brandSearchQuery = query;
   renderBrandsTab();
@@ -802,29 +791,35 @@ export function handleToggleBrandFeatured(id) {
   }
 }
 
-export function handleDeleteBrand(id, name) {
-  if (!confirm(`Are you sure you want to delete brand "${name}"?`)) return;
+export async function handleDeleteBrand(id, name) {
+  if (!confirm(`Move brand "${name}" to the Trash Bin?`)) return;
 
-  const result = deleteBrand(id);
+  const result = await deleteBrand(id);
   if (result.success) {
     showToast(result.message, 'success');
     renderBrandsTab();
+    updateTrashSidebarBadge();
   } else {
     showToast(result.message, 'error');
   }
 }
 
 // Window Global Bindings
-window.renderBrandsTab = renderBrandsTab;
-window.openBrandFormPage = openBrandFormPage;
-window.closeBrandFormPage = closeBrandFormPage;
-window.triggerBrandFormSubmit = triggerBrandFormSubmit;
-window.handleSaveBrandFormPage = handleSaveBrandFormPage;
-window.handleBrandSearch = handleBrandSearch;
-window.handleBrandFeaturedFilter = handleBrandFeaturedFilter;
-window.resetBrandFilters = resetBrandFilters;
-window.handleToggleBrandFeatured = handleToggleBrandFeatured;
-window.handleDeleteBrand = handleDeleteBrand;
-window.handleBrandNameInput = handleBrandNameInput;
-window.applyBrandPreset = applyBrandPreset;
-window.updateBrandLivePreview = updateBrandLivePreview;
+if (typeof window !== 'undefined') {
+  Object.assign(window, {
+    renderBrandsTab,
+    toggleBrandStatus,
+    openBrandFormPage,
+    closeBrandFormPage,
+    triggerBrandFormSubmit,
+    handleSaveBrandFormPage,
+    handleBrandSearch,
+    handleBrandFeaturedFilter,
+    resetBrandFilters,
+    handleToggleBrandFeatured,
+    handleDeleteBrand,
+    handleBrandNameInput,
+    applyBrandPreset,
+    updateBrandLivePreview
+  });
+}

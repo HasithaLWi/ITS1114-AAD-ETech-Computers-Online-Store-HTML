@@ -1,19 +1,29 @@
+// ============================================================
+//  src/js/controller/product_management_controller.js — Products Controller
+// ============================================================
 import { getBranches } from './branch_controller.js';
-import { getStoredProducts, saveProduct, deleteProduct, getProductById } from '../models/data.js';
+import { 
+  getStoredProducts, saveProduct, deleteProduct, getProductById, updateProductStatus 
+} from '../models/data.js';
 import { getCurrentUser } from './login_controller.js';
 import { getCategories, getBadges } from '../models/taxonomy_data.js';
 import { getBrands } from '../models/brand_data.js';
+import { showToast } from './cart_controller.js';
+import { updateTrashSidebarBadge } from './admin_dashboard_controller.js';
+
+let productSearchQuery = '';
 
 /**
  * ============================================================
- * TAB 2: PRODUCT MANAGEMENT (STAFF & ADMIN)
+ * TAB: PRODUCT MANAGEMENT (STAFF & ADMIN)
  * ============================================================
  */
 export function renderProductsTab() {
   const tbody = document.getElementById('products-tbody');
   if (!tbody) return;
 
-  const products = getStoredProducts();
+  // By default, getStoredProducts excludes DELETED products
+  let products = getStoredProducts();
   const branches = getBranches();
   const activeUser = getCurrentUser();
 
@@ -39,54 +49,126 @@ export function renderProductsTab() {
     }
   }
 
-  tbody.innerHTML = products.map(p => `
-    <tr class="hover:bg-[#f8fafc] transition-colors">
-      <td class="py-3 px-3.5">
-        <div class="flex items-center space-x-2.5">
-          <img src="${p.image}" class="w-9 h-9 object-cover rounded bg-[#f8fafc] border border-[#e2e8f0] flex-shrink-0">
-          <div>
-            <p class="font-bold text-[#0f172a] text-xs line-clamp-1">${p.name}</p>
-            <p class="text-[10px] text-blue-600 font-mono">${p.sku}</p>
+  // Filter with live search
+  const searchInput = document.getElementById('product-search-input');
+  if (searchInput && searchInput.value) {
+    productSearchQuery = searchInput.value.toLowerCase().trim();
+  }
+
+  if (productSearchQuery) {
+    products = products.filter(p => 
+      p.name.toLowerCase().includes(productSearchQuery) ||
+      (p.sku && p.sku.toLowerCase().includes(productSearchQuery)) ||
+      (p.category && p.category.toLowerCase().includes(productSearchQuery)) ||
+      (p.brand && p.brand.toLowerCase().includes(productSearchQuery))
+    );
+  }
+
+  if (products.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="7" class="py-8 text-center text-[#64748b] text-xs">
+          ${productSearchQuery ? 'No catalog items matched your search query.' : 'No active products found in inventory.'}
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  tbody.innerHTML = products.map(p => {
+    const status = (p.productStatus || p.status || 'ACTIVE').toUpperCase();
+    const isActive = status === 'ACTIVE';
+
+    return `
+      <tr class="hover:bg-[#f8fafc] transition-colors">
+        <td class="py-3 px-3.5">
+          <div class="flex items-center space-x-2.5">
+            <img src="${p.image}" class="w-9 h-9 object-cover rounded bg-[#f8fafc] border border-[#e2e8f0] flex-shrink-0">
+            <div>
+              <p class="font-bold text-[#0f172a] text-xs line-clamp-1">${p.name}</p>
+              <p class="text-[10px] text-blue-600 font-mono">${p.sku}</p>
+            </div>
           </div>
-        </div>
-      </td>
-      <td class="py-3 px-3.5 uppercase text-[10px] font-mono font-bold text-blue-600">${p.category}</td>
-      <td class="py-3 px-3.5 font-bold text-[#0f172a] font-mono text-xs">Rs. ${p.price.toLocaleString()}</td>
-      <td class="py-3 px-3.5">
-        <div class="flex flex-wrap gap-1">
-          ${branches.map(b => {
-            const qty = (p.branchStock && p.branchStock[b.id]) || 0;
-            return `
-              <span class="px-1.5 py-0.5 rounded text-[9px] font-mono border ${qty > 0 ? 'bg-[#f8fafc] text-[#0f172a] border-[#e2e8f0]' : 'bg-rose-50 text-rose-700 border-rose-200'}">
-                <strong class="text-blue-600">${b.city}:</strong> ${qty}
-              </span>
-            `;
-          }).join('')}
-        </div>
-      </td>
-      <td class="py-3 px-3.5">
-        <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold ${p.totalStock > 0 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200'}">
-          ${p.totalStock} units
-        </span>
-      </td>
-      <td class="py-3 px-3.5 text-right">
-        <div class="flex items-center justify-end space-x-1.5">
-          <button onclick="editProduct(${p.id})" class="p-1.5 bg-[#f8fafc] hover:bg-[#f1f5f9] text-blue-600 rounded border border-[#e2e8f0] transition-colors shadow-sm" title="Edit Product">
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+        </td>
+        <td class="py-3 px-3.5 uppercase text-[10px] font-mono font-bold text-blue-600">${p.category}</td>
+        <td class="py-3 px-3.5 font-bold text-[#0f172a] font-mono text-xs">Rs. ${(p.price || 0).toLocaleString()}</td>
+        <td class="py-3 px-3.5">
+          <div class="flex flex-wrap gap-1">
+            ${branches.map(b => {
+              const qty = (p.branchStock && p.branchStock[b.id]) || 0;
+              return `
+                <span class="px-1.5 py-0.5 rounded text-[9px] font-mono border ${qty > 0 ? 'bg-[#f8fafc] text-[#0f172a] border-[#e2e8f0]' : 'bg-rose-50 text-rose-700 border-rose-200'}">
+                  <strong class="text-blue-600">${b.city}:</strong> ${qty}
+                </span>
+              `;
+            }).join('')}
+          </div>
+        </td>
+        <td class="py-3 px-3.5">
+          <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold ${p.totalStock > 0 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200'}">
+            ${p.totalStock || 0} units
+          </span>
+        </td>
+        <!-- 1-Click Status Switcher (ACTIVE / INACTIVE) -->
+        <td class="py-3 px-3.5">
+          <button type="button" onclick="toggleProductStatus(${p.id})"
+            title="Click to toggle between ACTIVE and INACTIVE"
+            class="px-2.5 py-1 rounded-full text-[10px] font-mono font-extrabold uppercase transition-all flex items-center space-x-1.5 shadow-2xs cursor-pointer ${isActive ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100' : 'bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100'}">
+            <span class="w-1.5 h-1.5 rounded-full ${isActive ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}"></span>
+            <span>${status}</span>
           </button>
-          <button onclick="confirmDeleteProduct(${p.id})" class="p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded transition-colors shadow-sm" title="Delete Product">
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-          </button>
-        </div>
-      </td>
-    </tr>
-  `).join('');
+        </td>
+        <td class="py-3 px-3.5 text-right">
+          <div class="flex items-center justify-end space-x-1.5">
+            <button onclick="editProduct(${p.id})" class="p-1.5 bg-[#f8fafc] hover:bg-[#f1f5f9] text-blue-600 rounded border border-[#e2e8f0] transition-colors shadow-sm" title="Edit Product">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+            </button>
+            <button onclick="confirmDeleteProduct(${p.id})" class="p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded transition-colors shadow-sm" title="Soft Delete (Move to Trash Bin)">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+            </button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
 }
 
-export function confirmDeleteProduct(productId) {
-  if (confirm('Are you sure you want to delete this product from inventory?')) {
-    deleteProduct(productId);
+/**
+ * 1-Click Status Toggler (ACTIVE <-> INACTIVE)
+ */
+export async function toggleProductStatus(productId) {
+  const p = getProductById(productId);
+  if (!p) return;
+
+  const currentStatus = (p.productStatus || p.status || 'ACTIVE').toUpperCase();
+  const nextStatus = currentStatus === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
+
+  await updateProductStatus(productId, nextStatus);
+  showToast(`Product "${p.name}" status changed to ${nextStatus}.`, 'info');
+  renderProductsTab();
+}
+
+/**
+ * Filter Table via Search Input
+ */
+export function filterProductsTable() {
+  const searchInput = document.getElementById('product-search-input');
+  productSearchQuery = searchInput ? searchInput.value.toLowerCase().trim() : '';
+  renderProductsTab();
+}
+
+/**
+ * Soft Delete Product confirmation (Moves to Trash Bin)
+ */
+export async function confirmDeleteProduct(productId) {
+  const p = getProductById(productId);
+  const name = p ? p.name : 'Product';
+
+  if (confirm(`Move "${name}" to the Trash Bin?`)) {
+    await deleteProduct(productId);
+    showToast(`"${name}" was moved to the Trash Bin.`, 'info');
     renderProductsTab();
+    updateTrashSidebarBadge();
   }
 }
 
@@ -176,7 +258,7 @@ export function openProductFormPage(productId = null) {
   // Populate dynamic category options
   const categorySelect = document.getElementById('form-p-category');
   if (categorySelect) {
-    const allCategories = getCategories();
+    const allCategories = getCategories({ activeOnly: false });
     categorySelect.innerHTML = allCategories.map(c => `
       <option value="${c.slug}">${c.icon || '📦'} ${c.name}</option>
     `).join('');
@@ -186,7 +268,7 @@ export function openProductFormPage(productId = null) {
   // Populate dynamic brand options
   const brandSelect = document.getElementById('form-p-brand');
   if (brandSelect) {
-    const allBrands = getBrands();
+    const allBrands = getBrands({ activeOnly: false });
     brandSelect.innerHTML = allBrands.map(b => `
       <option value="${b.name}">${b.name}</option>
     `).join('');
@@ -196,15 +278,37 @@ export function openProductFormPage(productId = null) {
     brandSelect.value = product ? (product.brand || allBrands[0]?.name || 'ASUS') : (allBrands[0]?.name || 'ASUS');
   }
 
-  // Populate dynamic badge options (Excluding "Hot Deal" which is managed solely via Hot Deals promotions)
+  // Populate dynamic badge options
   const badgeSelect = document.getElementById('form-p-badge');
   if (badgeSelect) {
-    const allBadges = getBadges().filter(b => b.isActive && b.slug !== 'hot-deal' && !b.name.toLowerCase().includes('hot deal'));
+    const allBadges = getBadges({ activeOnly: true }).filter(b => b.slug !== 'hot-deal' && !b.name.toLowerCase().includes('hot deal'));
     badgeSelect.innerHTML = `
       ${allBadges.map(b => `<option value="${b.name}">${b.name}</option>`).join('')}
       <option value="">None (No Badge)</option>
     `;
     badgeSelect.value = product && product.badge && !product.badge.toLowerCase().includes('hot deal') ? product.badge : '';
+  }
+
+  // Status selector (ACTIVE / INACTIVE)
+  let statusSelect = document.getElementById('form-p-status');
+  if (!statusSelect) {
+    // Inject status dropdown into form row 1 if not present
+    const brandContainer = document.getElementById('form-p-brand')?.parentElement?.parentElement;
+    if (brandContainer) {
+      const statusDiv = document.createElement('div');
+      statusDiv.innerHTML = `
+        <label class="block text-[#475569] font-bold mb-1">Status *</label>
+        <select id="form-p-status" class="w-full px-3.5 py-2 rounded-md bg-[#f8fafc] border border-[#e2e8f0] text-[#0f172a] focus:border-blue-600 text-xs font-bold">
+          <option value="ACTIVE">ACTIVE (Visible in Catalog)</option>
+          <option value="INACTIVE">INACTIVE (Hidden from Customers)</option>
+        </select>
+      `;
+      brandContainer.appendChild(statusDiv);
+      statusSelect = document.getElementById('form-p-status');
+    }
+  }
+  if (statusSelect) {
+    statusSelect.value = product ? (product.productStatus || product.status || 'ACTIVE').toUpperCase() : 'ACTIVE';
   }
 
   document.getElementById('form-p-sku').value = product ? product.sku : `ETC-LAP-${Math.floor(1000 + Math.random() * 9000)}`;
@@ -460,7 +564,7 @@ export function openProductModal(productId = null) {
   openProductFormPage(productId);
 }
 
-export function handleSaveProductSubmit(e) {
+export async function handleSaveProductSubmit(e) {
   e.preventDefault();
   const productIdAttr = e.target.getAttribute('data-product-id');
   const productId = productIdAttr ? parseInt(productIdAttr) : null;
@@ -481,12 +585,10 @@ export function handleSaveProductSubmit(e) {
     }
   });
 
-  // Filter gallery images array (max 5)
   const images = window.formImagesState && window.formImagesState.filter(u => u && typeof u === 'string' && u.trim() !== '').length > 0
     ? window.formImagesState.filter(u => u && typeof u === 'string' && u.trim() !== '').slice(0, 5)
     : ["https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?auto=format&fit=crop&w=600&q=80"];
 
-  // Convert specsState array into key-value object
   const specsObj = {};
   if (window.formSpecsState && Array.isArray(window.formSpecsState)) {
     window.formSpecsState.forEach(s => {
@@ -496,7 +598,6 @@ export function handleSaveProductSubmit(e) {
     });
   }
 
-  // Convert featuresState array into string array
   const featuresArr = window.formFeaturesState && Array.isArray(window.formFeaturesState)
     ? window.formFeaturesState.map(f => typeof f === 'string' ? f.trim() : '').filter(f => f.length > 0)
     : ["High Performance Tech Hardware"];
@@ -505,6 +606,7 @@ export function handleSaveProductSubmit(e) {
   const brandVal = document.getElementById('form-p-brand') ? document.getElementById('form-p-brand').value : (existingProduct ? existingProduct.brand : 'ASUS');
   const priceVal = parseFloat(document.getElementById('form-p-price').value);
   const origPriceVal = document.getElementById('form-p-original-price').value ? parseFloat(document.getElementById('form-p-original-price').value) : priceVal;
+  const statusVal = document.getElementById('form-p-status') ? document.getElementById('form-p-status').value : (existingProduct ? existingProduct.productStatus : 'ACTIVE');
 
   const productData = {
     id: productId,
@@ -522,10 +624,13 @@ export function handleSaveProductSubmit(e) {
     fullDescription: document.getElementById('form-p-full-description').value || document.getElementById('form-p-description').value || '',
     specs: Object.keys(specsObj).length > 0 ? specsObj : { "Category": categoryVal },
     features: featuresArr.length > 0 ? featuresArr : ["High Performance Hardware"],
-    branchStock: branchStock
+    branchStock: branchStock,
+    productStatus: statusVal,
+    status: statusVal
   };
 
-  saveProduct(productData);
+  await saveProduct(productData);
+  showToast(`Product "${productData.name}" saved successfully.`, 'success');
   window.dispatchEvent(new CustomEvent('productsUpdated'));
   if (window.switchAdminTab) {
     window.switchAdminTab('products');
@@ -533,10 +638,44 @@ export function handleSaveProductSubmit(e) {
   renderProductsTab();
 }
 
-// Export aliases for backwards compatibility with script.js
+// Export aliases
 export const renderFormImageInputs = renderGalleryInputs;
 export const removeGalleryImageInput = removeGalleryImage;
 export const renderFormSpecsInputs = renderSpecsInputs;
 export const removeFormSpecInput = removeSpecItem;
 export const renderFormFeaturesInputs = renderFeaturesInputs;
 export const removeFormFeatureInput = removeFeatureItem;
+
+if (typeof window !== 'undefined') {
+  Object.assign(window, {
+    renderProductsTab,
+    toggleProductStatus,
+    filterProductsTable,
+    confirmDeleteProduct,
+    openProductFormPage,
+    triggerProductFormSubmit,
+    renderGalleryInputs,
+    renderFormImageInputs,
+    addGalleryImageInput,
+    updateGalleryImage,
+    removeGalleryImage,
+    removeGalleryImageInput,
+    renderSpecsInputs,
+    renderFormSpecsInputs,
+    addFormSpecInput,
+    updateSpecItem,
+    removeSpecItem,
+    removeFormSpecInput,
+    renderFeaturesInputs,
+    renderFormFeaturesInputs,
+    addFormFeatureInput,
+    updateFeatureItem,
+    removeFeatureItem,
+    removeFormFeatureInput,
+    renderBranchStockInputs,
+    updateLivePreview,
+    editProduct,
+    openProductModal,
+    handleSaveProductSubmit
+  });
+}

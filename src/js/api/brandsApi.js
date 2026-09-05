@@ -1,96 +1,159 @@
 // ============================================================
-//  src/js/api/brandsApi.js — Brands Backend API Service Client
+//  src/js/api/brandsApi.js — Hardware Brands Backend API Client
 // ============================================================
-
-const API_BASE_URL = window.API_BASE_URL || 'http://localhost:8080/api/v1';
+import { ajaxRequest } from './apiClient.js';
 
 export const BrandsApi = {
   /**
-   * Fetch all active hardware brands with optional category filter
+   * Fetch all non-deleted hardware brands ordered by display order
+   * GET /api/v1/brands/all
    */
-  async getAllBrands(activeOnly = true) {
-    const res = await fetch(`${API_BASE_URL}/brands?activeOnly=${activeOnly}`);
-    if (!res.ok) throw new Error('Failed to fetch brands from API.');
-    return res.json();
+  async getAll() {
+    console.log('[BrandsAPI] getAll() -> fetching all brands');
+    const res = await ajaxRequest({
+      endpoint: '/brands/all',
+      method: 'GET'
+    });
+    return res.body || res;
   },
 
   /**
    * Fetch featured brands for homepage showcase
+   * GET /api/v1/brands/featured
    */
-  async getFeaturedBrands() {
-    const res = await fetch(`${API_BASE_URL}/brands/featured`);
-    if (!res.ok) throw new Error('Failed to fetch featured brands from API.');
-    return res.json();
+  async getFeatured() {
+    console.log('[BrandsAPI] getFeatured() -> fetching featured brands');
+    const res = await ajaxRequest({
+      endpoint: '/brands/featured',
+      method: 'GET'
+    });
+    return res.body || res;
   },
 
   /**
-   * Get single brand profile and associated store products
+   * Fetch single brand by ID
+   * GET /api/v1/brands/{id}
    */
-  async getBrandBySlugOrId(slugOrId) {
-    const res = await fetch(`${API_BASE_URL}/brands/${encodeURIComponent(slugOrId)}`);
-    if (!res.ok) throw new Error('Failed to fetch brand details from API.');
-    return res.json();
+  async getById(id) {
+    console.log('[BrandsAPI] getById() -> ID:', id);
+    const res = await ajaxRequest({
+      endpoint: `/brands/${encodeURIComponent(id)}`,
+      method: 'GET'
+    });
+    return res.body || res;
   },
 
   /**
-   * Create new hardware brand (Admin only)
+   * Fetch single brand by slug
+   * GET /api/v1/brands/slug/{slug}
    */
-  async createBrand(brandData, token) {
-    const res = await fetch(`${API_BASE_URL}/brands`, {
+  async getBySlug(slug) {
+    console.log('[BrandsAPI] getBySlug() -> slug:', slug);
+    const res = await ajaxRequest({
+      endpoint: `/brands/slug/${encodeURIComponent(slug)}`,
+      method: 'GET'
+    });
+    return res.body || res;
+  },
+
+  /**
+   * Fetch single brand by name
+   * GET /api/v1/brands/name/{name}
+   */
+  async getByName(name) {
+    console.log('[BrandsAPI] getByName() -> name:', name);
+    const res = await ajaxRequest({
+      endpoint: `/brands/name/${encodeURIComponent(name)}`,
+      method: 'GET'
+    });
+    return res.body || res;
+  },
+
+  /**
+   * Filter brands by search keyword
+   * GET /api/v1/brands/filter?search={search}
+   */
+  async filter(search) {
+    console.log('[BrandsAPI] filter() -> search:', search);
+    const res = await ajaxRequest({
+      endpoint: `/brands/filter?search=${encodeURIComponent(search)}`,
+      method: 'GET'
+    });
+    return res.body || res;
+  },
+
+  /**
+   * Fetch brands by lifecycle status (ACTIVE, INACTIVE, DELETED)
+   * GET /api/v1/brands/status/{status}
+   */
+  async getByStatus(status) {
+    console.log('[BrandsAPI] getByStatus() -> status:', status);
+    const res = await ajaxRequest({
+      endpoint: `/brands/status/${encodeURIComponent(status)}`,
+      method: 'GET'
+    });
+    return res.body || res;
+  },
+
+  /**
+   * Register a new official hardware manufacturer brand (Admin/Superadmin)
+   * POST /api/v1/brands/create
+   */
+  async create(brandData) {
+    console.log('[BrandsAPI] create() -> payload:', brandData);
+    return ajaxRequest({
+      endpoint: '/brands/create',
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify(brandData)
+      data: brandData
     });
-    if (!res.ok) throw new Error('Failed to create brand.');
-    return res.json();
   },
 
   /**
-   * Update brand profile (Admin only)
+   * Update brand profile metadata (Admin/Superadmin)
+   * PUT /api/v1/brands/update/{id}
    */
-  async updateBrand(id, brandData, token) {
-    const res = await fetch(`${API_BASE_URL}/brands/${encodeURIComponent(id)}`, {
+  async update(id, brandData) {
+    console.log('[BrandsAPI] update() -> ID:', id, brandData);
+    return ajaxRequest({
+      endpoint: `/brands/update/${encodeURIComponent(id)}`,
       method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify(brandData)
+      data: brandData
     });
-    if (!res.ok) throw new Error('Failed to update brand.');
-    return res.json();
   },
 
   /**
-   * Toggle featured status on homepage showcase
+   * Update brand lifecycle status (ACTIVE, INACTIVE, DELETED)
+   * PATCH /api/v1/brands/update-status/{id}?status={status}
    */
-  async toggleFeatured(id, featured, token) {
-    const res = await fetch(`${API_BASE_URL}/brands/${encodeURIComponent(id)}/featured`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify({ featured })
+  async updateStatus(id, status) {
+    console.log('[BrandsAPI] updateStatus() -> ID:', id, 'status:', status);
+    return ajaxRequest({
+      endpoint: `/brands/update-status/${encodeURIComponent(id)}?status=${encodeURIComponent(status)}`,
+      method: 'PATCH'
     });
-    if (!res.ok) throw new Error('Failed to toggle featured status.');
-    return res.json();
   },
 
   /**
-   * Delete brand with safety check (Admin only)
+   * Soft delete brand (transitions status to DELETED)
+   * DELETE /api/v1/brands/delete/{id}
    */
-  async deleteBrand(id, token) {
-    const res = await fetch(`${API_BASE_URL}/brands/${encodeURIComponent(id)}`, {
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
+  async delete(id) {
+    console.log('[BrandsAPI] delete() [Soft Delete] -> ID:', id);
+    return ajaxRequest({
+      endpoint: `/brands/delete/${encodeURIComponent(id)}`,
+      method: 'DELETE'
     });
-    if (!res.ok) throw new Error('Failed to delete brand.');
-    return res.json();
+  },
+
+  /**
+   * Permanently delete brand record and unlink products (SuperADMIN only)
+   * DELETE /api/v1/brands/perma-delete/{id}
+   */
+  async permaDelete(id) {
+    console.log('[BrandsAPI] permaDelete() [Permanent Delete] -> ID:', id);
+    return ajaxRequest({
+      endpoint: `/brands/perma-delete/${encodeURIComponent(id)}`,
+      method: 'DELETE'
+    });
   }
 };

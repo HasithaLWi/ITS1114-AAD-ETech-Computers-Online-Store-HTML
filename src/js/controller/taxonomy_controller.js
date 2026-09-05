@@ -2,14 +2,15 @@
 //  taxonomy_controller.js — Categories & Badges Management Controller
 // ============================================================
 import { 
-  getCategories, saveCategory, deleteCategory, getCategoryBySlug,
-  getBadges, saveBadge, deleteBadge, getBadgeById,
+  getCategories, saveCategory, deleteCategory, getCategoryBySlug, updateCategoryStatus,
+  getBadges, saveBadge, deleteBadge, getBadgeById, updateBadgeStatus,
   runAutoBadgeAssignment, getBadgeColorClass, getBadgeThresholdSummary,
   getProductBehaviorHistory, recordProductBehaviorEvent
 } from '../models/taxonomy_data.js';
-import { getStoredProducts, saveStoredProducts } from '../models/data.js';
-import { closeAdminModal, switchAdminTab } from './admin_dashboard_controller.js';
+import { getStoredProducts } from '../models/data.js';
+import { closeAdminModal } from './admin_dashboard_controller.js';
 import { showToast } from './cart_controller.js';
+import { updateTrashSidebarBadge } from './admin_dashboard_controller.js';
 
 /**
  * ============================================================
@@ -20,6 +21,7 @@ export function renderTaxonomyTab() {
   const container = document.getElementById('tab-panel-taxonomy');
   if (!container) return;
 
+  // By default, exclude soft-deleted categories & badges
   const categories = getCategories();
   const badges = getBadges();
   const products = getStoredProducts();
@@ -29,8 +31,8 @@ export function renderTaxonomyTab() {
   const totalCategories = categories.length;
   const featuredCategoriesCount = categories.filter(c => c.featured).length;
   const totalBadges = badges.length;
-  const activeBadgesCount = badges.filter(b => b.isActive).length;
-  const autoRulesCount = badges.filter(b => b.ruleType === 'automatic' && b.isActive).length;
+  const activeBadgesCount = badges.filter(b => b.status === 'ACTIVE' || b.isActive).length;
+  const autoRulesCount = badges.filter(b => b.ruleType === 'automatic' && (b.status === 'ACTIVE' || b.isActive)).length;
   const productsWithBadgesCount = products.filter(p => p.badge && p.badge.trim() !== '').length;
   const badgeCoveragePct = products.length > 0 ? Math.round((productsWithBadgesCount / products.length) * 100) : 0;
 
@@ -65,24 +67,24 @@ export function renderTaxonomyTab() {
             </div>
             <div>
               <h2 class="text-lg font-extrabold text-[#0f172a]">Categories & Badges Management</h2>
-              <p class="text-xs text-[#64748b]">Control store categorization hierarchy, dynamic visual tags, and automated behavior reach rules with customizable thresholds.</p>
+              <p class="text-xs text-[#64748b]">Control store categorization hierarchy, dynamic visual tags, status lifecycle, and automated reach rules.</p>
             </div>
           </div>
         </div>
 
         <div class="flex flex-wrap items-center gap-2.5">
           <button onclick="runAutoBadgeAssigner()" title="Evaluate & Auto-Assign Badges to Products"
-            class="px-3.5 py-2 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 text-xs font-bold transition-all flex items-center space-x-1.5 shadow-sm active:scale-95">
+            class="px-3.5 py-2 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 text-xs font-bold transition-all flex items-center space-x-1.5 shadow-sm active:scale-95 cursor-pointer">
             <span>⚡ Run Auto-Assigner</span>
           </button>
 
           <button onclick="openCategoryModal()"
-            class="px-3.5 py-2 rounded-lg bg-[#f8fafc] hover:bg-[#f1f5f9] text-[#0f172a] border border-[#e2e8f0] text-xs font-bold transition-all flex items-center space-x-1.5 shadow-sm">
+            class="px-3.5 py-2 rounded-lg bg-[#f8fafc] hover:bg-[#f1f5f9] text-[#0f172a] border border-[#e2e8f0] text-xs font-bold transition-all flex items-center space-x-1.5 shadow-sm cursor-pointer">
             <span>+ Add Category</span>
           </button>
 
           <button onclick="openBadgeModal()"
-            class="px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-all flex items-center space-x-1.5 shadow-sm">
+            class="px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-all flex items-center space-x-1.5 shadow-sm cursor-pointer">
             <span>+ Add Badge</span>
           </button>
         </div>
@@ -138,7 +140,7 @@ export function renderTaxonomyTab() {
             <p class="text-[11px] text-[#64748b] mt-0.5">Primary navigation groupings and filter categories across catalog and shop.</p>
           </div>
 
-          <button onclick="openCategoryModal()" class="text-xs text-blue-600 hover:text-blue-700 font-bold flex items-center space-x-1">
+          <button onclick="openCategoryModal()" class="text-xs text-blue-600 hover:text-blue-700 font-bold flex items-center space-x-1 cursor-pointer">
             <span>+ Add New Category</span>
           </button>
         </div>
@@ -152,12 +154,16 @@ export function renderTaxonomyTab() {
                 <th class="py-3 px-4">Description</th>
                 <th class="py-3 px-4 text-center">Featured Storefront</th>
                 <th class="py-3 px-4 text-center">Product Count</th>
+                <th class="py-3 px-4 text-center">Status</th>
                 <th class="py-3 px-4 text-right">Actions</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-[#e2e8f0] text-xs">
               ${categories.map(c => {
                 const count = categoryCounts[c.slug] || 0;
+                const status = (c.categoryStatus || c.status || 'ACTIVE').toUpperCase();
+                const isActive = status === 'ACTIVE';
+
                 return `
                   <tr class="hover:bg-[#f8fafc] transition-colors">
                     <td class="py-3 px-4 font-bold text-[#0f172a] flex items-center space-x-2">
@@ -180,13 +186,22 @@ export function renderTaxonomyTab() {
                         ${count} Products
                       </span>
                     </td>
+                    <!-- 1-Click Status Switcher (ACTIVE / INACTIVE) -->
+                    <td class="py-3 px-4 text-center">
+                      <button type="button" onclick="toggleCategoryStatus('${c.slug}')"
+                        title="Click to toggle between ACTIVE and INACTIVE"
+                        class="px-2.5 py-1 rounded-full text-[10px] font-mono font-extrabold uppercase transition-all inline-flex items-center space-x-1.5 shadow-2xs cursor-pointer ${isActive ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100' : 'bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100'}">
+                        <span class="w-1.5 h-1.5 rounded-full ${isActive ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}"></span>
+                        <span>${status}</span>
+                      </button>
+                    </td>
                     <td class="py-3 px-4 text-right space-x-1.5 whitespace-nowrap">
                       <button onclick="openCategoryModal('${c.slug}')" title="Edit Category"
-                        class="px-2.5 py-1 bg-[#f8fafc] hover:bg-[#f1f5f9] text-blue-600 hover:text-blue-800 rounded text-xs font-bold border border-[#e2e8f0] transition-colors shadow-sm">
+                        class="px-2.5 py-1 bg-[#f8fafc] hover:bg-[#f1f5f9] text-blue-600 hover:text-blue-800 rounded text-xs font-bold border border-[#e2e8f0] transition-colors shadow-sm cursor-pointer">
                         Edit
                       </button>
-                      <button onclick="confirmDeleteCategory('${c.slug}')" title="Delete Category"
-                        class="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded text-xs font-bold border border-rose-200 transition-colors shadow-sm">
+                      <button onclick="confirmDeleteCategory('${c.slug}')" title="Soft Delete (Move to Trash Bin)"
+                        class="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded text-xs font-bold border border-rose-200 transition-colors shadow-sm cursor-pointer">
                         Delete
                       </button>
                     </td>
@@ -211,10 +226,10 @@ export function renderTaxonomyTab() {
 
           <div class="flex items-center space-x-2">
             <button onclick="runAutoBadgeAssigner()"
-              class="px-3 py-1.5 rounded bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 text-xs font-bold transition-all flex items-center space-x-1 shadow-sm">
+              class="px-3 py-1.5 rounded bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 text-xs font-bold transition-all flex items-center space-x-1 shadow-sm cursor-pointer">
               <span>⚡ Run Rules Now</span>
             </button>
-            <button onclick="openBadgeModal()" class="text-xs text-blue-600 hover:text-blue-700 font-bold flex items-center space-x-1">
+            <button onclick="openBadgeModal()" class="text-xs text-blue-600 hover:text-blue-700 font-bold flex items-center space-x-1 cursor-pointer">
               <span>+ Add New Badge</span>
             </button>
           </div>
@@ -238,8 +253,11 @@ export function renderTaxonomyTab() {
                 const colorClass = getBadgeColorClass(b.color);
                 const count = badgeCounts[b.name.toLowerCase()] || 0;
                 const thresholdSummary = getBadgeThresholdSummary(b);
+                const status = (b.status || (b.isActive !== false ? 'ACTIVE' : 'INACTIVE')).toUpperCase();
+                const isActive = status === 'ACTIVE';
+
                 return `
-                  <tr class="hover:bg-[#f8fafc] transition-colors ${!b.isActive ? 'opacity-50' : ''}">
+                  <tr class="hover:bg-[#f8fafc] transition-colors ${!isActive ? 'opacity-60' : ''}">
                     <td class="py-3 px-4">
                       <div class="flex items-center space-x-2.5">
                         <span class="px-2.5 py-1 rounded text-[10px] font-bold uppercase tracking-wider border shadow-sm ${colorClass}">
@@ -268,10 +286,21 @@ export function renderTaxonomyTab() {
                         ${count} Products
                       </span>
                     </td>
+                    <!-- 1-Click Status Switcher (ACTIVE / INACTIVE) -->
                     <td class="py-3 px-4 text-center">
-                      ${b.isActive 
-                        ? `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">Active</span>`
-                        : `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">Disabled</span>`}
+                      ${(b.id === 'bdg-hotdeal' || b.canEdit === false) ? `
+                        <span class="px-2.5 py-1 rounded-full text-[10px] font-mono font-extrabold uppercase bg-emerald-50 text-emerald-700 border border-emerald-200 inline-flex items-center space-x-1">
+                          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                          <span>ACTIVE</span>
+                        </span>
+                      ` : `
+                        <button type="button" onclick="toggleBadgeStatus('${b.id}')"
+                          title="Click to toggle between ACTIVE and INACTIVE"
+                          class="px-2.5 py-1 rounded-full text-[10px] font-mono font-extrabold uppercase transition-all inline-flex items-center space-x-1.5 shadow-2xs cursor-pointer ${isActive ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100' : 'bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100'}">
+                          <span class="w-1.5 h-1.5 rounded-full ${isActive ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}"></span>
+                          <span>${status}</span>
+                        </button>
+                      `}
                     </td>
                     <td class="py-3 px-4 text-right space-x-1.5 whitespace-nowrap">
                       ${(b.id === 'bdg-hotdeal' || b.canEdit === false) ? `
@@ -289,7 +318,7 @@ export function renderTaxonomyTab() {
                           class="px-2.5 py-1 bg-[#f8fafc] hover:bg-[#f1f5f9] text-blue-600 hover:text-blue-800 rounded text-xs font-bold border border-[#e2e8f0] transition-colors shadow-sm cursor-pointer">
                           Edit
                         </button>
-                        <button onclick="confirmDeleteBadge('${b.id}')" title="Delete Badge"
+                        <button onclick="confirmDeleteBadge('${b.id}')" title="Soft Delete (Move to Trash Bin)"
                           class="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded text-xs font-bold border border-rose-200 transition-colors shadow-sm cursor-pointer">
                           Delete
                         </button>
@@ -305,6 +334,36 @@ export function renderTaxonomyTab() {
 
     </div>
   `;
+}
+
+/**
+ * 1-Click Status Toggler for Category (ACTIVE <-> INACTIVE)
+ */
+export async function toggleCategoryStatus(slugOrId) {
+  const cat = getCategoryBySlug(slugOrId);
+  if (!cat) return;
+
+  const currentStatus = (cat.categoryStatus || cat.status || 'ACTIVE').toUpperCase();
+  const nextStatus = currentStatus === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
+
+  await updateCategoryStatus(slugOrId, nextStatus);
+  showToast(`Category "${cat.name}" status changed to ${nextStatus}.`, 'info');
+  renderTaxonomyTab();
+}
+
+/**
+ * 1-Click Status Toggler for Badge (ACTIVE <-> INACTIVE)
+ */
+export async function toggleBadgeStatus(badgeId) {
+  const badge = getBadgeById(badgeId);
+  if (!badge) return;
+
+  const currentStatus = (badge.status || (badge.isActive !== false ? 'ACTIVE' : 'INACTIVE')).toUpperCase();
+  const nextStatus = currentStatus === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
+
+  await updateBadgeStatus(badgeId, nextStatus);
+  showToast(`Badge "${badge.name}" status changed to ${nextStatus}.`, 'info');
+  renderTaxonomyTab();
 }
 
 /**
@@ -367,6 +426,14 @@ export function openCategoryModal(slug = null) {
           </div>
 
           <div>
+            <label class="block text-[#475569] font-bold mb-1">Lifecycle Status *</label>
+            <select id="modal-cat-status" class="w-full px-3 py-2 rounded-md bg-[#f8fafc] border border-[#e2e8f0] text-[#0f172a] focus:border-blue-600 font-bold">
+              <option value="ACTIVE" ${category && (category.categoryStatus === 'ACTIVE' || category.status === 'ACTIVE') ? 'selected' : ''}>ACTIVE (Storefront Visible)</option>
+              <option value="INACTIVE" ${category && (category.categoryStatus === 'INACTIVE' || category.status === 'INACTIVE') ? 'selected' : ''}>INACTIVE (Hidden from Customers)</option>
+            </select>
+          </div>
+
+          <div>
             <label class="block text-[#475569] font-bold mb-1">Category Description & Scope</label>
             <textarea id="modal-cat-desc" rows="2"
               placeholder="Describe what products belong in this category..."
@@ -399,7 +466,7 @@ export function openCategoryModal(slug = null) {
   `;
 }
 
-export function handleSaveCategorySubmit(event, isEdit = false) {
+export async function handleSaveCategorySubmit(event, isEdit = false) {
   event.preventDefault();
 
   const id = document.getElementById('modal-cat-id').value;
@@ -408,19 +475,22 @@ export function handleSaveCategorySubmit(event, isEdit = false) {
   const icon = document.getElementById('modal-cat-icon').value.trim() || '📦';
   const description = document.getElementById('modal-cat-desc').value.trim();
   const featured = document.getElementById('modal-cat-featured').checked;
+  const status = document.getElementById('modal-cat-status')?.value || 'ACTIVE';
 
   if (!name || !slug) {
     alert('Category name and slug are required.');
     return;
   }
 
-  saveCategory({
+  await saveCategory({
     id: id || undefined,
     name,
     slug,
     icon,
     description,
-    featured
+    featured,
+    categoryStatus: status,
+    status: status
   }, isEdit);
 
   closeAdminModal();
@@ -428,32 +498,32 @@ export function handleSaveCategorySubmit(event, isEdit = false) {
   showToast(`✓ Category "${name}" saved successfully.`);
 }
 
-export function confirmDeleteCategory(slug) {
+export async function confirmDeleteCategory(slug) {
   const category = getCategoryBySlug(slug);
   if (!category) return;
 
   const products = getStoredProducts();
   const linkedCount = products.filter(p => (p.category || '').toLowerCase() === slug.toLowerCase()).length;
 
-  let confirmMsg = `Are you sure you want to delete the category "${category.name}"?`;
+  let confirmMsg = `Move category "${category.name}" to the Trash Bin?`;
   if (linkedCount > 0) {
-    confirmMsg += `\n\n⚠️ Warning: ${linkedCount} product(s) are currently assigned to this category.`;
+    confirmMsg += `\n\n⚠️ Note: ${linkedCount} product(s) are currently assigned under this category.`;
   }
 
   if (confirm(confirmMsg)) {
-    deleteCategory(slug);
+    await deleteCategory(slug);
     renderTaxonomyTab();
-    showToast(`✓ Category "${category.name}" removed.`);
+    updateTrashSidebarBadge();
+    showToast(`✓ Category "${category.name}" moved to Trash Bin.`);
   }
 }
 
 /**
  * ============================================================
- * BADGE MODALS & CRUD HANDLERS (WITH DYNAMIC THRESHOLD EDITOR)
+ * BADGE MODALS & CRUD HANDLERS
  * ============================================================
  */
 
-// Active cached badge for modal threshold rendering
 let currentEditingBadge = null;
 
 export function openBadgeModal(badgeId = null) {
@@ -510,14 +580,15 @@ export function openBadgeModal(badgeId = null) {
             </div>
           </div>
 
-          <div>
-            <label class="block text-[#475569] font-bold mb-1">Badge Purpose & Explanation</label>
-            <input type="text" id="modal-bdg-purpose" value="${badge ? badge.purpose : ''}"
-              placeholder="e.g. Highlights top-tier products chosen by our certified architects."
-              class="w-full px-3 py-2 rounded-md bg-[#f8fafc] border border-[#e2e8f0] text-[#0f172a] focus:border-blue-600">
-          </div>
-
           <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-[#475569] font-bold mb-1">Lifecycle Status *</label>
+              <select id="modal-bdg-status" class="w-full px-3 py-2 rounded-md bg-[#f8fafc] border border-[#e2e8f0] text-[#0f172a] focus:border-blue-600 font-bold">
+                <option value="ACTIVE" ${!badge || badge.status === 'ACTIVE' || badge.isActive ? 'selected' : ''}>ACTIVE (Enabled)</option>
+                <option value="INACTIVE" ${badge && (badge.status === 'INACTIVE' || badge.isActive === false) ? 'selected' : ''}>INACTIVE (Disabled)</option>
+              </select>
+            </div>
+
             <div>
               <label class="block text-[#475569] font-bold mb-1">Assignment Rule Type *</label>
               <select id="modal-bdg-ruletype" onchange="updateBadgeThresholdsUI()" required
@@ -526,21 +597,28 @@ export function openBadgeModal(badgeId = null) {
                 <option value="manual" ${badge && badge.ruleType === 'manual' ? 'selected' : ''}>✋ Manual (Direct Staff Pick)</option>
               </select>
             </div>
+          </div>
 
-            <div>
-              <label class="block text-[#475569] font-bold mb-1">Trigger Standard Criteria *</label>
-              <select id="modal-bdg-criteria" onchange="updateBadgeThresholdsUI()"
-                class="w-full px-3 py-2 rounded-md bg-[#f8fafc] border border-[#e2e8f0] text-blue-600 font-mono text-[11px] focus:border-blue-600">
-                <option value="discount_gte_10" ${badge && badge.criteria === 'discount_gte_10' ? 'selected' : ''}>Price Markdown / Discount</option>
-                <option value="rating_gte_48" ${badge && badge.criteria === 'rating_gte_48' ? 'selected' : ''}>Customer Rating & Reviews</option>
-                <option value="bestseller" ${badge && badge.criteria === 'bestseller' ? 'selected' : ''}>Sales Champion (Reviews)</option>
-                <option value="reviews_gte_40" ${badge && badge.criteria === 'reviews_gte_40' ? 'selected' : ''}>High Popularity (Reviews)</option>
-                <option value="low_stock_scarcity" ${badge && badge.criteria === 'low_stock_scarcity' ? 'selected' : ''}>Low Stock Urgency Threshold</option>
-                <option value="new_arrival" ${badge && badge.criteria === 'new_arrival' ? 'selected' : ''}>Recent Catalog Release</option>
-                <option value="manual_curated" ${badge && badge.criteria === 'manual_curated' ? 'selected' : ''}>Manual Specialist Assignment</option>
-                <option value="manual_clearance" ${badge && badge.criteria === 'manual_clearance' ? 'selected' : ''}>Manual Clearance Batch</option>
-              </select>
-            </div>
+          <div>
+            <label class="block text-[#475569] font-bold mb-1">Badge Purpose & Explanation</label>
+            <input type="text" id="modal-bdg-purpose" value="${badge ? badge.purpose : ''}"
+              placeholder="e.g. Highlights top-tier products chosen by our certified architects."
+              class="w-full px-3 py-2 rounded-md bg-[#f8fafc] border border-[#e2e8f0] text-[#0f172a] focus:border-blue-600">
+          </div>
+
+          <div>
+            <label class="block text-[#475569] font-bold mb-1">Trigger Standard Criteria *</label>
+            <select id="modal-bdg-criteria" onchange="updateBadgeThresholdsUI()"
+              class="w-full px-3 py-2 rounded-md bg-[#f8fafc] border border-[#e2e8f0] text-blue-600 font-mono text-[11px] focus:border-blue-600">
+              <option value="discount_gte_10" ${badge && badge.criteria === 'discount_gte_10' ? 'selected' : ''}>Price Markdown / Discount</option>
+              <option value="rating_gte_48" ${badge && badge.criteria === 'rating_gte_48' ? 'selected' : ''}>Customer Rating & Reviews</option>
+              <option value="bestseller" ${badge && badge.criteria === 'bestseller' ? 'selected' : ''}>Sales Champion (Reviews)</option>
+              <option value="reviews_gte_40" ${badge && badge.criteria === 'reviews_gte_40' ? 'selected' : ''}>High Popularity (Reviews)</option>
+              <option value="low_stock_scarcity" ${badge && badge.criteria === 'low_stock_scarcity' ? 'selected' : ''}>Low Stock Urgency Threshold</option>
+              <option value="new_arrival" ${badge && badge.criteria === 'new_arrival' ? 'selected' : ''}>Recent Catalog Release</option>
+              <option value="manual_curated" ${badge && badge.criteria === 'manual_curated' ? 'selected' : ''}>Manual Specialist Assignment</option>
+              <option value="manual_clearance" ${badge && badge.criteria === 'manual_clearance' ? 'selected' : ''}>Manual Clearance Batch</option>
+            </select>
           </div>
 
           <!-- Dynamic Thresholds Configuration Panel -->
@@ -561,14 +639,6 @@ export function openBadgeModal(badgeId = null) {
               <input type="number" id="modal-bdg-priority" value="${badge ? badge.priority : 10}" min="1" max="100"
                 class="w-full px-3 py-2 rounded-md bg-[#f8fafc] border border-[#e2e8f0] text-[#0f172a] font-mono focus:border-blue-600">
             </div>
-
-            <div class="flex items-center space-x-2 pt-6">
-              <input type="checkbox" id="modal-bdg-active" ${!badge || badge.isActive ? 'checked' : ''}
-                class="rounded bg-[#f8fafc] border-[#e2e8f0] text-blue-600 focus:ring-0">
-              <label for="modal-bdg-active" class="text-xs text-[#475569] font-semibold cursor-pointer">
-                Rule Enabled & Active
-              </label>
-            </div>
           </div>
 
           <input type="hidden" id="modal-bdg-id" value="${badge ? badge.id : ''}">
@@ -588,177 +658,91 @@ export function openBadgeModal(badgeId = null) {
     </div>
   `;
 
-  // Render initial threshold inputs based on current criteria
   updateBadgeThresholdsUI();
 }
 
-/**
- * Dynamically switches threshold inputs in the badge modal based on selected criteria
- */
 export function updateBadgeThresholdsUI() {
   const container = document.getElementById('modal-bdg-thresholds-container');
   const criteriaEl = document.getElementById('modal-bdg-criteria');
   const ruleTypeEl = document.getElementById('modal-bdg-ruletype');
-  if (!container || !criteriaEl || !ruleTypeEl) return;
+  if (!container || !criteriaEl) return;
 
   const criteria = criteriaEl.value;
-  const ruleType = ruleTypeEl.value;
+  const isAuto = ruleTypeEl && ruleTypeEl.value === 'automatic';
   const t = (currentEditingBadge && currentEditingBadge.thresholds) ? currentEditingBadge.thresholds : {};
 
-  if (ruleType === 'manual') {
+  if (!isAuto) {
     container.innerHTML = `
-      <div class="flex items-center space-x-2 text-[#64748b] text-[11px] py-1">
-        <span>✋</span>
-        <span>Manual Rule: Assigned by technicians or administrators. No automatic numeric triggers required.</span>
+      <div class="text-[11px] text-[#64748b] flex items-center space-x-2">
+        <span>ℹ️</span>
+        <span>Manual Badge: Assigned directly by staff to hardware catalog items. No automated rule checks.</span>
       </div>
     `;
     return;
   }
 
   switch (criteria) {
-    case 'discount_gte_10': {
-      const currentDisc = t.discountPct !== undefined ? t.discountPct : 10;
+    case 'discount_gte_10':
       container.innerHTML = `
-        <div class="space-y-1.5">
-          <div class="flex items-center justify-between">
-            <label class="text-[11px] font-extrabold text-amber-700 uppercase tracking-wider flex items-center space-x-1.5">
-              <span>🏷️ Discount Benchmark Threshold (%)</span>
-            </label>
-            <span class="text-[10px] text-[#64748b] font-mono">Triggers on markdown</span>
+        <div class="space-y-1">
+          <label class="block text-[#0f172a] font-bold">Minimum Discount Markdown %</label>
+          <div class="flex items-center space-x-2">
+            <input type="number" id="threshold-discountPct" min="1" max="90" value="${t.discountPct !== undefined ? t.discountPct : 10}"
+              class="w-24 px-2 py-1 rounded bg-white border border-[#e2e8f0] text-xs font-mono font-bold focus:border-blue-600">
+            <span class="text-xs text-[#64748b]">% off original list price</span>
           </div>
-          <div class="flex items-center space-x-2.5">
-            <span class="text-xs text-[#475569] font-bold">Discount ≥</span>
-            <input type="number" id="modal-thresh-discount" min="1" max="99" step="1" value="${currentDisc}"
-              class="w-24 px-3 py-1.5 rounded-md bg-white border border-[#e2e8f0] text-[#0f172a] font-mono text-xs focus:border-amber-500">
-            <span class="text-xs text-[#0f172a] font-bold">% off original MSRP</span>
-          </div>
-          <p class="text-[10px] text-[#64748b]">Products with price markdown at or above this percentage will automatically qualify.</p>
         </div>
       `;
       break;
-    }
-
-    case 'rating_gte_48': {
-      const currentRating = t.minRating !== undefined ? t.minRating : 4.8;
-      const currentReviews = t.minReviews !== undefined ? t.minReviews : 50;
+    case 'rating_gte_48':
       container.innerHTML = `
-        <div class="space-y-2">
-          <div class="flex items-center justify-between">
-            <label class="text-[11px] font-extrabold text-amber-700 uppercase tracking-wider flex items-center space-x-1.5">
-              <span>⭐ Customer Rating & Review Benchmarks</span>
-            </label>
-            <span class="text-[10px] text-[#64748b] font-mono">Both criteria required</span>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-[#0f172a] font-bold">Min Rating (Stars)</label>
+            <input type="number" step="0.1" min="1.0" max="5.0" id="threshold-minRating" value="${t.minRating !== undefined ? t.minRating : 4.8}"
+              class="w-full px-2 py-1 rounded bg-white border border-[#e2e8f0] text-xs font-mono font-bold focus:border-blue-600">
           </div>
-          <div class="grid grid-cols-2 gap-3">
-            <div>
-              <label class="block text-[10px] text-[#475569] font-semibold mb-1">Min Star Rating (1.0 - 5.0)</label>
-              <div class="flex items-center space-x-1.5">
-                <span class="text-amber-500 text-sm">★</span>
-                <input type="number" id="modal-thresh-rating" min="1.0" max="5.0" step="0.1" value="${currentRating}"
-                  class="w-full px-2.5 py-1.5 rounded-md bg-white border border-[#e2e8f0] text-[#0f172a] font-mono text-xs focus:border-amber-500">
-              </div>
-            </div>
-            <div>
-              <label class="block text-[10px] text-[#475569] font-semibold mb-1">Min Verified Reviews Count</label>
-              <div class="flex items-center space-x-1.5">
-                <span class="text-blue-600 text-xs">💬</span>
-                <input type="number" id="modal-thresh-reviews" min="0" step="1" value="${currentReviews}"
-                  class="w-full px-2.5 py-1.5 rounded-md bg-white border border-[#e2e8f0] text-[#0f172a] font-mono text-xs focus:border-amber-500">
-              </div>
-            </div>
+          <div>
+            <label class="block text-[#0f172a] font-bold">Min Reviews Count</label>
+            <input type="number" min="1" id="threshold-minReviews" value="${t.minReviews !== undefined ? t.minReviews : 50}"
+              class="w-full px-2 py-1 rounded bg-white border border-[#e2e8f0] text-xs font-mono font-bold focus:border-blue-600">
           </div>
-          <p class="text-[10px] text-[#64748b]">Product must have at least ${currentRating} ★ rating AND at least ${currentReviews} customer reviews.</p>
         </div>
       `;
       break;
-    }
-
-    case 'bestseller': {
-      const currentBestseller = t.minReviews !== undefined ? t.minReviews : 80;
+    case 'bestseller':
+    case 'reviews_gte_40':
       container.innerHTML = `
-        <div class="space-y-1.5">
-          <div class="flex items-center justify-between">
-            <label class="text-[11px] font-extrabold text-amber-700 uppercase tracking-wider flex items-center space-x-1.5">
-              <span>🏆 Sales Champion / Bestseller Threshold</span>
-            </label>
-            <span class="text-[10px] text-[#64748b] font-mono">Volume benchmark</span>
+        <div>
+          <label class="block text-[#0f172a] font-bold">Verified Customer Reviews Threshold</label>
+          <div class="flex items-center space-x-2">
+            <input type="number" min="1" id="threshold-minReviews" value="${t.minReviews !== undefined ? t.minReviews : (criteria === 'bestseller' ? 80 : 40)}"
+              class="w-24 px-2 py-1 rounded bg-white border border-[#e2e8f0] text-xs font-mono font-bold focus:border-blue-600">
+            <span class="text-xs text-[#64748b]">reviews required</span>
           </div>
-          <div class="flex items-center space-x-2.5">
-            <span class="text-xs text-[#475569] font-bold">Total Reviews ≥</span>
-            <input type="number" id="modal-thresh-bestseller" min="1" step="1" value="${currentBestseller}"
-              class="w-28 px-3 py-1.5 rounded-md bg-white border border-[#e2e8f0] text-[#0f172a] font-mono text-xs focus:border-amber-500">
-            <span class="text-xs text-[#0f172a] font-semibold">customer reviews</span>
-          </div>
-          <p class="text-[10px] text-[#64748b]">Highlights top sales leaders with high volume verified reviews.</p>
         </div>
       `;
       break;
-    }
-
-    case 'reviews_gte_40': {
-      const currentPopular = t.minReviews !== undefined ? t.minReviews : 40;
+    case 'low_stock_scarcity':
       container.innerHTML = `
-        <div class="space-y-1.5">
-          <div class="flex items-center justify-between">
-            <label class="text-[11px] font-extrabold text-amber-700 uppercase tracking-wider flex items-center space-x-1.5">
-              <span>🔥 High Popularity Review Benchmark</span>
-            </label>
-            <span class="text-[10px] text-[#64748b] font-mono">Trending interest</span>
+        <div>
+          <label class="block text-[#0f172a] font-bold">Urgent Low Stock Ceiling</label>
+          <div class="flex items-center space-x-2">
+            <input type="number" min="1" max="50" id="threshold-maxStock" value="${t.maxStock !== undefined ? t.maxStock : 5}"
+              class="w-24 px-2 py-1 rounded bg-white border border-[#e2e8f0] text-xs font-mono font-bold focus:border-blue-600">
+            <span class="text-xs text-[#64748b]">units remaining across all branch hubs</span>
           </div>
-          <div class="flex items-center space-x-2.5">
-            <span class="text-xs text-[#475569] font-bold">Customer Reviews ≥</span>
-            <input type="number" id="modal-thresh-popular" min="1" step="1" value="${currentPopular}"
-              class="w-28 px-3 py-1.5 rounded-md bg-white border border-[#e2e8f0] text-[#0f172a] font-mono text-xs focus:border-amber-500">
-            <span class="text-xs text-[#0f172a] font-semibold">reviews</span>
-          </div>
-          <p class="text-[10px] text-[#64748b]">Awarded to popular items receiving consistent customer engagement.</p>
         </div>
       `;
       break;
-    }
-
-    case 'low_stock_scarcity': {
-      const currentStock = t.maxStock !== undefined ? t.maxStock : 5;
-      container.innerHTML = `
-        <div class="space-y-1.5">
-          <div class="flex items-center justify-between">
-            <label class="text-[11px] font-extrabold text-amber-700 uppercase tracking-wider flex items-center space-x-1.5">
-              <span>⚠️ Low Stock Scarcity Threshold</span>
-            </label>
-            <span class="text-[10px] text-[#64748b] font-mono">Inventory warning</span>
-          </div>
-          <div class="flex items-center space-x-2.5">
-            <span class="text-xs text-[#475569] font-bold">Total Available Stock ≤</span>
-            <input type="number" id="modal-thresh-stock" min="1" max="100" step="1" value="${currentStock}"
-              class="w-24 px-3 py-1.5 rounded-md bg-white border border-[#e2e8f0] text-[#0f172a] font-mono text-xs focus:border-amber-500">
-            <span class="text-xs text-[#0f172a] font-semibold">units in warehouse</span>
-          </div>
-          <p class="text-[10px] text-[#64748b]">Triggers urgency badge when available units drop to or below this count.</p>
-        </div>
-      `;
-      break;
-    }
-
-    case 'new_arrival':
-      container.innerHTML = `
-        <div class="flex items-center space-x-2 text-[#64748b] text-[11px] py-1">
-          <span>✨</span>
-          <span>New Arrival: Automatically tags products added during recent catalog intake batches.</span>
-        </div>
-      `;
-      break;
-
     default:
       container.innerHTML = `
-        <div class="text-[#64748b] text-[11px] italic py-1">
-          Custom or manual rule assignment.
-        </div>
+        <div class="text-[11px] text-[#64748b]">Automated rule will trigger dynamically when product matches standard criteria.</div>
       `;
-      break;
   }
 }
 
-export function handleSaveBadgeSubmit(event, isEdit = false) {
+export async function handleSaveBadgeSubmit(event, isEdit = false) {
   event.preventDefault();
 
   const id = document.getElementById('modal-bdg-id').value;
@@ -767,80 +751,77 @@ export function handleSaveBadgeSubmit(event, isEdit = false) {
   const purpose = document.getElementById('modal-bdg-purpose').value.trim();
   const ruleType = document.getElementById('modal-bdg-ruletype').value;
   const criteria = document.getElementById('modal-bdg-criteria').value;
-  let standardDescription = document.getElementById('modal-bdg-standard').value.trim();
+  const standardDescription = document.getElementById('modal-bdg-standard').value.trim();
   const priority = parseInt(document.getElementById('modal-bdg-priority').value) || 10;
-  const isActive = document.getElementById('modal-bdg-active').checked;
+  const status = document.getElementById('modal-bdg-status')?.value || 'ACTIVE';
+
+  const thresholds = {};
+  if (document.getElementById('threshold-discountPct')) {
+    thresholds.discountPct = parseFloat(document.getElementById('threshold-discountPct').value) || 10;
+  }
+  if (document.getElementById('threshold-minRating')) {
+    thresholds.minRating = parseFloat(document.getElementById('threshold-minRating').value) || 4.8;
+  }
+  if (document.getElementById('threshold-minReviews')) {
+    thresholds.minReviews = parseInt(document.getElementById('threshold-minReviews').value) || 40;
+  }
+  if (document.getElementById('threshold-maxStock')) {
+    thresholds.maxStock = parseInt(document.getElementById('threshold-maxStock').value) || 5;
+  }
 
   if (!name) {
-    alert('Badge title is required.');
+    alert('Badge name is required.');
     return;
   }
 
-  // Extract threshold numbers based on selected criteria
-  const thresholds = {};
-  if (ruleType === 'automatic') {
-    if (criteria === 'discount_gte_10') {
-      const disc = parseFloat(document.getElementById('modal-thresh-discount')?.value);
-      thresholds.discountPct = !isNaN(disc) ? disc : 10;
-      if (!standardDescription) standardDescription = `Automated: Active price markdown ≥ ${thresholds.discountPct}% off original MSRP.`;
-    } else if (criteria === 'rating_gte_48') {
-      const r = parseFloat(document.getElementById('modal-thresh-rating')?.value);
-      const rev = parseInt(document.getElementById('modal-thresh-reviews')?.value);
-      thresholds.minRating = !isNaN(r) ? r : 4.8;
-      thresholds.minReviews = !isNaN(rev) ? rev : 50;
-      if (!standardDescription) standardDescription = `Automated: Verified rating ≥ ${thresholds.minRating} with minimum ${thresholds.minReviews} reviews.`;
-    } else if (criteria === 'bestseller') {
-      const rev = parseInt(document.getElementById('modal-thresh-bestseller')?.value);
-      thresholds.minReviews = !isNaN(rev) ? rev : 80;
-      if (!standardDescription) standardDescription = `Automated: Sales volume & review benchmark satisfied (${thresholds.minReviews} reviews).`;
-    } else if (criteria === 'reviews_gte_40') {
-      const rev = parseInt(document.getElementById('modal-thresh-popular')?.value);
-      thresholds.minReviews = !isNaN(rev) ? rev : 40;
-      if (!standardDescription) standardDescription = `Automated: Customer review count ≥ ${thresholds.minReviews}.`;
-    } else if (criteria === 'low_stock_scarcity') {
-      const st = parseInt(document.getElementById('modal-thresh-stock')?.value);
-      thresholds.maxStock = !isNaN(st) ? st : 5;
-      if (!standardDescription) standardDescription = `Automated: Total inventory stock ≤ ${thresholds.maxStock} units.`;
-    }
-  }
-
-  saveBadge({
+  await saveBadge({
     id: id || undefined,
     name,
     color,
     purpose,
     ruleType,
     criteria,
-    thresholds,
     standardDescription,
     priority,
-    isActive
+    status: status,
+    isActive: status === 'ACTIVE',
+    thresholds
   }, isEdit);
-
-  // Automatically evaluate and re-assign badges to reflect new thresholds
-  try {
-    runAutoBadgeAssignment();
-  } catch (e) {
-    console.warn('Auto-assign on badge save failed:', e);
-  }
 
   closeAdminModal();
   renderTaxonomyTab();
-  showToast(`✓ Badge "${name}" with customized thresholds saved.`);
+  showToast(`✓ Badge "${name}" rule saved successfully.`);
 }
 
-export function confirmDeleteBadge(badgeId) {
+export async function confirmDeleteBadge(badgeId) {
   const badge = getBadgeById(badgeId);
   if (!badge) return;
 
-  if (badge.canDelete === false || badge.isSystemDefault || badge.id === 'bdg-hotdeal' || badge.id === 'bdg-toprated' || badge.id === 'bdg-newarrival' || badge.id === 'bdg-bestseller') {
-    showToast(`⚠️ "${badge.name}" is a permanent system default badge and cannot be deleted.`);
-    return;
+  if (confirm(`Move badge "${badge.name}" to the Trash Bin?`)) {
+    const success = await deleteBadge(badgeId);
+    if (success) {
+      renderTaxonomyTab();
+      updateTrashSidebarBadge();
+      showToast(`✓ Badge "${badge.name}" moved to Trash Bin.`);
+    } else {
+      showToast('⚠️ Cannot delete system protected badge.');
+    }
   }
+}
 
-  if (confirm(`Are you sure you want to delete the badge "${badge.name}"?`)) {
-    deleteBadge(badgeId);
-    renderTaxonomyTab();
-    showToast(`✓ Badge "${badge.name}" removed.`);
-  }
+// Directly attach to window
+if (typeof window !== 'undefined') {
+  Object.assign(window, {
+    renderTaxonomyTab,
+    toggleCategoryStatus,
+    toggleBadgeStatus,
+    runAutoBadgeAssigner,
+    openCategoryModal,
+    handleSaveCategorySubmit,
+    confirmDeleteCategory,
+    openBadgeModal,
+    updateBadgeThresholdsUI,
+    handleSaveBadgeSubmit,
+    confirmDeleteBadge
+  });
 }

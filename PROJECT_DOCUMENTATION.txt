@@ -36,19 +36,19 @@ TABLE OF CONTENTS
    2.7 Motion, Transitions & Micro-Animations
 
 3. COMPONENT & STOREFRONT LOGIC
-   3.1 Dynamic Header Navigation & Mobile Drawer (Auth UI Sync)
+   3.1 Dynamic Header Navigation & Mobile Drawer (Auth UI Sync & Role-Themed Badges)
    3.2 Hero Section & 3D Layered New Arrivals Product Carousel Engine
    3.3 Catalog Shop Logic & Multi-Parametric Filter System (shop_controller.js)
-   3.4 Product Details View, Image Gallery & Rating System (product-details_controller.js)
-   3.5 Cart Logic & Checkout Engine (cart_controller.js)
+   3.4 Product Details View, 5-Image Gallery & Rating System (product-details_controller.js)
+   3.5 Cart Logic & Checkout Engine (cart_controller.js & product_detail_cart.js)
    3.6 Branch Selection & Shipping Fee Calculation Algorithm (branch_controller.js)
-   3.7 User Authentication, Access Control & Roles (login_controller.js & user_model.js)
+   3.7 User Authentication, Access Control & 4-Tier Roles (login_controller.js & user_model.js)
    3.8 Customer Account Portal, Order Tracking & Cancellation (order_management_controller.js)
 
 4. ADMIN & MANAGEMENT CONSOLE LOGIC
-   4.1 Admin Console Architecture & Responsive Collapsible Sidebar
-   4.2 Product Management Module (CRUD, Gallery Builder, Specs Matrix, Live Preview)
-   4.3 Order Management Module & Order Lifecycle Tracking
+   4.1 Admin Console Architecture & Responsive Collapsible Sidebar (administrator.js)
+   4.2 Product Management Module (product_management_controller.js)
+   4.3 Order Management Module (order_management_controller.js)
    4.4 Stock Health & Inventory Alert Monitor (stock_health_controller.js)
    4.5 Branch Management Module (branch_management_controller.js)
    4.6 User Account Management Module (user_management_controller.js)
@@ -57,16 +57,20 @@ TABLE OF CONTENTS
    4.9 Inter-Branch Stock Transfers & Kit Assembly Logistics (transfer_management_controller.js)
    4.10 Taxonomy, Automated Badge Rules & Product Behavior Analytics (taxonomy_controller.js)
    4.11 Corporate Profile & Legal Policy Management Engine (policy_management_controller.js)
-   4.12 E-T AI Technical Advisor Chatbot Engine (chatbot_controller.js & et-training.js)
+   4.12 Financial Analytics & Performance Reports (analytics_and_report_controller.js)
+   4.13 E-T AI Technical Advisor Chatbot Engine (chatbot_controller.js & et-training.js)
 
 5. DATA MODELS & ENTITY SCHEMAS
    5.1 Product Entity Model (`Product` in `product_model.js`, `data.js`)
    5.2 User Entity Model (`User` & `USER_ROLE` in `user_model.js`)
-   5.3 Cart Schema (`etech_cart`)
-   5.4 Order Schema (`etech_orders`)
-   5.5 Branch Schema (`etech_branches`)
-   5.6 Taxonomy & Badge Schema (`etech_categories`, `etech_badges`, `etech_behavior_history`)
-   5.7 Legal Policy & Corporate Schema (`etech_legal_policies`, `etech_business_info`)
+   5.3 Hardware Brand Entity Model (`brand_data.js`)
+   5.4 Deal Bundle & Hot Deal Schemas (`deals_data.js`)
+   5.5 Stock Transfer Schema (`transfers_data.js`)
+   5.6 Cart Schema (`etech_cart`)
+   5.7 Order Schema (`etech_orders`)
+   5.8 Branch Schema (`etech_branches`)
+   5.9 Taxonomy & Badge Schema (`etech_categories_data`, `etech_badges_data`, `etech_product_behavior_history`)
+   5.10 Legal Policy & Corporate Schema (`etech_policies`, `etech_business_info`)
 
 6. BACKEND API MIGRATION ROADMAP (SPRING BOOT + MYSQL)
    6.1 Target Database Relational Schema Overview (DDL)
@@ -94,7 +98,7 @@ via an ES Module Window Bridge (`script.js`).
 Primary Architectural Pillars:
 - Modular Controller Layer: Discrete controllers manage storefront and administrative features.
 - Single Source of Truth CSS System: Global variables in `src/css/variables.css` enforce branding, colors, spacing, and typography.
-- REST API Service Layer (`src/js/api/`): Clean network communication layer with centralized token management and sanitized logging.
+- REST API Service Layer (`src/js/api/`): Clean network communication layer with centralized token management, normalized error surfacing, and sanitized logging.
 - Database-Driven Architecture: Validation rules, entity integrity, and role-based permissions are enforced by the backend database.
 - Backend Readiness: Formatted for direct drop-in integration with a Java Spring Boot REST API and MySQL database.
 
@@ -116,6 +120,7 @@ Supported Routes & Viewports:
 - `#admin` / `#administrator`: Full-screen staff management console (hidden storefront header/footer/chatbot during active session).
 - `#about`: Corporate profile page displaying company history, branch network, and executive mission.
 - `#privacy` / `#terms` / `#warranty` / `#policies`: Interactive legal policy portal with print action and section accordions.
+- `#deals`: Hot Deals promotional showcase with active deal countdown timers and discount matrices.
 
 Route Protection & Security Guards:
 1. Protected Customer Routes (`#checkout`, `#account`):
@@ -162,7 +167,8 @@ All HTTP communication with the backend is routed through dedicated API service 
    - `UserApi.changePassword(payload)` -> `PUT /api/v1/users/me/password`
 3. `brandsApi.js` (`BrandsApi`):
    - `BrandsApi.getAllBrands(params)` -> `GET /api/v1/brands`
-   - `BrandsApi.getBrandById(id)` -> `GET /api/v1/brands/{id}`
+   - `BrandsApi.getFeaturedBrands()` -> `GET /api/v1/brands/featured`
+   - `BrandsApi.getBrandBySlugOrId(id)` -> `GET /api/v1/brands/{id}`
    - `BrandsApi.createBrand(payload)` -> `POST /api/v1/brands`
    - `BrandsApi.updateBrand(id, payload)` -> `PUT /api/v1/brands/{id}`
    - `BrandsApi.toggleFeatured(id, featured)` -> `PATCH /api/v1/brands/{id}/featured`
@@ -265,12 +271,17 @@ Font Families:
 - `--shadow-sm`, `--shadow-md`, `--shadow-lg`, `--shadow-xl`.
 - `--shadow-glow-blue` (0 0 20px rgba(37, 99, 235, 0.12)).
 
+2.7 Motion, Transitions & Micro-Animations
+--------------------------------------------------------------------------------
+- Standard Transition: `transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);`
+- Modal Backdrops: `backdrop-filter: blur(4px);`
+
 
 ================================================================================
 3. COMPONENT & STOREFRONT LOGIC
 ================================================================================
 
-3.1 Dynamic Header Navigation & Responsive Mobile Drawer (Auth UI Sync)
+3.1 Dynamic Header Navigation & Mobile Drawer (Auth UI Sync & Role-Themed Badges)
 --------------------------------------------------------------------------------
 - Checks `getCurrentUser()` which returns an instance of `User`.
 - Unauthenticated User: Displays "Sign In" button leading to `#login`.
@@ -278,40 +289,44 @@ Font Families:
 - Authenticated Admin / Staff / Super Admin:
   * Uses `user.isAdmin()` and `user.isStaff()` to display "Console" link leading to `#admin`.
   * Distinctive Role Themes: Super Admin (Purple initial badge), Admin (Blue initial badge), Staff (Sky badge).
+- Cart Counter: Synchronized via `cartUpdated` event.
 
 3.2 Hero Section & 3D Layered New Arrivals Product Carousel Engine
 --------------------------------------------------------------------------------
 - Pulls product array via `getNewArrivalProducts()`.
-- Renders prev, current, and next cards in 3D depth stacked view with auto-play and swipe support.
+- Renders prev, current, and next cards in 3D depth stacked view with auto-play, pause on hover, and swipe support.
 
 3.3 Catalog Shop Logic & Multi-Parametric Filter System (shop_controller.js)
 --------------------------------------------------------------------------------
 - Dynamic URL Query parser for categories, brands, price ranges, and search keywords.
 - Multi-parametric filter pipeline with responsive sorting (featured, price asc/desc, newest, rating).
+- Grid / List view layout toggle with responsive breakpoint awareness.
 
-3.4 Product Details View, Image Gallery & Rating System
+3.4 Product Details View, 5-Image Gallery & Rating System
 --------------------------------------------------------------------------------
 - Dynamic 5-image gallery preview and thumbnail switcher.
-- Multi-branch stock availability breakdown.
-- Technical specifications table and verified customer review submissions.
+- Multi-branch stock availability breakdown pill badges.
+- Technical specifications table and verified customer review submission.
 
-3.5 Cart Logic & Checkout Engine (cart_controller.js)
+3.5 Cart Logic & Checkout Engine (cart_controller.js & product_detail_cart.js)
 --------------------------------------------------------------------------------
-- Real-time subtotal, shipping fee calculation, and order placement.
+- Real-time subtotal, shipping fee calculation, tax, and order placement.
+- Floating quick add-to-cart bar for product details view (`product_detail_cart.js`).
 - Dispatches `cartUpdated` event to keep header badge in sync.
 
 3.6 Branch Selection & Shipping Fee Calculation Algorithm (branch_controller.js)
 --------------------------------------------------------------------------------
-- Calculates geographic delivery distances and dynamically auto-selects fulfillment branch with complete cart inventory.
+- Calculates geographic delivery distances using Haversine algorithm.
+- Dynamically auto-selects fulfillment branch with complete cart inventory.
 
-3.7 User Authentication, Access Control & Role Entity (`User` in `user_model.js`)
+3.7 User Authentication, Access Control & 4-Tier Roles (login_controller.js & user_model.js)
 --------------------------------------------------------------------------------
 - Single Source of Truth `User` ES6 Class:
   * Properties: `id`, `username`, `name`, `email`, `password`, `role`, `assignedBranch`, `createdAt`.
   * Methods: `isAdmin()`, `isSuperAdmin()`, `isStaff()`, `isCustomer()`, `getInitial()`.
 - `USER_ROLE` constant (`CUSTOMER`, `STAFF`, `ADMIN`, `SUPERADMIN`) and `DEFAULT_ROLE = 'CUSTOMER'`.
-- All client-side regex validators removed; validation is handled by database and Spring Security backend.
-- Errors returned by backend are displayed directly to user.
+- Database-driven validation: Spring Security backend handles all constraints, surfacing error messages directly.
+- User Profile & Password Change Modal Component (`user_profile_modal_container.js`).
 
 3.8 Customer Account Portal, Order Tracking & Cancellation
 --------------------------------------------------------------------------------
@@ -328,18 +343,35 @@ Module: `src/js/controller/order_management_controller.js` & `src/js/app/app.js`
 4. ADMIN & MANAGEMENT CONSOLE LOGIC
 ================================================================================
 
-4.1 Admin Console Architecture & Responsive Collapsible Sidebar
+4.1 Admin Console Architecture & Responsive Collapsible Sidebar (administrator.js)
 --------------------------------------------------------------------------------
 - Full-screen desktop shell hiding storefront header, footer, and chatbot.
-- Role-based sidebar items: `user.isAdmin()` grants full management tabs; `user.isStaff()` scopes to operational tabs.
+- Role-based sidebar navigation (12 discrete management tabs):
+  * `overview`: High-level metrics, revenue analytics chart, and recent orders.
+  * `products`: Product catalog CRUD, 5-image gallery builder, and specs matrix.
+  * `promotions`: Deal Bundles with dynamic bottleneck calculations and Hot Deals.
+  * `orders`: Order lifecycle processing, search, branch filtering, and details view.
+  * `stock-health`: Multi-branch stock matrix monitor, alerts, and quick restock.
+  * `taxonomy`: Categories CRUD, custom badge builder, and automated rules engine.
+  * `brands`: Hardware partner manufacturers, vector logo presets, and showcase toggles.
+  * `branches`: Store branch profiles, geo-coordinates, and base shipping rates.
+  * `transfers`: Inter-branch stock transfers and kit assembly movements.
+  * `users`: 4-tier user directory, role assignments, and Superadmin protection.
+  * `analytics`: Financial analytics, branch revenue breakdowns, and order reports.
+  * `policies`: Corporate business credentials editor and legal policy WYSIWYG builder.
+- Responsive collapse/expand states with tooltip hovering, mobile backdrop overlay, and keyboard navigation.
 
 4.2 Product Management Module (product_management_controller.js)
 --------------------------------------------------------------------------------
-- CRUD product management, 5-image gallery builder, key-value specs matrix, multi-branch stock allocation, and live preview modal.
+- Full CRUD product management.
+- 5-image multi-image upload / URL builder.
+- Key-value specifications matrix and features tag builder.
+- Multi-branch stock allocation table and live card preview modal.
 
 4.3 Order Management Module (order_management_controller.js)
 --------------------------------------------------------------------------------
-- Order search, branch filtering, status lifecycle transitions, item inspection, and customer communication.
+- Order search, status filter (`Pending`, `Processing`, `Shipped`, `Delivered`, `Cancelled`), and branch filter.
+- Order details inspector modal and fulfillment status lifecycle transitions.
 
 4.4 Stock Health & Inventory Alert Monitor (stock_health_controller.js)
 --------------------------------------------------------------------------------
@@ -347,17 +379,17 @@ Module: `src/js/controller/order_management_controller.js` & `src/js/app/app.js`
 
 4.5 Branch Management Module (branch_management_controller.js)
 --------------------------------------------------------------------------------
-- Branch profiles, coordinates, delivery radius, and contact management.
+- Branch profiles, coordinates, delivery radius, base shipping rates, and contact management.
 
 4.6 User Account Management Module (user_management_controller.js)
 --------------------------------------------------------------------------------
 - Fetches directory from `UserApi.getUsers()` and wraps in `User` instances.
 - Generates role options dynamically from `USER_ROLE` via `buildRoleOptionsHtml(user.role)`.
-- Enforces RBAC permissions: Superadmin has full authority; Admin cannot modify other Admins or Superadmin.
+- Enforces 4-tier RBAC: Superadmin has full authority; Admin cannot modify other Admins or Superadmin.
 
 4.7 Hardware Brands & Partner Showcase Management (brand_management_controller.js)
 --------------------------------------------------------------------------------
-- Official hardware partner brands, vector logo URLs, origin countries, official website links, and homepage featured showcase toggles.
+- Official hardware partner brands, vector logo presets (ASUS, Intel, NVIDIA, AMD, Corsair, Samsung, MSI, Gigabyte, Razer, Logitech G, HyperX, Apple, Lian Li, NZXT), origin countries, official website links, and homepage featured showcase toggles.
 
 4.8 Deals & Promotional Campaigns Engine (promotion_management_controller.js & hot_deal_controller.js)
 --------------------------------------------------------------------------------
@@ -367,6 +399,7 @@ Module: `src/js/controller/order_management_controller.js` & `src/js/app/app.js`
 4.9 Inter-Branch Stock Transfers & Kit Assembly Logistics (transfer_management_controller.js)
 --------------------------------------------------------------------------------
 - Manages stock rebalancing across regional warehouses (`PENDING` -> `IN_TRANSIT` -> `RECEIVED` / `CANCELLED`).
+- 1-click kit assembly transfer triggers from deal bundle stock shortages.
 
 4.10 Taxonomy, Automated Badge Rules & Product Behavior Analytics (taxonomy_controller.js)
 --------------------------------------------------------------------------------
@@ -376,7 +409,12 @@ Module: `src/js/controller/order_management_controller.js` & `src/js/app/app.js`
 --------------------------------------------------------------------------------
 - Business credentials editor and legal policy WYSIWYG section builder (Privacy Policy, Terms of Service, Warranty).
 
-4.12 E-T AI Technical Advisor Chatbot Engine (chatbot_controller.js & et-training.js)
+4.12 Financial Analytics & Performance Reports (analytics_and_report_controller.js)
+--------------------------------------------------------------------------------
+- High-level business KPIs: Gross Revenue, Total Orders, Average Order Value, Active Customers.
+- Branch revenue breakdowns and order distribution.
+
+4.13 E-T AI Technical Advisor Chatbot Engine (chatbot_controller.js & et-training.js)
 --------------------------------------------------------------------------------
 - Hardware advisory chatbot grounded with store catalog, shopping cart, stock health, and policies.
 
@@ -406,6 +444,7 @@ export class Product {
     warranty;
     specs;
     features;
+    branchStock;
 }
 ```
 
@@ -448,7 +487,84 @@ export class User {
 }
 ```
 
-5.3 Cart Schema (`etech_cart`)
+5.3 Hardware Brand Entity Model (`brand_data.js`)
+--------------------------------------------------------------------------------
+```javascript
+export class Brand {
+    id;           // e.g. 'brd-asus'
+    name;         // e.g. 'ASUS'
+    slug;         // e.g. 'asus'
+    logo;         // Vector SVG / Image URL
+    country;      // e.g. 'Taiwan'
+    founded;      // e.g. '1989'
+    website;      // e.g. 'https://www.asus.com'
+    tagline;      // e.g. 'In Search of Incredible'
+    description;  // Overview
+    featured;     // boolean (homepage carousel)
+    active;       // boolean
+    displayOrder; // integer
+}
+```
+
+5.4 Deal Bundle & Hot Deal Schemas (`deals_data.js`)
+--------------------------------------------------------------------------------
+```json
+// Deal Bundle Schema
+{
+  "id": 1,
+  "badge": "BEST DEAL",
+  "eyebrow": "FEATURED DEAL",
+  "title": "Ultimate Gaming Power",
+  "subtitle": "RTX 4070 Super + Ryzen 7 7800X3D + 32GB DDR5",
+  "image": "public/images/products/rtx4070.jpg",
+  "price": 259999,
+  "originalPrice": 360996,
+  "targetQuota": 20,
+  "soldCount": 14,
+  "durationSeconds": 86400,
+  "timerUpdatedAt": "2026-08-26T12:00:00Z",
+  "isActive": true,
+  "items": [
+    { "productId": 1, "quantity": 1 },
+    { "productId": 4, "quantity": 1 }
+  ]
+}
+
+// Hot Deal Schema
+{
+  "id": 101,
+  "productId": 1,
+  "badge": "HOT DEAL",
+  "promoPrice": 259999,
+  "originalPrice": 289999,
+  "discountPercent": 10,
+  "durationSeconds": 86400,
+  "timerUpdatedAt": "2026-08-26T12:00:00Z",
+  "isActive": true
+}
+```
+
+5.5 Stock Transfer Schema (`transfers_data.js`)
+--------------------------------------------------------------------------------
+```json
+{
+  "id": "TRF-2026-001",
+  "productId": 1,
+  "productName": "ASUS ROG Strix RTX 4070 Super",
+  "fromBranchId": "BR-GAL",
+  "toBranchId": "BR-COL",
+  "quantity": 3,
+  "status": "IN_TRANSIT",
+  "reason": "Deal Bundle Kit Assembly",
+  "initiatedBy": "Kasun Perera",
+  "notes": "Urgent kit assembly for online orders",
+  "createdAt": "2026-08-26T10:30:00Z",
+  "dispatchedAt": "2026-08-26T11:00:00Z",
+  "receivedAt": null
+}
+```
+
+5.6 Cart Schema (`etech_cart`)
 --------------------------------------------------------------------------------
 ```json
 [
@@ -463,7 +579,7 @@ export class User {
 ]
 ```
 
-5.4 Order Schema (`etech_orders`)
+5.7 Order Schema (`etech_orders`)
 --------------------------------------------------------------------------------
 ```json
 [
@@ -488,11 +604,81 @@ export class User {
     ],
     "subtotal": 385000,
     "shippingFee": 350,
+    "tax": 0,
     "totalAmount": 385350,
-    "paymentMethod": "Cash on Delivery",
+    "paymentMethod": "Credit / Debit Card",
     "status": "Pending"
   }
 ]
+```
+
+5.8 Branch Schema (`etech_branches`)
+--------------------------------------------------------------------------------
+```json
+[
+  {
+    "id": "BR-COL",
+    "name": "Colombo Main Hub",
+    "city": "Colombo",
+    "address": "No. 45, Galle Road, Colombo 03",
+    "phone": "+94 11 234 5678",
+    "email": "colombo@etech.lk",
+    "latitude": 6.9271,
+    "longitude": 79.8612,
+    "baseShippingRate": 350.00,
+    "active": true
+  }
+]
+```
+
+5.9 Taxonomy & Badge Schema (`etech_categories_data`, `etech_badges_data`, `etech_product_behavior_history`)
+--------------------------------------------------------------------------------
+```json
+// Categories Schema
+{
+  "id": "cat-laptops",
+  "name": "Laptops & Notebooks",
+  "slug": "laptops",
+  "icon": "💻",
+  "description": "High-performance gaming laptops and ultrabooks",
+  "featured": true,
+  "displayOrder": 1
+}
+
+// Badges Schema
+{
+  "id": "bdg-hotdeal",
+  "name": "Hot Deal",
+  "slug": "hot-deal",
+  "colorKey": "rose",
+  "colorHex": "#e11d48",
+  "purpose": "Promotional campaign highlight",
+  "standardDescription": "Limited-time flash sale price reduction",
+  "ruleType": "system",
+  "criteria": "hot_deal_active",
+  "priority": 1,
+  "isSystemDefault": true,
+  "canEdit": false,
+  "canDelete": false,
+  "isActive": true
+}
+```
+
+5.10 Legal Policy & Corporate Schema (`etech_policies`, `etech_business_info`)
+--------------------------------------------------------------------------------
+```json
+// Business Info Schema
+{
+  "name": "ETech Computers (Pvt) Ltd",
+  "tagline": "Premium Computing & Enterprise Hardware Solutions",
+  "regNo": "PV-2024-89211",
+  "taxId": "VAT-99210041-7000",
+  "iso": "ISO 9001:2015 Certified Hardware Vendor",
+  "supportEmail": "support@etech.lk",
+  "hotline": "+94 11 772 8800",
+  "headquarters": "ETech Tower, No. 120, R.A. De Mel Mawatha, Colombo 03, Sri Lanka",
+  "hours": "Mon - Sat: 9:00 AM - 7:00 PM | Sun: 10:00 AM - 4:00 PM"
+}
 ```
 
 
@@ -502,17 +688,22 @@ export class User {
 
 6.1 Target Database Relational Schema Overview (DDL)
 --------------------------------------------------------------------------------
-- Primary Tables: `users`, `branches`, `categories`, `brands`, `badges`, `products`, `product_images`, `branch_inventory`, `deal_bundles`, `bundle_items`, `hot_deals`, `home_deal_banner`, `stock_transfers`, `product_reviews`, `product_behavior_history`, `orders`, `order_items`, `business_profile`, `legal_policies`.
+- Primary Tables: `users`, `branches`, `categories`, `badges`, `brands`, `products`, `product_images`, `branch_inventory`, `deal_bundles`, `bundle_items`, `hot_deals`, `home_deal_banner`, `stock_transfers`, `product_reviews`, `product_behavior_history`, `orders`, `order_items`, `business_profile`, `legal_policies`.
 
 6.2 Spring Boot REST API Endpoint Specifications
 --------------------------------------------------------------------------------
 - Auth: `POST /api/v1/auth/login`, `POST /api/v1/auth/register`, `GET /api/v1/auth/me`.
-- Users: `GET /api/v1/users`, `POST /api/v1/users`, `PUT /api/v1/users/{id}`, `PATCH /api/v1/users/{id}/role`, `DELETE /api/v1/users/{id}`.
-- Products: `GET /api/v1/products`, `GET /api/v1/products/{id}`, `POST /api/v1/products`, `PUT /api/v1/products/{id}`, `DELETE /api/v1/products/{id}`.
-- Brands: `GET /api/v1/brands`, `POST /api/v1/brands`, `PUT /api/v1/brands/{id}`, `PATCH /api/v1/brands/{id}/featured`, `DELETE /api/v1/brands/{id}`.
+- Users: `GET /api/v1/users`, `POST /api/v1/users`, `PUT /api/v1/users/{id}`, `PATCH /api/v1/users/{id}/role`, `DELETE /api/v1/users/{id}`, `PUT /api/v1/users/me/profile`, `PUT /api/v1/users/me/password`.
+- Products: `GET /api/v1/products`, `GET /api/v1/products/{id}`, `GET /api/v1/products/sku/{sku}`, `POST /api/v1/products`, `PUT /api/v1/products/{id}`, `DELETE /api/v1/products/{id}`.
+- Brands: `GET /api/v1/brands`, `GET /api/v1/brands/featured`, `GET /api/v1/brands/{slugOrId}`, `POST /api/v1/brands`, `PUT /api/v1/brands/{id}`, `PATCH /api/v1/brands/{id}/featured`, `DELETE /api/v1/brands/{id}`.
 - Orders: `GET /api/v1/orders`, `GET /api/v1/orders/my-orders`, `GET /api/v1/orders/{orderCode}`, `POST /api/v1/orders`, `PATCH /api/v1/orders/{id}/status`.
 - Promotions: `GET /api/v1/promotions/bundles`, `GET /api/v1/promotions/hot-deals`, `GET /api/v1/promotions/home-banner`.
-- Transfers: `GET /api/v1/transfers`, `POST /api/v1/transfers`, `PATCH /api/v1/transfers/{id}/status`.
+- Transfers: `GET /api/v1/transfers`, `POST /api/v1/transfers`, `PATCH /api/v1/transfers/{id}/status`, `GET /api/v1/transfers/metrics`.
+- Categories & Badges: `GET /api/v1/categories`, `GET /api/v1/badges`, `POST /api/v1/badges/auto-assign`.
+- Inventory: `GET /api/v1/inventory/health-report`, `PATCH /api/v1/inventory/{id}/settings`, `POST /api/v1/inventory/{id}/adjust`.
+- Chatbot: `POST /api/v1/chat/message`.
+- Profile & Policies: `GET /api/v1/business-profile`, `GET /api/v1/policies`, `GET /api/v1/policies/{slug}`.
+- Financial Analytics: `GET /api/v1/analytics/overview`, `GET /api/v1/analytics/branch-revenue`, `GET /api/v1/analytics/top-products`.
 
 6.3 Architectural Regulations: Database-Driven Frontend & Single Source of Truth
 --------------------------------------------------------------------------------
@@ -541,10 +732,19 @@ root/
 ├── BACKEND_API_MIGRATION.md                    Master Spring Boot REST API & MySQL Specification
 ├── PROJECT_DOCUMENTATION.txt                   Comprehensive Project Architecture Document
 ├── API_DOCUMENTATION.md                        API Quick Reference
+├── RedesignToAdminOverview.md                  Admin Console Overview Specification
+├── StaffOverview.md                            Staff Workspace Role Guidelines
+├── dealhot_page.md                             Hot Deals Page Specification
+├── homePage_redesign.md                        Storefront Homepage Redesign Guide
+├── plan.md                                     Initial Development Project Plan
 │
 ├── public/                                     Static Assets
-│   ├── fonts/                                  Local Font Preloads
+│   ├── fonts/                                  Local Font Preloads (.gitkeep)
 │   └── images/                                 Product Imagery, Hero Setup, Brand Logos
+│       ├── hero_section_background.jpeg
+│       ├── hero_setup.jpg
+│       ├── home-hero-image-1.png
+│       └── WEEKEND-TECH-DEAL-cart-bg.jpeg
 │
 └── src/
     ├── css/
@@ -563,7 +763,7 @@ root/
     │   ├── ratings_reviews.js                  Product Customer Reviews Seeds
     │   ├── taxonomy.js                         Categories, Badges & History Seeds
     │   ├── transfers.js                        Stock Transfers & Logistics Seeds
-    │   └── users.js                            User Seed Data
+    │   └── users.js                            User Directory Seed Data
     │
     └── js/
         ├── api/                                REST API Network Service Client Layer
@@ -576,9 +776,9 @@ root/
         │   ├── about/
         │   │   └── about.js                    About Us Corporate Profile Page Renderer
         │   ├── administrator/
-        │   │   └── administrator.js            Admin Dashboard View & Shell Renderer
+        │   │   └── administrator.js            Admin Dashboard View & Shell Renderer (12-tab Navigation)
         │   └── login/
-        │       └── login.js                    Authentication Page Renderer
+        │       └── login.js                    Authentication Page Renderer (Login & Signup Tabs)
         │
         ├── components/                         Reusable UI Components & Modals
         │   ├── product_detail_cart.js          Product Details Floating Add-To-Cart Bar
@@ -589,7 +789,7 @@ root/
         │   ├── analytics_and_report_controller.js Financial Analytics & Sales Report Summarizer
         │   ├── branch_controller.js            Branch Network & Geo-Distance Shipping Calculator
         │   ├── branch_management_controller.js Admin Branch CRUD Management
-        │   ├── brand_management_controller.js  Hardware Partner Brands Management
+        │   ├── brand_management_controller.js  Hardware Partner Brands Management (Presets & Showcases)
         │   ├── cart_controller.js              Cart Engine & Checkout Pipeline
         │   ├── chatbot_controller.js           Gemini AI Chatbot Engine & Fallback Logic
         │   ├── hot_deal_controller.js          Hot Deals, Flash Sales & Category Filters

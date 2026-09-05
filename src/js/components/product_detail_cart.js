@@ -1,4 +1,4 @@
-import { getProductById, products } from '../models/data.js';
+import { getProductById, getStoredProducts, products } from '../models/data.js';
 import { getCurrentUser } from '../controller/login_controller.js';
 import { getUserReviewForProduct, getProductReviews } from '../models/rating_data.js';
 import { getBrands } from '../models/brand_data.js';
@@ -8,18 +8,20 @@ export default function renderProductDetails(productId) {
     if (!container) return;
 
     const product = getProductById(productId);
-    if (!product) {
+    const currentUser = getCurrentUser();
+    const isStaffOrAdmin = currentUser && (currentUser.isAdmin() || currentUser.isStaff());
+
+    if (!product || (product.productStatus === 'DELETED') || (product.productStatus === 'INACTIVE' && !isStaffOrAdmin)) {
         container.innerHTML = `
       <div class="text-center py-16 bg-white rounded-lg border border-[#e2e8f0] space-y-4 shadow-sm">
-        <h3 class="text-xl font-bold text-[#0f172a]">Product Not Found</h3>
-        <p class="text-xs text-[#64748b]">The requested product details could not be loaded.</p>
+        <h3 class="text-xl font-bold text-[#0f172a]">Product Unavailable</h3>
+        <p class="text-xs text-[#64748b]">The requested product is currently inactive or not available in the store catalog.</p>
         <a href="#shop" class="inline-block px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-md shadow-sm">Back to Shop Catalog</a>
       </div>
     `;
         return;
     }
 
-    const currentUser = getCurrentUser();
     const userReviewObj = currentUser ? getUserReviewForProduct(product.id, currentUser.id) : null;
     const userRatingValue = userReviewObj ? userReviewObj.rating : 5;
     const productReviews = getProductReviews(product.id);
@@ -29,10 +31,9 @@ export default function renderProductDetails(productId) {
         ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
         : 0;
 
-    // Get related products in same category
-    const relatedProducts = (typeof products !== 'undefined')
-        ? products.filter(p => p.category === product.category && p.id !== product.id).slice(0, 4)
-        : [];
+    // Get related products in same category (Active only)
+    const storedActiveProducts = typeof getStoredProducts === 'function' ? getStoredProducts({ activeOnly: true }) : (products || []);
+    const relatedProducts = storedActiveProducts.filter(p => p.category === product.category && p.id !== product.id).slice(0, 4);
 
     container.innerHTML = `
     <div class="space-y-8">

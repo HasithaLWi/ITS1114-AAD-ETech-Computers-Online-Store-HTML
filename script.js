@@ -90,10 +90,10 @@ import {
 // Product Management Controller Imports
 import {
     renderProductsTab, confirmDeleteProduct, openProductFormPage,
-    renderFormImageInputs, addGalleryImageInput, removeGalleryImageInput,
-    renderFormSpecsInputs, addFormSpecInput, removeFormSpecInput,
-    renderFormFeaturesInputs, addFormFeatureInput, removeFormFeatureInput,
-    triggerProductFormSubmit, updateLivePreview, editProduct,
+    renderGalleryInputs, renderFormImageInputs, addGalleryImageInput, removeGalleryImage, removeGalleryImageInput, updateGalleryImage,
+    renderSpecsInputs, renderFormSpecsInputs, addFormSpecInput, removeSpecItem, removeFormSpecInput, updateSpecItem,
+    renderFeaturesInputs, renderFormFeaturesInputs, addFormFeatureInput, removeFeatureItem, removeFormFeatureInput, updateFeatureItem,
+    renderBranchStockInputs, triggerProductFormSubmit, updateLivePreview, editProduct,
     openProductModal, handleSaveProductSubmit
 } from './src/js/controller/product_management_controller.js';
 
@@ -282,10 +282,10 @@ Object.assign(window, {
 
     // Product Management
     renderProductsTab, confirmDeleteProduct, openProductFormPage,
-    renderFormImageInputs, addGalleryImageInput, removeGalleryImageInput,
-    renderFormSpecsInputs, addFormSpecInput, removeFormSpecInput,
-    renderFormFeaturesInputs, addFormFeatureInput, removeFormFeatureInput,
-    triggerProductFormSubmit, updateLivePreview, editProduct,
+    renderGalleryInputs, renderFormImageInputs, addGalleryImageInput, removeGalleryImage, removeGalleryImageInput, updateGalleryImage,
+    renderSpecsInputs, renderFormSpecsInputs, addFormSpecInput, removeSpecItem, removeFormSpecInput, updateSpecItem,
+    renderFeaturesInputs, renderFormFeaturesInputs, addFormFeatureInput, removeFeatureItem, removeFormFeatureInput, updateFeatureItem,
+    renderBranchStockInputs, triggerProductFormSubmit, updateLivePreview, editProduct,
     openProductModal, handleSaveProductSubmit,
 
     // Order Management & Customer Order Control

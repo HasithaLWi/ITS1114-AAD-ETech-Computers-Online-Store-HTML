@@ -51,7 +51,7 @@ export function renderCategoryCombobox() {
   const combobox = document.getElementById('shop-category-combobox');
   if (!combobox) return;
 
-  const categories = getCategories();
+  const categories = getCategories({ activeOnly: true });
   let optionsHtml = `<option value="" disabled selected>+ Select category...</option>`;
 
   categories.forEach(c => {
@@ -73,7 +73,7 @@ export function renderSelectedCategoryTags() {
   const countBadge = document.getElementById('category-selected-badge');
   if (!tagsContainer) return;
 
-  const categories = getCategories();
+  const categories = getCategories({ activeOnly: true });
 
   if (selectedCategorySlugs.length === 0) {
     if (countBadge) {
@@ -149,7 +149,7 @@ export function renderBrandCombobox() {
   const combobox = document.getElementById('shop-brand-combobox');
   if (!combobox) return;
 
-  const brands = getBrands();
+  const brands = getBrands({ activeOnly: true });
   let optionsHtml = `<option value="" disabled selected>+ Select brand...</option>`;
 
   brands.forEach(b => {
@@ -170,7 +170,7 @@ export function renderSelectedBrandTags() {
   const countBadge = document.getElementById('brand-selected-badge');
   if (!tagsContainer) return;
 
-  const brands = getBrands();
+  const brands = getBrands({ activeOnly: true });
 
   if (selectedBrandSlugs.length === 0) {
     if (countBadge) {
@@ -320,8 +320,8 @@ export function renderFilteredProducts() {
 
   if (!grid) return;
 
-  const allProducts = (typeof getStoredProducts === 'function' ? getStoredProducts() : null) || products || [];
-  const brandsList = getBrands();
+  const allProducts = (typeof getStoredProducts === 'function' ? getStoredProducts({ activeOnly: true }) : null) || products || [];
+  const brandsList = getBrands({ activeOnly: true });
 
   // Extract filter values
   const searchInput = document.getElementById('search-input');

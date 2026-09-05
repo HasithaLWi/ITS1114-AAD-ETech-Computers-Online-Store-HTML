@@ -2,7 +2,7 @@
 //  src/js/api/apiClient.js — Centralized jQuery AJAX API Client
 // ============================================================
 
-export const API_BASE_URL = window.API_BASE_URL || 'http://localhost:8080/api/v1';
+export const API_BASE_URL = (typeof window !== 'undefined' && window.API_BASE_URL) ? window.API_BASE_URL : 'http://localhost:8080/api/v1';
 export const TOKEN_STORAGE_KEY = 'etech_jwt_token';
 export const CURRENT_USER_STORAGE_KEY = 'etech_current_user';
 
@@ -10,6 +10,7 @@ export const CURRENT_USER_STORAGE_KEY = 'etech_current_user';
  * Retrieve active JWT Bearer Token from localStorage
  */
 export function getToken() {
+  if (typeof localStorage === 'undefined') return null;
   return localStorage.getItem(TOKEN_STORAGE_KEY);
 }
 
@@ -17,7 +18,7 @@ export function getToken() {
  * Persist JWT Bearer Token into localStorage
  */
 export function setToken(token) {
-  if (token) {
+  if (typeof localStorage !== 'undefined' && token) {
     localStorage.setItem(TOKEN_STORAGE_KEY, token);
   }
 }
@@ -26,7 +27,9 @@ export function setToken(token) {
  * Clear JWT Bearer Token from localStorage
  */
 export function removeToken() {
-  localStorage.removeItem(TOKEN_STORAGE_KEY);
+  if (typeof localStorage !== 'undefined') {
+    localStorage.removeItem(TOKEN_STORAGE_KEY);
+  }
 }
 
 /**

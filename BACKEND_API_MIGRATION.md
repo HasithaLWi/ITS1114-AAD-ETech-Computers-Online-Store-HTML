@@ -2,7 +2,7 @@
 
 > **Master Specification Document**: This document serves as the authoritative blueprint for transitioning the ETech Computers Online Store frontend from client-side mock datasets and `localStorage` to a production-ready **Spring Boot REST API** backed by a **MySQL Database**.
 > 
-> *Maintained and updated to reflect all frontend data models, centralized data architecture (`src/data/`), taxonomy engines, Deal Bundles & dynamic composite inventory, Hot Deals, synchronized deal timers, Inter-Branch Transfer logistics, stock health matrix, rating systems, AI assistants, and administration modules.*
+> *Maintained and updated to reflect all frontend data models, centralized data architecture (`src/data/`), taxonomy engines, Deal Bundles & dynamic composite inventory, Hot Deals, synchronized deal timers, Inter-Branch Transfer logistics, stock health matrix, rating systems, AI assistants, 4-tier Role-Based Access Control (RBAC), and administration modules.*
 
 ---
 
@@ -40,10 +40,10 @@
 
 ```mermaid
 flowchart TD
-    subgraph Frontend["Frontend SPA (HTML5 / Vanilla JS / Tailwind CSS)"]
-        UI["UI Layer (index.html, DOM Renderers, Modals)"]
-        Controllers["Controllers (shop, cart, product-details, taxonomy, brand_management, promotion_management, hot_deal, transfer_management, stock_health, auth, admin, policies)"]
-        APILayer["API Service Client Layer (src/js/api/)"]
+    subgraph Frontend["Frontend SPA (HTML5 / Vanilla JS / Tailwind CSS / jQuery AJAX)"]
+        UI["UI Layer (index.html, DOM Renderers, Modals, Drawers)"]
+        Controllers["Controllers (shop, cart, product-details, taxonomy, brand_management, promotion_management, hot_deal, transfer_management, stock_health, login, user_management, branch_management, policy_management, analytics)"]
+        APILayer["API Service Client Layer (src/js/api/apiClient.js, userApi.js, brandsApi.js, etc.)"]
     end
 
     subgraph Current["Current State (Mock / Centralized src/data/ + localStorage)"]
@@ -52,8 +52,8 @@ flowchart TD
         DataDir -.->|Hydrates on First Run| LocalStorage
     end
 
-    subgraph Target["Target Backend (Spring Boot 3.x + MySQL 8.x)"]
-        APILayer -->|HTTP / REST (JSON + JWT Bearer)| SpringSecurity["Spring Security (JWT Filter Chain)"]
+    subgraph Target["Target Backend (Spring Boot 3.3+ + MySQL 8.x)"]
+        APILayer -->|HTTP / REST (JSON + JWT Bearer)| SpringSecurity["Spring Security 6 (JWT Filter Chain)"]
         SpringSecurity --> RESTControllers["Spring REST Controllers (@RestController)"]
         RESTControllers --> Services["Business Services (@Service + @Transactional)"]
         Services --> RulesEngine["Automated Badge & Stock Rules Engine"]
@@ -66,8 +66,8 @@ flowchart TD
         Hibernate --> MySQL[("MySQL 8.x Database Engine")]
     end
 
-    Controllers -.->|Current Direct Access| LocalStorage
-    Controllers -->|Future Migration Target| APILayer
+    Controllers -.->|Current Fallback Direct Access| LocalStorage
+    Controllers -->|Production Integration Target| APILayer
 ```
 
 ---
@@ -90,8 +90,9 @@ All mock data is centralized under `src/data/` as the single source of truth:
 | `etech_product_reviews` | `src/data/ratings_reviews.js`<br>`src/js/models/rating_data.js` | Stores 1–5 star customer text reviews, updating average ratings and review counts | `GET /api/v1/products/{id}/reviews`<br>`POST /api/v1/products/{id}/reviews`<br>`DELETE /api/v1/reviews/{id}` | **Replace completely** with database table. |
 | `etech_branches` | `src/data/branches.js`<br>`src/js/controller/branch_controller.js` | Stores regional warehouse hubs (Colombo, Galle, Matara, Kandy) with geo coordinates & base rates | `GET /api/v1/branches`<br>`POST /api/v1/branches`<br>`PUT /api/v1/branches/{id}`<br>`DELETE /api/v1/branches/{id}` | **Replace completely** with API fetch calls. |
 | `etech_orders` | `src/data/orders.js`<br>`src/js/controller/order_management_controller.js` | Stores customer orders, delivery distances, fulfillment branch, item arrays, and status | `GET /api/v1/orders`<br>`GET /api/v1/orders/my-orders`<br>`POST /api/v1/orders`<br>`PATCH /api/v1/orders/{id}/status` | **Replace completely** with API fetch calls. |
-| `etech_users` | `src/data/users.js`<br>`src/js/controller/login_controller.js` | Stores user directory with unique username, 4-tier role (`SUPERADMIN`, `ADMIN`, `STAFF`, `CUSTOMER`), and branch assignments | `GET /api/v1/users`<br>`POST /api/v1/auth/register`<br>`POST /api/v1/users`<br>`PATCH /api/v1/users/{id}/role` | **Replace completely**. Spring Security manages BCrypt passwords & RBAC authorization. |
-| `etech_current_user` | `src/js/controller/login_controller.js` | Stores current logged-in user profile & role session (`SUPERADMIN`, `ADMIN`, `STAFF`, `CUSTOMER`) | `POST /api/v1/auth/login`<br>`GET /api/v1/auth/me` | **Keep minimal**: Store only the **JWT Bearer Token** and user profile. |
+| `etech_users` / `DEFAULT_USERS` | `src/data/users.js`<br>`src/js/controller/login_controller.js`<br>`src/js/models/user_model.js` | Stores user directory with unique username, 4-tier role (`SUPERADMIN`, `ADMIN`, `STAFF`, `CUSTOMER`), and branch assignments | `GET /api/v1/users`<br>`POST /api/v1/auth/register`<br>`POST /api/v1/users`<br>`PATCH /api/v1/users/{id}/role` | **Replace completely**. Spring Security manages BCrypt passwords & RBAC authorization. |
+| `etech_jwt_token` | `src/js/api/apiClient.js` | Stores active authentication JWT Bearer token | `POST /api/v1/auth/login`<br>`POST /api/v1/auth/register` | **Keep in `localStorage`** for stateless session authentication. |
+| `etech_current_user` | `src/js/controller/login_controller.js`<br>`src/js/models/user_model.js` | Stores current logged-in user profile & role session (`SUPERADMIN`, `ADMIN`, `STAFF`, `CUSTOMER`) | `POST /api/v1/auth/login`<br>`GET /api/v1/auth/me` | **Keep minimal**: Store only active user profile DTO. |
 | `etech_cart` | `src/js/controller/cart_controller.js` | Stores active shopping cart items and quantities | Optional: `GET/POST /api/v1/cart` (or keep in `localStorage` for guest sessions) | Can **remain in `localStorage`** for guest carts, syncing on checkout. |
 | `etech_business_info` | `src/data/policies.js`<br>`src/js/models/policy-data.js` | Corporate business details, registration no, tax ID, ISO credentials, and hotline | `GET /api/v1/business-profile`<br>`PUT /api/v1/business-profile` | **Replace completely** with database table. |
 | `etech_policies` | `src/data/policies.js`<br>`src/js/models/policy-data.js` | Legal compliance policies (Privacy Policy, Terms of Service, Guarantee & Warranty) | `GET /api/v1/policies`<br>`GET /api/v1/policies/{slug}`<br>`PUT /api/v1/policies/{slug}` | **Replace completely** with database table. |
@@ -195,7 +196,8 @@ erDiagram
     PRODUCTS {
         bigint id PK
         varchar name
-        varchar category_slug
+        varchar category_slug FK
+        varchar brand
         decimal price
         decimal original_price
         decimal rating
@@ -336,6 +338,29 @@ erDiagram
         int quantity
         decimal total_price
     }
+
+    BUSINESS_PROFILE {
+        int id PK
+        varchar store_name
+        varchar tagline
+        varchar registration_no
+        varchar tax_id
+        varchar iso_cert
+        varchar support_email
+        varchar hotline
+        text headquarters
+        varchar working_hours
+        text mission_statement
+        text company_story
+    }
+
+    LEGAL_POLICIES {
+        varchar id PK "privacy, terms, warranty"
+        varchar title
+        varchar subtitle
+        varchar last_updated
+        json sections_json
+    }
 ```
 
 ---
@@ -468,7 +493,7 @@ CREATE TABLE products (
     INDEX idx_products_price (price)
 ) ENGINE=InnoDB;
 
--- 6. Product Gallery Images (Multi-Image Support, Max 5 Images)
+-- 7. Product Gallery Images (Multi-Image Support, Max 5 Images)
 CREATE TABLE product_images (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     product_id BIGINT NOT NULL,
@@ -478,7 +503,7 @@ CREATE TABLE product_images (
     INDEX idx_product_images_product (product_id)
 ) ENGINE=InnoDB;
 
--- 7. Branch Warehouse Stock Allocation (Many-to-Many Bridge)
+-- 8. Branch Warehouse Stock Allocation (Many-to-Many Bridge)
 CREATE TABLE branch_inventory (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     product_id BIGINT NOT NULL,
@@ -491,7 +516,7 @@ CREATE TABLE branch_inventory (
     INDEX idx_inventory_lookup (product_id, branch_id)
 ) ENGINE=InnoDB;
 
--- 8. Deal Bundles (Featured Carousel & Package Rig Deals)
+-- 9. Deal Bundles (Featured Carousel & Package Rig Deals)
 CREATE TABLE deal_bundles (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     badge VARCHAR(50) NOT NULL DEFAULT 'BEST DEAL',
@@ -510,7 +535,7 @@ CREATE TABLE deal_bundles (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
--- 9. Bundle Items (Components Breakdown Bridge)
+-- 10. Bundle Items (Components Breakdown Bridge)
 CREATE TABLE bundle_items (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     bundle_id BIGINT NOT NULL,
@@ -522,7 +547,7 @@ CREATE TABLE bundle_items (
     INDEX idx_bundle_items_bundle (bundle_id)
 ) ENGINE=InnoDB;
 
--- 10. Hot Deals Table (Individual Promotional Hot Deals)
+-- 11. Hot Deals Table (Individual Promotional Hot Deals)
 CREATE TABLE hot_deals (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     product_id BIGINT NOT NULL UNIQUE,
@@ -539,7 +564,7 @@ CREATE TABLE hot_deals (
     INDEX idx_hot_deals_product (product_id)
 ) ENGINE=InnoDB;
 
--- 11. Home Deal Banner (Weekend Tech Deal Hero Banner)
+-- 12. Home Deal Banner (Weekend Tech Deal Hero Banner)
 CREATE TABLE home_deal_banner (
     id INT PRIMARY KEY DEFAULT 1,
     deal_tag VARCHAR(100) NOT NULL DEFAULT 'WEEKEND TECH DEAL',
@@ -554,7 +579,7 @@ CREATE TABLE home_deal_banner (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
--- 12. Inter-Branch Stock Transfers (Logistics Hub)
+-- 13. Inter-Branch Stock Transfers (Logistics Hub)
 CREATE TABLE stock_transfers (
     id VARCHAR(50) PRIMARY KEY, -- e.g. 'TRF-2026-001'
     product_id BIGINT NOT NULL,
@@ -576,7 +601,7 @@ CREATE TABLE stock_transfers (
     INDEX idx_transfers_branches (from_branch_id, to_branch_id)
 ) ENGINE=InnoDB;
 
--- 13. Product Ratings & Customer Reviews Table
+-- 14. Product Ratings & Customer Reviews Table
 CREATE TABLE product_reviews (
     id VARCHAR(50) PRIMARY KEY, -- e.g. 'REV-10001'
     product_id BIGINT NOT NULL,
@@ -593,7 +618,7 @@ CREATE TABLE product_reviews (
     INDEX idx_reviews_product (product_id)
 ) ENGINE=InnoDB;
 
--- 14. Product Behavior History & Audit Log Table
+-- 15. Product Behavior History & Audit Log Table
 CREATE TABLE product_behavior_history (
     id VARCHAR(100) PRIMARY KEY, -- e.g. 'pbe-1723824000-123'
     product_id BIGINT NOT NULL,
@@ -617,7 +642,7 @@ CREATE TABLE product_behavior_history (
     INDEX idx_behavior_event (event_type)
 ) ENGINE=InnoDB;
 
--- 15. Orders Table (Customer Checkout & Fulfillment)
+-- 16. Orders Table (Customer Checkout & Fulfillment)
 CREATE TABLE orders (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     order_code VARCHAR(50) NOT NULL UNIQUE, -- e.g. 'ORD-2026-8492'
@@ -645,7 +670,7 @@ CREATE TABLE orders (
     INDEX idx_orders_date (order_date)
 ) ENGINE=InnoDB;
 
--- 16. Order Items Table
+-- 17. Order Items Table
 CREATE TABLE order_items (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     order_id BIGINT NOT NULL,
@@ -660,7 +685,7 @@ CREATE TABLE order_items (
     INDEX idx_order_items_order (order_id)
 ) ENGINE=InnoDB;
 
--- 17. Business Profile Table (Store Credentials & Operations Matrix)
+-- 18. Business Profile Table (Store Credentials & Operations Matrix)
 CREATE TABLE business_profile (
     id INT PRIMARY KEY DEFAULT 1,
     store_name VARCHAR(150) NOT NULL,
@@ -677,7 +702,7 @@ CREATE TABLE business_profile (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
--- 18. Legal Policies Table (Privacy, Terms, Guarantee & Warranty)
+-- 19. Legal Policies Table (Privacy, Terms, Guarantee & Warranty)
 CREATE TABLE legal_policies (
     id VARCHAR(50) PRIMARY KEY, -- 'privacy', 'terms', 'warranty'
     title VARCHAR(150) NOT NULL,
@@ -701,9 +726,10 @@ All endpoints are prefixed with `/api/v1`.
 | `POST` | `/api/v1/auth/login` | Public | Authenticate user via username/password & issue JWT with role claims (`SUPERADMIN`, `ADMIN`, `STAFF`, `CUSTOMER`) | `{ "username": "superadmin", "password": "..." }` | `{ "token": "jwt.token...", "user": { "id": "USR-100000", "username": "superadmin", "name": "System Owner & Super Admin", "email": "superadmin@etech.com", "role": "SUPERADMIN", "assignedBranch": null } }` |
 | `POST` | `/api/v1/auth/register` | Public | Register new customer account | `{ "name": "...", "username": "...", "email": "...", "password": "..." }` | `{ "token": "jwt.token...", "user": { "id": "USR-100004", "username": "...", "name": "...", "email": "...", "role": "CUSTOMER", "assignedBranch": null } }` |
 | `GET` | `/api/v1/auth/me` | Authenticated | Retrieve current session profile & role | Headers: `Authorization: Bearer <token>` | Current User Profile DTO |
-| `PUT` | `/api/v1/users/me/profile` | Authenticated | Update current user personal profile | `{ "name": "...", "username": "...", "email": "..." }` | Updated User Profile DTO |
-| `PUT` | `/api/v1/users/me/password` | Authenticated | Change current user password | `{ "currentPassword": "...", "newPassword": "..." }` | `{ "success": true, "message": "Password changed" }` |
-| `GET` | `/api/v1/users` | `SUPERADMIN, ADMIN` | List system users.<br>- **Superadmin**: Returns all users across all roles.<br>- **Admin**: Returns other Admins (marked `canManage: false`), Staff, and Customers. **`SUPERADMIN` records are stripped out completely** (invisible to Admin). | Query: `?role=STAFF&branch=BR-COL` | List of User DTOs |
+| `PUT` | `/api/v1/users/me/profile` | Authenticated | Update current user personal profile (Name, Username, Email) | `{ "name": "...", "username": "...", "email": "..." }` | Updated User Profile DTO |
+| `PUT` | `/api/v1/users/me/password` | Authenticated | Change current user account password | `{ "currentPassword": "...", "newPassword": "..." }` | `{ "success": true, "message": "Password changed" }` |
+| `GET` | `/api/v1/users` | `SUPERADMIN, ADMIN` | List system users.<br>- **Superadmin**: Returns all users across all roles.<br>- **Admin**: Returns other Admins (marked `canManage: false`), Staff, and Customers. **`SUPERADMIN` records are stripped out completely** (invisible to Admin). | Query: `?role=STAFF&branch=BR-COL&search=kasun` | List of User DTOs |
+| `GET` | `/api/v1/users/{id}` | `SUPERADMIN, ADMIN` | Fetch single user details by ID | None | User DTO |
 | `GET` | `/api/v1/users/roles` | Public / Auth | Fetch dynamic list of available system user roles configured in database | None | `[ "SUPERADMIN", "ADMIN", "STAFF", "CUSTOMER" ]` |
 | `POST` | `/api/v1/users` | `SUPERADMIN, ADMIN` | Create user account.<br>- **Superadmin**: Can create `ADMIN`, `STAFF`, `CUSTOMER`.<br>- **Admin**: Can only create `STAFF`, `CUSTOMER`. Attempt to create `ADMIN` or `SUPERADMIN` yields `403 Forbidden`. | `{ "name": "...", "username": "...", "email": "...", "password": "...", "role": "STAFF", "assignedBranch": "BR-GAL" }` | Created User DTO |
 | `PUT` | `/api/v1/users/{id}` | `SUPERADMIN, ADMIN` | Update user details & branch.<br>- **Superadmin**: Full update authority.<br>- **Admin**: Can only update `STAFF` and `CUSTOMER`. Modifying an `ADMIN` or `SUPERADMIN` yields `403 Forbidden`. | User Form DTO | Updated User DTO |
@@ -714,7 +740,7 @@ All endpoints are prefixed with `/api/v1`.
 
 | Method | Endpoint | Access | Description | Request Payload | Response Payload |
 |---|---|---|---|---|---|
-| `GET` | `/api/v1/products` | Public | Fetch catalog with filters, search, pagination, and branch inventory breakdown | Query params:<br>`?category=laptops`<br>`&search=rtx`<br>`&minPrice=1000`<br>`&maxPrice=500000`<br>`&badge=bestseller`<br>`&page=0&size=20` | `{ "content": [ { "id": 1, "name": "Apex Raider", "sku": "ETC-1", "price": 259999, "branchStock": {"BR-COL": 11, "BR-GAL": 5}, "totalStock": 21, "specs": {...}, "images": [...] } ], "totalPages": 2, "totalElements": 24 }` |
+| `GET` | `/api/v1/products` | Public | Fetch catalog with filters, search, pagination, and branch inventory breakdown | Query params:<br>`?category=laptops`<br>`&brand=asus`<br>`&search=rtx`<br>`&minPrice=1000`<br>`&maxPrice=500000`<br>`&badge=bestseller`<br>`&page=0&size=20` | `{ "content": [ { "id": 1, "name": "Apex Raider", "sku": "ETC-1", "price": 259999, "branchStock": {"BR-COL": 11, "BR-GAL": 5}, "totalStock": 21, "specs": {...}, "images": [...] } ], "totalPages": 2, "totalElements": 24 }` |
 | `GET` | `/api/v1/products/{id}` | Public | Get single product with full specs, features, images, and reviews | None | Single Product DTO |
 | `GET` | `/api/v1/products/sku/{sku}` | Public | Lookup product by unique SKU | None | Single Product DTO |
 | `POST` | `/api/v1/products` | `ADMIN, STAFF` | Create new product with specs, up to 5 images, and branch stock allocation | Product Form DTO | Created Product DTO |
@@ -842,7 +868,7 @@ All endpoints are prefixed with `/api/v1`.
 
 | Method | Endpoint | Access | Description | Request Payload | Response Payload |
 |---|---|---|---|---|---|
-| `POST` | `/api/v1/chat/message` | Public / Auth | **Backend Gemini 2.0 Proxy**: Grounds user message with live store catalog, current shopping cart, stock health, and legal policies securely on the backend without exposing API keys | `{ "message": "Can you recommend a gaming laptop under $2500 with an RTX 4080?", "history": [...], "cart": [...] }` | `{ "reply": "...", "suggestedProducts": [1, 3], "timestamp": "..." }` |
+| `POST` | `/api/v1/chat/message` | Public / Auth | **Backend Gemini 2.0 Proxy**: Grounds user message with live store catalog, current shopping cart, stock health, and legal policies securely on the backend without exposing API keys | `{ "message": "Can you recommend a gaming laptop with an RTX 4080?", "history": [...], "cart": [...] }` | `{ "reply": "...", "suggestedProducts": [1, 3], "timestamp": "..." }` |
 
 ### Financial Analytics & Reports
 
@@ -857,7 +883,7 @@ All endpoints are prefixed with `/api/v1`.
 ## 6. Spring Boot Application Architecture & Dependencies
 
 ### Recommended Technology Stack
-- **Framework**: Spring Boot 3.2+ / 3.3+ (Java 17 or 21 LTS)
+- **Framework**: Spring Boot 3.3+ (Java 17 or 21 LTS)
 - **Security**: Spring Security 6 + JJWT (`io.jsonwebtoken:jjwt-api:0.12.5`) for stateless JWT Bearer token authentication
 - **Persistence**: Spring Data JPA + Hibernate ORM + MySQL Connector/J
 - **Validation**: Jakarta Bean Validation (`spring-boot-starter-validation`)
@@ -953,12 +979,14 @@ com.etech.store/
 │   ├── ProductController.java
 │   ├── ReviewController.java
 │   ├── CategoryController.java
+│   ├── BrandController.java
 │   ├── BadgeController.java
 │   ├── PromotionController.java      # Bundles, Hot Deals, Home Banner
 │   ├── TransferController.java       # Inter-branch stock transfers
 │   ├── BranchController.java
 │   ├── InventoryController.java
 │   ├── OrderController.java
+│   ├── PolicyController.java
 │   ├── ChatbotController.java
 │   └── AnalyticsController.java
 ├── dto/                              # Request / Response DTOs
@@ -968,6 +996,7 @@ com.etech.store/
 │   ├── User.java
 │   ├── Branch.java
 │   ├── Category.java
+│   ├── Brand.java
 │   ├── Badge.java
 │   ├── Product.java
 │   ├── ProductImage.java
@@ -980,11 +1009,14 @@ com.etech.store/
 │   ├── ProductReview.java
 │   ├── ProductBehaviorHistory.java
 │   ├── Order.java
-│   └── OrderItem.java
+│   ├── OrderItem.java
+│   ├── BusinessProfile.java
+│   └── LegalPolicy.java
 ├── repository/                       # Spring Data JPA Repositories
 │   ├── UserRepository.java
 │   ├── BranchRepository.java
 │   ├── CategoryRepository.java
+│   ├── BrandRepository.java
 │   ├── BadgeRepository.java
 │   ├── ProductRepository.java
 │   ├── ProductImageRepository.java
@@ -997,19 +1029,23 @@ com.etech.store/
 │   ├── ProductReviewRepository.java
 │   ├── ProductBehaviorHistoryRepository.java
 │   ├── OrderRepository.java
-│   └── OrderItemRepository.java
+│   ├── OrderItemRepository.java
+│   ├── BusinessProfileRepository.java
+│   └── LegalPolicyRepository.java
 ├── service/                          # Business logic & @Transactional rules
 │   ├── AuthService.java
 │   ├── UserService.java
 │   ├── ProductService.java
 │   ├── ReviewService.java
-│   ├── TaxonomyService.java
+│   ├── CategoryService.java
+│   ├── BrandService.java
 │   ├── BadgeRuleEngineService.java   # Evaluates auto-reach badge conditions & logs audit events
 │   ├── PromotionService.java         # Deal bundle bottlenecks, hot deal overrides, countdowns
 │   ├── TransferService.java          # Multi-branch stock movement & kit balancing
 │   ├── BranchService.java
 │   ├── InventoryService.java         # Restock, alerts & health metrics
 │   ├── OrderService.java             # Atomically places orders & decrements branch stock
+│   ├── PolicyService.java
 │   ├── ChatbotService.java           # Gemini API proxy with catalog grounding
 │   └── AnalyticsService.java
 └── exception/
@@ -1088,7 +1124,7 @@ To ensure clean maintainability, prevent duplication, and avoid multi-file code 
    - The frontend maintains only the active session token (`etech_jwt_token`) and sanitized active profile (`etech_current_user`).
 
 4. **Sanitized Debug Logging Standard**:
-   - All API client operations (`apiClient.js` and `userApi.js`) must log method, endpoint, roundtrip duration (ms), status codes, and payload/response data for debugging.
+   - All API client operations (`apiClient.js`, `userApi.js`, `brandsApi.js`, etc.) must log method, endpoint, roundtrip duration (ms), status codes, and payload/response data for debugging.
    - **Credential Redaction**: Sensitive attributes (`password`, `currentPassword`, `newPassword`, `confirmPassword`, `token`, `jwt`, `secret`, `cvv`, `cardNumber`) MUST be sanitized and redacted as `[REDACTED]` prior to printing to browser console.
 
 ---
@@ -1120,7 +1156,7 @@ export function sanitizeForLogging(payload) {
 }
 
 export function ajaxRequest({ endpoint, method = 'GET', data = null, headers = {} }) {
-  const url = `${API_BASE_URL}${endpoint}`;
+  const url = `${API_BASE_URL}${endpoint.startsWith('/') ? endpoint : '/' + endpoint}`;
   const token = getToken();
   const reqHeaders = {
     'Content-Type': 'application/json',
@@ -1131,9 +1167,13 @@ export function ajaxRequest({ endpoint, method = 'GET', data = null, headers = {
   return new Promise((resolve, reject) => {
     $.ajax({
       url,
-      method,
+      type: method.toUpperCase(),
+      dataType: 'json',
+      contentType: 'application/json; charset=utf-8',
       headers: reqHeaders,
-      data: data ? JSON.stringify(data) : undefined,
+      data: (data && ['POST', 'PUT', 'PATCH'].includes(method.toUpperCase())) 
+        ? (typeof data === 'string' ? data : JSON.stringify(data)) 
+        : data,
       success: (res) => resolve(res),
       error: (xhr) => {
         if (xhr.status === 401) {
@@ -1159,12 +1199,12 @@ export const AuthApi = {
 };
 
 export const UserApi = {
-  getUsers: (params = {}) => ajaxRequest({ endpoint: `/users${$.param(params) ? '?' + $.param(params) : ''}`, method: 'GET' }),
-  getUserById: (id) => ajaxRequest({ endpoint: `/users/${id}`, method: 'GET' }),
+  getUsers: (params = {}) => ajaxRequest({ endpoint: '/users', method: 'GET', data: params }),
+  getUserById: (id) => ajaxRequest({ endpoint: `/users/${encodeURIComponent(id)}`, method: 'GET' }),
   createUser: (payload) => ajaxRequest({ endpoint: '/users', method: 'POST', data: payload }),
-  updateUser: (id, payload) => ajaxRequest({ endpoint: `/users/${id}`, method: 'PUT', data: payload }),
-  updateUserRole: (id, payload) => ajaxRequest({ endpoint: `/users/${id}/role`, method: 'PATCH', data: payload }),
-  deleteUser: (id) => ajaxRequest({ endpoint: `/users/${id}`, method: 'DELETE' }),
+  updateUser: (id, payload) => ajaxRequest({ endpoint: `/users/${encodeURIComponent(id)}`, method: 'PUT', data: payload }),
+  updateUserRole: (id, payload) => ajaxRequest({ endpoint: `/users/${encodeURIComponent(id)}/role`, method: 'PATCH', data: payload }),
+  deleteUser: (id) => ajaxRequest({ endpoint: `/users/${encodeURIComponent(id)}`, method: 'DELETE' }),
   updateSelfProfile: (payload) => ajaxRequest({ endpoint: '/users/me/profile', method: 'PUT', data: payload }),
   changePassword: (payload) => ajaxRequest({ endpoint: '/users/me/password', method: 'PUT', data: payload })
 };
@@ -1175,139 +1215,142 @@ export const UserApi = {
 import { ajaxRequest } from './apiClient.js';
 
 export const BrandsApi = {
-  getAllBrands: (params = {}) => ajaxRequest({ endpoint: `/brands${$.param(params) ? '?' + $.param(params) : ''}`, method: 'GET' }),
-  getBrandById: (id) => ajaxRequest({ endpoint: `/brands/${id}`, method: 'GET' }),
+  getAllBrands: (activeOnly = true) => ajaxRequest({ endpoint: `/brands?activeOnly=${activeOnly}`, method: 'GET' }),
+  getFeaturedBrands: () => ajaxRequest({ endpoint: '/brands/featured', method: 'GET' }),
+  getBrandBySlugOrId: (slugOrId) => ajaxRequest({ endpoint: `/brands/${encodeURIComponent(slugOrId)}`, method: 'GET' }),
   createBrand: (payload) => ajaxRequest({ endpoint: '/brands', method: 'POST', data: payload }),
-  updateBrand: (id, payload) => ajaxRequest({ endpoint: `/brands/${id}`, method: 'PUT', data: payload }),
-  toggleFeatured: (id, featured) => ajaxRequest({ endpoint: `/brands/${id}/featured`, method: 'PATCH', data: { featured } }),
-  deleteBrand: (id) => ajaxRequest({ endpoint: `/brands/${id}`, method: 'DELETE' })
+  updateBrand: (id, payload) => ajaxRequest({ endpoint: `/brands/${encodeURIComponent(id)}`, method: 'PUT', data: payload }),
+  toggleFeatured: (id, featured) => ajaxRequest({ endpoint: `/brands/${encodeURIComponent(id)}/featured`, method: 'PATCH', data: { featured } }),
+  deleteBrand: (id) => ajaxRequest({ endpoint: `/brands/${encodeURIComponent(id)}`, method: 'DELETE' })
 };
 ```
 
-### 3. Product & Reviews API (`src/js/api/productApi.js`):
+### 4. Product Catalog & Reviews API (`src/js/api/productApi.js`):
 ```javascript
-import { apiRequest } from './apiClient.js';
+import { ajaxRequest } from './apiClient.js';
 
 export const ProductApi = {
-    getAll: (params = '') => apiRequest(`/products${params}`),
-    getById: (id) => apiRequest(`/products/${id}`),
-    getBySku: (sku) => apiRequest(`/products/sku/${sku}`),
-    create: (productData) => apiRequest('/products', { method: 'POST', body: JSON.stringify(productData) }),
-    update: (id, productData) => apiRequest(`/products/${id}`, { method: 'PUT', body: JSON.stringify(productData) }),
-    delete: (id) => apiRequest(`/products/${id}`, { method: 'DELETE' }),
+  getAll: (params = {}) => ajaxRequest({ endpoint: '/products', method: 'GET', data: params }),
+  getById: (id) => ajaxRequest({ endpoint: `/products/${encodeURIComponent(id)}`, method: 'GET' }),
+  getBySku: (sku) => ajaxRequest({ endpoint: `/products/sku/${encodeURIComponent(sku)}`, method: 'GET' }),
+  create: (payload) => ajaxRequest({ endpoint: '/products', method: 'POST', data: payload }),
+  update: (id, payload) => ajaxRequest({ endpoint: `/products/${encodeURIComponent(id)}`, method: 'PUT', data: payload }),
+  delete: (id) => ajaxRequest({ endpoint: `/products/${encodeURIComponent(id)}`, method: 'DELETE' }),
 
-    // Reviews & Ratings
-    getReviews: (productId, page = 0, size = 10) => apiRequest(`/products/${productId}/reviews?page=${page}&size=${size}`),
-    submitReview: (productId, reviewData) => apiRequest(`/products/${productId}/reviews`, { method: 'POST', body: JSON.stringify(reviewData) }),
-    deleteReview: (reviewId) => apiRequest(`/reviews/${reviewId}`, { method: 'DELETE' })
+  // Ratings & Customer Reviews
+  getReviews: (productId, page = 0, size = 10) => ajaxRequest({ endpoint: `/products/${productId}/reviews?page=${page}&size=${size}`, method: 'GET' }),
+  submitReview: (productId, reviewData) => ajaxRequest({ endpoint: `/products/${productId}/reviews`, method: 'POST', data: reviewData }),
+  deleteReview: (reviewId) => ajaxRequest({ endpoint: `/reviews/${encodeURIComponent(reviewId)}`, method: 'DELETE' })
 };
 ```
 
-### 4. Promotions & Deals API (`src/js/api/promotionsApi.js`):
+### 5. Promotions & Deals API (`src/js/api/promotionsApi.js`):
 ```javascript
-import { apiRequest } from './apiClient.js';
+import { ajaxRequest } from './apiClient.js';
 
 export const PromotionsApi = {
-    // Deal Bundles
-    getBundles: (activeOnly = false) => apiRequest(`/promotions/bundles${activeOnly ? '?activeOnly=true' : ''}`),
-    getBundleById: (id) => apiRequest(`/promotions/bundles/${id}`),
-    createBundle: (bundleData) => apiRequest('/promotions/bundles', { method: 'POST', body: JSON.stringify(bundleData) }),
-    updateBundle: (id, bundleData) => apiRequest(`/promotions/bundles/${id}`, { method: 'PUT', body: JSON.stringify(bundleData) }),
-    deleteBundle: (id) => apiRequest(`/promotions/bundles/${id}`, { method: 'DELETE' }),
+  // Deal Bundles
+  getBundles: (activeOnly = false) => ajaxRequest({ endpoint: `/promotions/bundles${activeOnly ? '?activeOnly=true' : ''}`, method: 'GET' }),
+  getBundleById: (id) => ajaxRequest({ endpoint: `/promotions/bundles/${encodeURIComponent(id)}`, method: 'GET' }),
+  createBundle: (payload) => ajaxRequest({ endpoint: '/promotions/bundles', method: 'POST', data: payload }),
+  updateBundle: (id, payload) => ajaxRequest({ endpoint: `/promotions/bundles/${encodeURIComponent(id)}`, method: 'PUT', data: payload }),
+  deleteBundle: (id) => ajaxRequest({ endpoint: `/promotions/bundles/${encodeURIComponent(id)}`, method: 'DELETE' }),
 
-    // Hot Deals
-    getHotDeals: (activeOnly = false) => apiRequest(`/promotions/hot-deals${activeOnly ? '?activeOnly=true' : ''}`),
-    createHotDeal: (dealData) => apiRequest('/promotions/hot-deals', { method: 'POST', body: JSON.stringify(dealData) }),
-    updateHotDeal: (id, dealData) => apiRequest(`/promotions/hot-deals/${id}`, { method: 'PUT', body: JSON.stringify(dealData) }),
-    deleteHotDeal: (id) => apiRequest(`/promotions/hot-deals/${id}`, { method: 'DELETE' }),
+  // Hot Deals
+  getHotDeals: (activeOnly = false) => ajaxRequest({ endpoint: `/promotions/hot-deals${activeOnly ? '?activeOnly=true' : ''}`, method: 'GET' }),
+  createHotDeal: (payload) => ajaxRequest({ endpoint: '/promotions/hot-deals', method: 'POST', data: payload }),
+  updateHotDeal: (id, payload) => ajaxRequest({ endpoint: `/promotions/hot-deals/${encodeURIComponent(id)}`, method: 'PUT', data: payload }),
+  deleteHotDeal: (id) => ajaxRequest({ endpoint: `/promotions/hot-deals/${encodeURIComponent(id)}`, method: 'DELETE' }),
 
-    // Home Deal Hero Banner
-    getHomeBanner: () => apiRequest('/promotions/home-banner'),
-    updateHomeBanner: (bannerData) => apiRequest('/promotions/home-banner', { method: 'PUT', body: JSON.stringify(bannerData) })
+  // Weekend Tech Deal Home Banner
+  getHomeBanner: () => ajaxRequest({ endpoint: '/promotions/home-banner', method: 'GET' }),
+  updateHomeBanner: (payload) => ajaxRequest({ endpoint: '/promotions/home-banner', method: 'PUT', data: payload })
 };
 ```
 
-### 5. Inter-Branch Stock Transfers API (`src/js/api/transfersApi.js`):
+### 6. Inter-Branch Stock Transfers API (`src/js/api/transfersApi.js`):
 ```javascript
-import { apiRequest } from './apiClient.js';
+import { ajaxRequest } from './apiClient.js';
 
 export const TransfersApi = {
-    getAll: (params = '') => apiRequest(`/transfers${params}`),
-    create: (transferData) => apiRequest('/transfers', { method: 'POST', body: JSON.stringify(transferData) }),
-    updateStatus: (id, status) => apiRequest(`/transfers/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) }),
-    getMetrics: () => apiRequest('/transfers/metrics')
+  getAll: (params = {}) => ajaxRequest({ endpoint: '/transfers', method: 'GET', data: params }),
+  create: (payload) => ajaxRequest({ endpoint: '/transfers', method: 'POST', data: payload }),
+  updateStatus: (id, status) => ajaxRequest({ endpoint: `/transfers/${encodeURIComponent(id)}/status`, method: 'PATCH', data: { status } }),
+  getMetrics: () => ajaxRequest({ endpoint: '/transfers/metrics', method: 'GET' })
 };
 ```
 
-### 6. Taxonomy & Badges API (`src/js/api/taxonomyApi.js`):
+### 7. Storefront Taxonomy & Badges API (`src/js/api/taxonomyApi.js`):
 ```javascript
-import { apiRequest } from './apiClient.js';
+import { ajaxRequest } from './apiClient.js';
 
 export const CategoryApi = {
-    getAll: () => apiRequest('/categories'),
-    getBySlug: (slug) => apiRequest(`/categories/${slug}`),
-    create: (catData) => apiRequest('/categories', { method: 'POST', body: JSON.stringify(catData) }),
-    update: (id, catData) => apiRequest(`/categories/${id}`, { method: 'PUT', body: JSON.stringify(catData) }),
-    delete: (id) => apiRequest(`/categories/${id}`, { method: 'DELETE' })
+  getAll: () => ajaxRequest({ endpoint: '/categories', method: 'GET' }),
+  getBySlug: (slug) => ajaxRequest({ endpoint: `/categories/${encodeURIComponent(slug)}`, method: 'GET' }),
+  create: (payload) => ajaxRequest({ endpoint: '/categories', method: 'POST', data: payload }),
+  update: (id, payload) => ajaxRequest({ endpoint: `/categories/${encodeURIComponent(id)}`, method: 'PUT', data: payload }),
+  delete: (id) => ajaxRequest({ endpoint: `/categories/${encodeURIComponent(id)}`, method: 'DELETE' })
 };
 
 export const BadgeApi = {
-    getAll: () => apiRequest('/badges'),
-    create: (badgeData) => apiRequest('/badges', { method: 'POST', body: JSON.stringify(badgeData) }),
-    update: (id, badgeData) => apiRequest(`/badges/${id}`, { method: 'PUT', body: JSON.stringify(badgeData) }),
-    delete: (id) => apiRequest(`/badges/${id}`, { method: 'DELETE' }),
-    runAutoAssigner: () => apiRequest('/badges/auto-assign', { method: 'POST' })
+  getAll: () => ajaxRequest({ endpoint: '/badges', method: 'GET' }),
+  create: (payload) => ajaxRequest({ endpoint: '/badges', method: 'POST', data: payload }),
+  update: (id, payload) => ajaxRequest({ endpoint: `/badges/${encodeURIComponent(id)}`, method: 'PUT', data: payload }),
+  delete: (id) => ajaxRequest({ endpoint: `/badges/${encodeURIComponent(id)}`, method: 'DELETE' }),
+  runAutoAssigner: () => ajaxRequest({ endpoint: '/badges/auto-assign', method: 'POST' })
 };
 
 export const ProductBehaviorHistoryApi = {
-    getAll: (page = 0, size = 50, eventType = '') => apiRequest(`/product-behavior-history?page=${page}&size=${size}${eventType ? `&eventType=${eventType}` : ''}`),
-    getByProductId: (productId) => apiRequest(`/products/${productId}/behavior-history`),
-    recordEvent: (eventData) => apiRequest('/product-behavior-history', { method: 'POST', body: JSON.stringify(eventData) })
+  getAll: (page = 0, size = 50, eventType = '') => 
+    ajaxRequest({ endpoint: `/product-behavior-history?page=${page}&size=${size}${eventType ? `&eventType=${eventType}` : ''}`, method: 'GET' }),
+  getByProductId: (productId) => ajaxRequest({ endpoint: `/products/${encodeURIComponent(productId)}/behavior-history`, method: 'GET' }),
+  recordEvent: (payload) => ajaxRequest({ endpoint: '/product-behavior-history', method: 'POST', data: payload })
 };
 ```
 
-### 7. Orders & Inventory API (`src/js/api/orderApi.js`, `src/js/api/inventoryApi.js`):
+### 8. Orders & Inventory API (`src/js/api/orderApi.js`, `src/js/api/inventoryApi.js`):
 ```javascript
-import { apiRequest } from './apiClient.js';
+import { ajaxRequest } from './apiClient.js';
 
 export const OrderApi = {
-    getAll: (params = '') => apiRequest(`/orders${params}`),
-    getMyOrders: () => apiRequest('/orders/my-orders'),
-    getByCode: (orderCode) => apiRequest(`/orders/${orderCode}`),
-    placeOrder: (orderPayload) => apiRequest('/orders', { method: 'POST', body: JSON.stringify(orderPayload) }),
-    updateStatus: (id, status) => apiRequest(`/orders/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) })
+  getAll: (params = {}) => ajaxRequest({ endpoint: '/orders', method: 'GET', data: params }),
+  getMyOrders: () => ajaxRequest({ endpoint: '/orders/my-orders', method: 'GET' }),
+  getByCode: (orderCode) => ajaxRequest({ endpoint: `/orders/${encodeURIComponent(orderCode)}`, method: 'GET' }),
+  placeOrder: (payload) => ajaxRequest({ endpoint: '/orders', method: 'POST', data: payload }),
+  updateStatus: (id, status) => ajaxRequest({ endpoint: `/orders/${encodeURIComponent(id)}/status`, method: 'PATCH', data: { status } })
 };
 
 export const InventoryApi = {
-    getHealthReport: (branchId = '') => apiRequest(`/inventory/health-report${branchId ? `?branch=${branchId}` : ''}`),
-    updateSettings: (productId, settings) => apiRequest(`/inventory/${productId}/settings`, { method: 'PATCH', body: JSON.stringify(settings) }),
-    adjustStock: (productId, branchId, quantityDelta) => apiRequest(`/inventory/${productId}/adjust`, { method: 'POST', body: JSON.stringify({ branchId, quantityDelta }) })
+  getHealthReport: (branchId = '') => ajaxRequest({ endpoint: `/inventory/health-report${branchId ? `?branch=${encodeURIComponent(branchId)}` : ''}`, method: 'GET' }),
+  updateSettings: (productId, settings) => ajaxRequest({ endpoint: `/inventory/${encodeURIComponent(productId)}/settings`, method: 'PATCH', data: settings }),
+  adjustStock: (productId, branchId, quantityDelta) => ajaxRequest({ endpoint: `/inventory/${encodeURIComponent(productId)}/adjust`, method: 'POST', data: { branchId, quantityDelta } })
 };
 ```
 
-### 8. Chatbot AI Proxy API (`src/js/api/chatApi.js`):
+### 9. Chatbot AI Proxy API (`src/js/api/chatApi.js`):
 ```javascript
-import { apiRequest } from './apiClient.js';
+import { ajaxRequest } from './apiClient.js';
 
 export const ChatApi = {
-    sendMessage: (message, history = [], cart = []) => 
-        apiRequest('/chat/message', { 
-            method: 'POST', 
-            body: JSON.stringify({ message, history, cart }) 
-        })
+  sendMessage: (message, history = [], cart = []) => 
+    ajaxRequest({ 
+      endpoint: '/chat/message', 
+      method: 'POST', 
+      data: { message, history, cart } 
+    })
 };
 ```
 
-### 9. Corporate Profile & Legal Policies API (`src/js/api/policyApi.js`):
+### 10. Corporate Profile & Legal Policies API (`src/js/api/policyApi.js`):
 ```javascript
-import { apiRequest } from './apiClient.js';
+import { ajaxRequest } from './apiClient.js';
 
 export const PolicyApi = {
-    getBusinessProfile: () => apiRequest('/business-profile'),
-    updateBusinessProfile: (profileData) => apiRequest('/business-profile', { method: 'PUT', body: JSON.stringify(profileData) }),
-    getPolicies: () => apiRequest('/policies'),
-    getPolicyBySlug: (slug) => apiRequest(`/policies/${slug}`),
-    updatePolicy: (slug, policyData) => apiRequest(`/policies/${slug}`, { method: 'PUT', body: JSON.stringify(policyData) })
+  getBusinessProfile: () => ajaxRequest({ endpoint: '/business-profile', method: 'GET' }),
+  updateBusinessProfile: (payload) => ajaxRequest({ endpoint: '/business-profile', method: 'PUT', data: payload }),
+  getPolicies: () => ajaxRequest({ endpoint: '/policies', method: 'GET' }),
+  getPolicyBySlug: (slug) => ajaxRequest({ endpoint: `/policies/${encodeURIComponent(slug)}`, method: 'GET' }),
+  updatePolicy: (slug, payload) => ajaxRequest({ endpoint: `/policies/${encodeURIComponent(slug)}`, method: 'PUT', data: payload })
 };
 ```
 
@@ -1318,22 +1361,23 @@ export const PolicyApi = {
 ### Phase 1: Database Initialization
 - [ ] Install MySQL Server 8.0+ locally or spin up a cloud RDS instance.
 - [ ] Run the complete DDL script from [Section 4](#4-mysql-relational-database-schema-ddl).
-- [ ] Seed initial branches (`BR-COL`, `BR-GAL`, `BR-MAT`, `BR-KAN`), categories, default badges (`Hot Deal`, `Top Rated`, `New Arrival`, `Bestseller`), default deal bundles, and the default `ADMIN` user with BCrypt hashed password (`admin123`) from `src/data/`.
+- [ ] Seed initial branches (`BR-COL`, `BR-GAL`, `BR-MAT`, `BR-KAN`), categories, default badges (`Hot Deal`, `Top Rated`, `New Arrival`, `Bestseller`), default hardware partner brands, default deal bundles, and the default `SUPERADMIN` (`superadmin`) and `ADMIN` (`admin`) users with BCrypt hashed passwords from `src/data/`.
 
 ### Phase 2: Spring Boot API Implementation
-- [ ] Initialize Spring Boot 3.x project with Maven / Gradle.
+- [ ] Initialize Spring Boot 3.3+ project with Maven / Gradle.
 - [ ] Configure `application.yml` with MySQL datasource and JWT secret keys.
 - [ ] Implement JPA Entities, Repositories, Services, and REST Controllers.
-- [ ] Implement `JwtAuthenticationFilter` and configure CORS headers for frontend origins.
+- [ ] Implement `JwtAuthenticationFilter` and configure CORS headers for frontend origins (`http://localhost:5500`, `http://127.0.0.1:5500`).
 - [ ] Implement `@Transactional` `OrderService.createOrder(...)` with atomic branch stock decrement.
 - [ ] Implement `PromotionService` to handle dynamic deal bundle bottleneck evaluation across multi-branch inventory.
 - [ ] Implement `TransferService` with `@Transactional` stock movement across branches.
 - [ ] Implement `BadgeRuleEngineService` evaluating auto-assignment rules against live database statistics.
 
 ### Phase 3: Frontend API Client Layer Integration
-- [ ] Create all API client modules in `src/js/api/`.
+- [ ] Create all API client modules in `src/js/api/` using `ajaxRequest` from `apiClient.js`.
 - [ ] Update `src/js/controller/login_controller.js` to store and attach JWT token upon login.
 - [ ] Update `src/js/models/data.js` and `src/js/controller/shop_controller.js` to fetch products asynchronously from `ProductApi.getAll()`.
+- [ ] Update `src/js/controller/brand_management_controller.js` to use `BrandsApi`.
 - [ ] Update `src/js/controller/promotion_management_controller.js` and `hot_deal_controller.js` to use `PromotionsApi`.
 - [ ] Update `src/js/controller/transfer_management_controller.js` to use `TransfersApi`.
 - [ ] Update `src/js/controller/taxonomy_controller.js` to use `CategoryApi` and `BadgeApi`.
@@ -1344,13 +1388,14 @@ export const PolicyApi = {
 ### Phase 4: Validation & Cutover Testing
 - [ ] Test customer registration, login, and token refresh workflows.
 - [ ] Test product creation, editing (with 5-image gallery), and stock matrix adjustments across branches.
+- [ ] Test hardware partner brands management, logo presets, and homepage featured showcase toggles.
 - [ ] Test deal bundle composite inventory bottlenecks and live MSRP savings calculations.
 - [ ] Test inter-branch stock transfers and verify atomic source decrement & destination increment.
 - [ ] Test order checkout with multi-item stock deduction and out-of-stock validation.
 - [ ] Verify review submission recalculates product ratings and triggers badge reach rules in audit log.
 - [ ] Verify system default badges (`Hot Deal`, `Top Rated`, `New Arrival`, `Bestseller`) are protected from accidental deletion.
-- [ ] Verify role-based access control (`ADMIN` vs `STAFF` vs `CUSTOMER`) across all restricted endpoints.
+- [ ] Verify role-based access control (`SUPERADMIN` vs `ADMIN` vs `STAFF` vs `CUSTOMER`) across all restricted endpoints.
 
 ---
-*Specification Master Version: 2.1 (Full Architecture & Module Alignment Audit)*  
+*Specification Master Version: 3.5 (Full Architecture & Module Alignment Audit)*  
 *Target: ETech Computers Online Store — Coursework ITS 1114 (Advanced Application Development)*

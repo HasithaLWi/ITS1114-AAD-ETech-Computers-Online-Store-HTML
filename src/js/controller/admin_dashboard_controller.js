@@ -37,6 +37,7 @@ import {
   handleCancelTransfer 
 } from './transfer_management_controller.js';
 import { renderBrandsTab } from './brand_management_controller.js';
+import { renderTrashBinTab, getTrashTotalCount } from './trash_bin_controller.js';
 
 let activeTab = 'overview';
 let activeUser = null;
@@ -66,6 +67,7 @@ export function initAdminDashboard() {
   updateUserInfoHeader();
   setupRoleBasedNavigation();
   setupSidebarEventListeners();
+  updateTrashSidebarBadge();
   switchAdminTab(activeTab);
 }
 
@@ -158,6 +160,8 @@ function updateUserInfoHeader() {
  */
 function setupRoleBasedNavigation() {
   const isSuperOrAdmin = activeUser && activeUser.isAdmin();
+  const isSuperAdmin = activeUser && activeUser.isSuperAdmin();
+
   const adminOnlyNavItems = document.querySelectorAll('.admin-only-nav');
   adminOnlyNavItems.forEach(item => {
     if (!isSuperOrAdmin) {
@@ -166,6 +170,30 @@ function setupRoleBasedNavigation() {
       item.classList.remove('hidden');
     }
   });
+
+  const superAdminOnlyNavItems = document.querySelectorAll('.superadmin-only-nav');
+  superAdminOnlyNavItems.forEach(item => {
+    if (!isSuperAdmin) {
+      item.classList.add('hidden');
+    } else {
+      item.classList.remove('hidden');
+    }
+  });
+}
+
+/**
+ * Update Sidebar Trash Bin counter badge
+ */
+export function updateTrashSidebarBadge() {
+  const badge = document.getElementById('admin-trash-badge');
+  if (!badge) return;
+  const count = getTrashTotalCount();
+  badge.textContent = count;
+  if (count > 0) {
+    badge.className = 'hidden lg:inline-flex px-1.5 py-0.5 rounded-full text-[9px] font-mono font-extrabold bg-rose-100 text-rose-700 border border-rose-200 shadow-2xs animate-pulse';
+  } else {
+    badge.className = 'hidden lg:inline-flex px-1.5 py-0.5 rounded-full text-[9px] font-mono font-extrabold bg-[#f1f5f9] text-[#64748b] border border-[#e2e8f0] shadow-2xs';
+  }
 }
 
 /**
@@ -173,8 +201,13 @@ function setupRoleBasedNavigation() {
  */
 export function switchAdminTab(tabName, param = null) {
   const isSuperOrAdmin = activeUser && activeUser.isAdmin();
+  const isSuperAdmin = activeUser && activeUser.isSuperAdmin();
 
   if (!isSuperOrAdmin && ['branches', 'users', 'analytics', 'policies'].includes(tabName)) {
+    tabName = 'overview';
+  }
+
+  if (tabName === 'trash' && !isSuperAdmin) {
     tabName = 'overview';
   }
 
@@ -185,10 +218,15 @@ export function switchAdminTab(tabName, param = null) {
   navBtns.forEach(btn => {
     const target = btn.getAttribute('data-tab');
     if (target === tabName) {
-      btn.classList.add('bg-blue-600', 'text-white', 'shadow-sm', 'font-bold');
-      btn.classList.remove('text-[#475569]', 'hover:text-[#0f172a]', 'hover:bg-[#f1f5f9]', 'font-medium');
+      if (tabName === 'trash') {
+        btn.classList.add('bg-rose-600', 'text-white', 'shadow-sm', 'font-bold');
+        btn.classList.remove('text-[#475569]', 'hover:text-[#0f172a]', 'hover:bg-[#f1f5f9]', 'font-medium');
+      } else {
+        btn.classList.add('bg-blue-600', 'text-white', 'shadow-sm', 'font-bold');
+        btn.classList.remove('text-[#475569]', 'hover:text-[#0f172a]', 'hover:bg-[#f1f5f9]', 'font-medium');
+      }
     } else {
-      btn.classList.remove('bg-blue-600', 'text-white', 'shadow-sm', 'font-bold');
+      btn.classList.remove('bg-blue-600', 'bg-rose-600', 'text-white', 'shadow-sm', 'font-bold');
       btn.classList.add('text-[#475569]', 'hover:text-[#0f172a]', 'hover:bg-[#f1f5f9]', 'font-medium');
     }
   });
@@ -213,6 +251,9 @@ export function switchAdminTab(tabName, param = null) {
   else if (tabName === 'users' && isSuperOrAdmin) renderUsersTab();
   else if (tabName === 'analytics' && isSuperOrAdmin) renderAnalyticsTab();
   else if (tabName === 'policies' && isSuperOrAdmin) renderPoliciesTab();
+  else if (tabName === 'trash' && isSuperAdmin) renderTrashBinTab();
+
+  updateTrashSidebarBadge();
 }
 
 /**
@@ -1731,5 +1772,19 @@ export function filterProductsTable() {
     } else {
       row.style.display = 'none';
     }
+  });
+}
+
+if (typeof window !== 'undefined') {
+  Object.assign(window, {
+    initAdminDashboard,
+    switchAdminTab,
+    openAdminSidebar,
+    closeAdminSidebar,
+    toggleAdminSidebar,
+    closeAdminModal,
+    handleAdminLogout,
+    filterProductsTable,
+    updateTrashSidebarBadge
   });
 }

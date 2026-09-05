@@ -133,6 +133,18 @@ export function renderAdminPage(queryPart) {
               <span class="sidebar-text-label hidden lg:inline whitespace-nowrap">Hardware Brands</span>
               <div class="sidebar-tooltip">Hardware Brands</div>
             </button>
+
+            <button data-tab="trash" onclick="switchAdminTab('trash')" title="Trash Bin & Data Recovery Vault"
+              class="superadmin-only-nav sidebar-nav-btn w-full flex items-center justify-between px-2 lg:px-3.5 py-2.5 rounded-lg font-medium text-xs text-[#475569] hover:text-rose-700 hover:bg-rose-50 transition-all relative group">
+              <div class="flex items-center space-x-0 lg:space-x-3">
+                <svg class="w-5 h-5 flex-shrink-0 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                <span class="sidebar-text-label hidden lg:inline whitespace-nowrap font-bold text-rose-700">Trash Bin</span>
+              </div>
+              <span id="admin-trash-badge" class="hidden lg:inline-flex px-1.5 py-0.5 rounded-full text-[9px] font-mono font-extrabold bg-rose-100 text-rose-700 border border-rose-200 shadow-2xs">0</span>
+              <div class="sidebar-tooltip">Trash Bin & Data Recovery</div>
+            </button>
             <button data-tab="branches" onclick="switchAdminTab('branches')" title="Store Branches"
               class="admin-only-nav sidebar-nav-btn w-full flex items-center justify-center lg:justify-start space-x-0 lg:space-x-3 px-2 lg:px-3.5 py-2.5 rounded-lg font-medium text-xs text-[#475569] hover:text-[#0f172a] hover:bg-[#f1f5f9] transition-all relative group">
               <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -323,6 +335,7 @@ export function renderAdminPage(queryPart) {
                       <th class="py-3 px-3.5">Price</th>
                       <th class="py-3 px-3.5">Branch Stock Breakdown</th>
                       <th class="py-3 px-3.5">Total Stock</th>
+                      <th class="py-3 px-3.5">Status</th>
                       <th class="py-3 px-3.5 text-right">Actions</th>
                     </tr>
                   </thead>
@@ -517,7 +530,7 @@ export function renderAdminPage(queryPart) {
                             class="w-full px-3.5 py-2.5 rounded-md bg-[#f8fafc] border border-[#e2e8f0] text-[#0f172a] focus:border-blue-600 text-sm font-medium">
                         </div>
 
-                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
                           <div>
                             <label class="block text-[#475569] font-bold mb-1">Category *</label>
                             <select id="form-p-category" required onchange="updateLivePreview()"
@@ -547,6 +560,15 @@ export function renderAdminPage(queryPart) {
                               <option value="Top Rated">Top Rated</option>
                               <option value="Popular">Popular</option>
                               <option value="">None</option>
+                            </select>
+                          </div>
+
+                          <div>
+                            <label class="block text-[#475569] font-bold mb-1">Status *</label>
+                            <select id="form-p-status" onchange="updateLivePreview()"
+                              class="w-full px-3.5 py-2 rounded-md bg-[#f8fafc] border border-[#e2e8f0] text-[#0f172a] focus:border-blue-600 text-xs font-bold">
+                              <option value="ACTIVE">ACTIVE (Catalog)</option>
+                              <option value="INACTIVE">INACTIVE (Hidden)</option>
                             </select>
                           </div>
                         </div>
@@ -738,6 +760,10 @@ export function renderAdminPage(queryPart) {
 
           <!-- Tab Panel: Brand Editor View (Dedicated Full Page Workspace - No Overlay) -->
           <div id="tab-panel-brand-form" class="dashboard-tab-panel hidden">
+          </div>
+
+          <!-- Tab Panel: SuperAdmin Trash Bin & Data Recovery Vault -->
+          <div id="tab-panel-trash" class="dashboard-tab-panel hidden">
           </div>
 
         </main>
