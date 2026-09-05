@@ -38,6 +38,7 @@ import {
 } from './transfer_management_controller.js';
 import { renderBrandsTab } from './brand_management_controller.js';
 import { renderTrashBinTab, getTrashTotalCount } from './trash_bin_controller.js';
+import { renderNewsletterTab } from './newsletter_management_controller.js';
 
 let activeTab = 'overview';
 let activeUser = null;
@@ -247,6 +248,7 @@ export function switchAdminTab(tabName, param = null) {
   else if (tabName === 'transfers') renderTransfersTab();
   else if (tabName === 'taxonomy') renderTaxonomyTab();
   else if (tabName === 'brands') renderBrandsTab();
+  else if (tabName === 'newsletter') renderNewsletterTab();
   else if (tabName === 'branches' && isSuperOrAdmin) renderBranchesTab();
   else if (tabName === 'users' && isSuperOrAdmin) renderUsersTab();
   else if (tabName === 'analytics' && isSuperOrAdmin) renderAnalyticsTab();
@@ -1644,51 +1646,6 @@ export function filterStaffAlerts(category) {
       card.style.display = 'none';
     }
   });
-}
-
-/**
- * Quick Notifications Modal Handler
- */
-export function handleNotificationClick() {
-  const modal = document.getElementById('admin-modal-container');
-  if (!modal) return;
-
-  modal.innerHTML = `
-    <div class="fixed inset-0 bg-[#0f172a]/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-      <div class="bg-white rounded-2xl border border-[#e2e8f0] shadow-2xl max-w-md w-full p-6 space-y-4 animate-in fade-in zoom-in-95 duration-200">
-        <div class="flex items-center justify-between pb-3 border-b border-[#f1f5f9]">
-          <div class="flex items-center space-x-2">
-            <span class="p-2 rounded-lg bg-blue-50 text-blue-600 font-bold text-sm">🔔</span>
-            <h3 class="text-base font-extrabold text-[#0f172a]">Operational Notifications</h3>
-          </div>
-          <button onclick="closeAdminModal()" class="p-1 rounded-lg text-[#64748b] hover:text-[#0f172a] hover:bg-[#f1f5f9]">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-          </button>
-        </div>
-
-        <div class="space-y-2.5 max-h-80 overflow-y-auto pr-1 text-xs">
-          <div class="p-3 bg-rose-50 border border-rose-200 rounded-lg">
-            <span class="font-bold text-rose-800 block">🔴 Critical Stock Attention</span>
-            <span class="text-[#64748b] text-[11px]">Regional warehouse low stock items detected.</span>
-          </div>
-          <div class="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-            <span class="font-bold text-blue-800 block">🔵 Inter-Branch Transfer Pending</span>
-            <span class="text-[#64748b] text-[11px]">Transfer queue has shipments awaiting dispatch/confirmation.</span>
-          </div>
-          <div class="p-3 bg-amber-50 border border-amber-200 rounded-lg">
-            <span class="font-bold text-amber-800 block">🟠 New Customer Orders</span>
-            <span class="text-[#64748b] text-[11px]">Orders waiting for warehouse packaging and dispatch.</span>
-          </div>
-        </div>
-
-        <div class="pt-3 border-t border-[#f1f5f9] flex justify-end">
-          <button onclick="closeAdminModal()" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-lg shadow-xs">
-            Dismiss All
-          </button>
-        </div>
-      </div>
-    </div>
-  `;
 }
 
 /**

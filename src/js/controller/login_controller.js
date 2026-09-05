@@ -34,6 +34,9 @@ export async function loginUser(usernameOrEmail, password) {
       (u.email && u.email.toLowerCase() === cleanIdentifier)
     );
     if (matched) {
+      if (matched.status === 'INACTIVE') {
+        return { success: false, message: 'Account Suspended: This user account is marked as INACTIVE. Please contact store administration.' };
+      }
       setToken('mock_jwt_session_' + matched.username);
       const userInstance = setCurrentUser(new User(matched));
       return { success: true, message: 'Logged in successfully!', user: userInstance };

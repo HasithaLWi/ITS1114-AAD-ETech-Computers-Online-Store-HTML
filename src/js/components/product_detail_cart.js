@@ -2,6 +2,7 @@ import { getProductById, getStoredProducts, products } from '../models/data.js';
 import { getCurrentUser } from '../controller/login_controller.js';
 import { getUserReviewForProduct, getProductReviews } from '../models/rating_data.js';
 import { getBrands } from '../models/brand_data.js';
+import { isInWishlist } from '../controller/wishlist_controller.js';
 
 export default function renderProductDetails(productId) {
     const container = document.getElementById('product-details-container');
@@ -319,15 +320,26 @@ export default function renderProductDetails(productId) {
                 </div>
               </div>
 
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <button onclick="handleAddToCartFromDetails(${product.id})" class="w-full py-3 px-5 bg-[#f8fafc] hover:bg-[#f1f5f9] text-[#0f172a] rounded-md font-bold text-xs shadow-sm border border-[#e2e8f0] transition-all flex items-center justify-center space-x-2">
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <button onclick="handleAddToCartFromDetails(${product.id})" class="w-full py-3 px-4 bg-[#f8fafc] hover:bg-[#f1f5f9] text-[#0f172a] rounded-md font-bold text-xs shadow-sm border border-[#e2e8f0] transition-all flex items-center justify-center space-x-2">
                   <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                  <span>Add to Shopping Cart</span>
+                  <span>Add to Cart</span>
                 </button>
 
-                <button onclick="handleBuyNowFromDetails(${product.id})" class="w-full py-3 px-5 bg-blue-600 hover:bg-blue-500 text-white rounded-md font-bold text-xs shadow-md transition-all flex items-center justify-center space-x-2">
+                <button onclick="handleBuyNowFromDetails(${product.id})" class="w-full py-3 px-4 bg-blue-600 hover:bg-blue-500 text-white rounded-md font-bold text-xs shadow-md transition-all flex items-center justify-center space-x-2">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-                  <span>Buy Now (Express Checkout)</span>
+                  <span>Buy Now</span>
+                </button>
+
+                <button 
+                  data-wishlist-btn="${product.id}"
+                  onclick="toggleWishlist(${product.id}, this)" 
+                  class="w-full py-3 px-4 ${isInWishlist(product.id) ? 'bg-rose-50 border-rose-200 text-rose-700' : 'bg-white hover:bg-rose-50 hover:border-rose-200 hover:text-rose-700 text-[#475569]'} rounded-md font-bold text-xs shadow-sm border border-[#e2e8f0] transition-all flex items-center justify-center space-x-2 cursor-pointer"
+                  title="Add to Wishlist">
+                  <svg class="w-4 h-4 ${isInWishlist(product.id) ? 'text-rose-600 fill-rose-600' : 'text-[#64748b]'}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                  </svg>
+                  <span class="wishlist-btn-text">${isInWishlist(product.id) ? 'Saved in Wishlist' : 'Add to Wishlist'}</span>
                 </button>
               </div>
             </div>

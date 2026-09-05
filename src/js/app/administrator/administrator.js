@@ -134,6 +134,16 @@ export function renderAdminPage(queryPart) {
               <div class="sidebar-tooltip">Hardware Brands</div>
             </button>
 
+            <button data-tab="newsletter" onclick="switchAdminTab('newsletter')" title="Newsletter & Email Marketing"
+              class="sidebar-nav-btn w-full flex items-center justify-center lg:justify-start space-x-0 lg:space-x-3 px-2 lg:px-3.5 py-2.5 rounded-lg font-medium text-xs text-[#475569] hover:text-[#0f172a] hover:bg-[#f1f5f9] transition-all relative group">
+              <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+              <span class="sidebar-text-label hidden lg:inline whitespace-nowrap">Newsletter & Email</span>
+              <div class="sidebar-tooltip">Newsletter & Email Marketing</div>
+            </button>
+
             <button data-tab="trash" onclick="switchAdminTab('trash')" title="Trash Bin & Data Recovery Vault"
               class="superadmin-only-nav sidebar-nav-btn w-full flex items-center justify-between px-2 lg:px-3.5 py-2.5 rounded-lg font-medium text-xs text-[#475569] hover:text-rose-700 hover:bg-rose-50 transition-all relative group">
               <div class="flex items-center space-x-0 lg:space-x-3">
@@ -242,7 +252,7 @@ export function renderAdminPage(queryPart) {
             </div>
           </div>
 
-          <!-- Right Header Tools: Status, Notifications, Profile -->
+          <!-- Right Header Tools: Status, Profile -->
           <div class="flex items-center space-x-3 sm:space-x-4">
             <!-- System Status Pill -->
             <div class="hidden sm:flex items-center space-x-2 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 shadow-2xs">
@@ -252,16 +262,6 @@ export function renderAdminPage(queryPart) {
                 <span class="text-emerald-700 font-extrabold font-mono tracking-wider">ONLINE</span>
               </div>
             </div>
-
-            <!-- Notification Bell -->
-            <button id="admin-notification-bell" onclick="handleNotificationClick()" title="Notifications"
-              class="relative p-2 rounded-lg text-[#475569] hover:text-[#0f172a] bg-[#f8fafc] hover:bg-[#f1f5f9] border border-[#e2e8f0] transition-all focus:outline-none">
-              <svg class="w-4 h-4 sm:w-5 sm:h-5 text-[#475569]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-              </svg>
-              <span id="admin-notification-badge" class="absolute -top-1 -right-1 w-4 h-4 bg-rose-500 text-white text-[9px] font-extrabold rounded-full flex items-center justify-center shadow-xs">8</span>
-            </button>
 
             <!-- Active Worker Profile Badge -->
             <div class="flex items-center space-x-2.5">
@@ -764,6 +764,10 @@ export function renderAdminPage(queryPart) {
 
           <!-- Tab Panel: SuperAdmin Trash Bin & Data Recovery Vault -->
           <div id="tab-panel-trash" class="dashboard-tab-panel hidden">
+          </div>
+
+          <!-- Tab Panel: Newsletter & Email Marketing Management -->
+          <div id="tab-panel-newsletter" class="dashboard-tab-panel hidden">
           </div>
 
         </main>

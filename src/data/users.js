@@ -9,6 +9,7 @@ export const DEFAULT_USERS = [
     name: 'System Owner & Super Admin',
     email: 'superadmin@etech.com',
     role: 'SUPERADMIN',
+    status: 'ACTIVE',
     assignedBranch: null,
     createdAt: 'Jan 01, 2026'
   },
@@ -18,6 +19,7 @@ export const DEFAULT_USERS = [
     name: 'Global Store Administrator',
     email: 'admin@etech.com',
     role: 'ADMIN',
+    status: 'ACTIVE',
     assignedBranch: null,
     createdAt: 'Jan 15, 2026'
   },
@@ -27,6 +29,7 @@ export const DEFAULT_USERS = [
     name: 'Galle Branch Administrator',
     email: 'admin.galle@etech.com',
     role: 'ADMIN',
+    status: 'ACTIVE',
     assignedBranch: 'BR-GAL',
     createdAt: 'Jan 20, 2026'
   },
@@ -36,6 +39,7 @@ export const DEFAULT_USERS = [
     name: 'Colombo Hub Staff',
     email: 'staff.colombo@etech.com',
     role: 'STAFF',
+    status: 'ACTIVE',
     assignedBranch: 'BR-COL',
     createdAt: 'Feb 01, 2026'
   },
@@ -45,6 +49,7 @@ export const DEFAULT_USERS = [
     name: 'Galle Hub Staff',
     email: 'staff.galle@etech.com',
     role: 'STAFF',
+    status: 'ACTIVE',
     assignedBranch: 'BR-GAL',
     createdAt: 'Feb 05, 2026'
   },
@@ -54,6 +59,7 @@ export const DEFAULT_USERS = [
     name: 'Matara Hub Staff',
     email: 'staff.matara@etech.com',
     role: 'STAFF',
+    status: 'ACTIVE',
     assignedBranch: 'BR-MAT',
     createdAt: 'Feb 10, 2026'
   },
@@ -63,6 +69,7 @@ export const DEFAULT_USERS = [
     name: 'Kasun Perera',
     email: 'kasun.p@gmail.com',
     role: 'CUSTOMER',
+    status: 'ACTIVE',
     assignedBranch: null,
     createdAt: 'Mar 10, 2026'
   }

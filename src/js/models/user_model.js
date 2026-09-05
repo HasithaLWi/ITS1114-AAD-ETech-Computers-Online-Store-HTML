@@ -12,6 +12,11 @@ export const USER_ROLE = {
     SUPERADMIN: 'SUPERADMIN'
 };
 
+export const USER_STATUS = {
+    ACTIVE: 'ACTIVE',
+    INACTIVE: 'INACTIVE'
+};
+
 /**
  * User Entity Model Class (Industry Standard ES6 Class)
  */
@@ -22,6 +27,7 @@ export class User {
     email;
     password;
     role;
+    status;
     assignedBranch;
     createdAt;
 
@@ -32,6 +38,7 @@ export class User {
         this.email = data.email ?? '';
         this.password = data.password ?? null;
         this.role = (data.role ?? DEFAULT_ROLE).toUpperCase();
+        this.status = (data.status ?? data.userStatus ?? USER_STATUS.ACTIVE).toUpperCase();
         this.assignedBranch = data.assignedBranch ?? null;
         this.createdAt = data.createdAt ?? new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
     }
@@ -182,3 +189,30 @@ export function getRoleBadge(role) {
             return `<span class="px-2 py-0.5 rounded text-[9px] font-mono font-medium uppercase bg-[#f8fafc] text-[#475569] border border-[#e2e8f0]">${rawRole}</span>`;
     }
 }
+
+/**
+ * Generate <option> HTML tags for user status
+ * @param {string} [selectedStatus='ACTIVE']
+ * @returns {string}
+ */
+export function buildStatusOptionsHtml(selectedStatus = 'ACTIVE') {
+    const active = String(selectedStatus || 'ACTIVE').toUpperCase();
+    return `
+        <option value="ACTIVE" ${active === 'ACTIVE' ? 'selected' : ''}>ACTIVE</option>
+        <option value="INACTIVE" ${active === 'INACTIVE' ? 'selected' : ''}>INACTIVE</option>
+    `;
+}
+
+/**
+ * Status badge formatter
+ * @param {string} status
+ * @returns {string} HTML markup for status badge
+ */
+export function getStatusBadge(status) {
+    const rawStatus = (status || 'ACTIVE').toUpperCase();
+    if (rawStatus === 'ACTIVE') {
+        return `<span class="px-2 py-0.5 rounded text-[9px] font-mono font-bold uppercase bg-emerald-50 text-emerald-700 border border-emerald-200">ACTIVE</span>`;
+    }
+    return `<span class="px-2 py-0.5 rounded text-[9px] font-mono font-bold uppercase bg-rose-50 text-rose-700 border border-rose-200">INACTIVE</span>`;
+}
+

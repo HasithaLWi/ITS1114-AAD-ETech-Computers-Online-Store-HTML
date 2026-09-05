@@ -163,6 +163,27 @@ export const UserApi = {
   },
 
   /**
+   * Update a user's status (ACTIVE / INACTIVE)
+   * PATCH /api/v1/users/{id}/status (with fallback to PUT /api/v1/users/{id})
+   */
+  async updateUserStatus(id, status) {
+    console.log('[UserAPI] UserApi.updateUserStatus() -> ID:', id, { status });
+    try {
+      return await ajaxRequest({
+        endpoint: `/users/${encodeURIComponent(id)}/status`,
+        method: 'PATCH',
+        data: { status }
+      });
+    } catch (e) {
+      return await ajaxRequest({
+        endpoint: `/users/${encodeURIComponent(id)}`,
+        method: 'PUT',
+        data: { status }
+      });
+    }
+  },
+
+  /**
    * Delete user account from system
    * DELETE /api/v1/users/{id}
    */

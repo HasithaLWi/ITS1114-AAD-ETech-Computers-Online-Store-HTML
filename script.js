@@ -15,7 +15,7 @@ import {
 } from './src/js/models/policy-data.js';
 import { ET_CONFIG } from './src/js/models/et-training.js';
 import { 
-    User, CURRENT_USER_STORAGE_KEY, DEFAULT_ROLE, USER_ROLE, getRoleBadge, buildRoleOptionsHtml
+    User, CURRENT_USER_STORAGE_KEY, DEFAULT_ROLE, USER_ROLE, USER_STATUS, getRoleBadge, getStatusBadge, buildRoleOptionsHtml, buildStatusOptionsHtml
 } from './src/js/models/user_model.js';
 import { AuthApi, UserApi } from './src/js/api/userApi.js';
 import {
@@ -58,6 +58,13 @@ import {
     handleLogout, updateHeaderAuthUI, renderHomeNewArrivalsGrid, renderHomeBrandsShowcase, scrollHomeBrands,
     toggleMobileMenu, openMobileMenu, closeMobileMenu, handleMobileSearchSubmit, handleHeaderSearchSubmit
 } from './src/js/app/app.js';
+import {
+    getWishlist, saveWishlist, isInWishlist, getWishlistCount,
+    updateWishlistBadge, toggleWishlist, removeFromWishlist, clearWishlist,
+    moveWishlistToCart, moveAllWishlistToCart, handleWishlistSearch,
+    handleWishlistCategoryFilter, handleWishlistStockFilter, handleWishlistSort,
+    initWishlistLogic, renderWishlistPage
+} from './src/js/controller/wishlist_controller.js';
 import { renderLoginPage, initLoginPage } from './src/js/app/login/login.js';
 import { renderAdminPage, initAdminPage } from './src/js/app/administrator/administrator.js';
 import { renderAboutPage } from './src/js/app/about/about.js';
@@ -78,13 +85,36 @@ import {
     removeClauseSection, confirmResetPolicies
 } from './src/js/controller/policy_management_controller.js';
 
+// Newsletter & Email Marketing Imports
+import { NewsletterApi } from './src/js/api/newsletterApi.js';
+import {
+    Subscriber, NEWSLETTER_STATUS, NEWSLETTER_SOURCE,
+    getNewsletterSubscribers, saveNewsletterSubscribers,
+    getNewsletterCampaigns, saveNewsletterCampaigns,
+    getNewsletterAnalytics, isValidEmail
+} from './src/js/models/newsletter_model.js';
+import {
+    renderNewsletterTab, setNewsletterSubTab,
+    handleNewsletterSearch, handleNewsletterStatusFilter,
+    handleNewsletterSourceFilter, handleNewsletterSort,
+    changeNewsletterPage, toggleSelectSubscriber,
+    toggleSelectAllSubscribers, clearSelectedSubscribers,
+    bulkUnsubscribeSelected, bulkResubscribeSelected,
+    bulkDeleteSelected, toggleSubscriberStatus,
+    deleteSubscriber, sendQuickTestEmail,
+    exportSubscribersCsv, openAddSubscriberModal,
+    saveNewSubscriberManual, openCampaignModal,
+    applyCampaignTemplate, handleSendCampaignSubmit,
+    closeNewsletterModal, handleStorefrontNewsletterSubmit
+} from './src/js/controller/newsletter_management_controller.js';
+
 // Admin Dashboard Shell Imports
 import {
     initAdminDashboard, switchAdminTab, closeAdminModal,
     handleAdminLogout, filterProductsTable, toggleAdminSidebar,
     openAdminSidebar, closeAdminSidebar, setSalesChartRange,
     initSalesOrdersChart, filterStaffAlerts,
-    handleNotificationClick, renderOverviewTab
+    renderOverviewTab
 } from './src/js/controller/admin_dashboard_controller.js';
 
 // Product Management Controller Imports
@@ -115,7 +145,7 @@ import {
 
 // User Management Controller Imports
 import {
-    renderUsersTab, changeUserRole, confirmDeleteUser,
+    renderUsersTab, changeUserRole, changeUserStatus, confirmDeleteUser,
     openUserModal, handleSaveUserSubmit, handleUserModalRoleChange
 } from './src/js/controller/user_management_controller.js';
 
@@ -227,7 +257,7 @@ Object.assign(window, {
     ET_CONFIG,
 
     // User Model & Data Layer
-    User, CURRENT_USER_STORAGE_KEY, DEFAULT_ROLE, USER_ROLE, getRoleBadge, buildRoleOptionsHtml,
+    User, CURRENT_USER_STORAGE_KEY, DEFAULT_ROLE, USER_ROLE, USER_STATUS, getRoleBadge, getStatusBadge, buildRoleOptionsHtml, buildStatusOptionsHtml,
 
     // Authentication & User Profile Management
     AuthApi, UserApi, getToken, setToken, removeToken,
@@ -273,12 +303,19 @@ Object.assign(window, {
     renderFlashDealsGrid, toggleDealWishlist, buyFeaturedDeal,
     handleDealsNewsletter, HOT_DEALS_DATA,
 
+    // Wishlist & Saved Products
+    getWishlist, saveWishlist, isInWishlist, getWishlistCount,
+    updateWishlistBadge, toggleWishlist, removeFromWishlist, clearWishlist,
+    moveWishlistToCart, moveAllWishlistToCart, handleWishlistSearch,
+    handleWishlistCategoryFilter, handleWishlistStockFilter, handleWishlistSort,
+    initWishlistLogic, renderWishlistPage,
+
     // Admin Dashboard Shell
     initAdminDashboard, switchAdminTab, closeAdminModal,
     handleAdminLogout, filterProductsTable, toggleAdminSidebar,
     openAdminSidebar, closeAdminSidebar, setSalesChartRange,
     initSalesOrdersChart, filterStaffAlerts,
-    handleNotificationClick, renderOverviewTab,
+    renderOverviewTab,
 
     // Product Management
     renderProductsTab, confirmDeleteProduct, openProductFormPage,
@@ -299,7 +336,7 @@ Object.assign(window, {
     editBranch, handleSaveBranchSubmit,
 
     // User Management
-    renderUsersTab, changeUserRole, confirmDeleteUser,
+    renderUsersTab, changeUserRole, changeUserStatus, confirmDeleteUser,
     openUserModal, handleSaveUserSubmit, handleUserModalRoleChange,
 
     // Dynamic Page Generators (SPA)
@@ -331,5 +368,24 @@ Object.assign(window, {
     getCategories, saveCategory, deleteCategory, getCategoryBySlug,
     getBadges, saveBadge, deleteBadge, getBadgeById, getBadgeThresholdSummary,
     getProductBehaviorHistory, recordProductBehaviorEvent, getProductHistory, clearProductBehaviorHistory,
-    runAutoBadgeAssignment
+    runAutoBadgeAssignment,
+
+    // Newsletter & Email Marketing
+    NewsletterApi,
+    Subscriber, NEWSLETTER_STATUS, NEWSLETTER_SOURCE,
+    getNewsletterSubscribers, saveNewsletterSubscribers,
+    getNewsletterCampaigns, saveNewsletterCampaigns,
+    getNewsletterAnalytics, isValidEmail,
+    renderNewsletterTab, setNewsletterSubTab,
+    handleNewsletterSearch, handleNewsletterStatusFilter,
+    handleNewsletterSourceFilter, handleNewsletterSort,
+    changeNewsletterPage, toggleSelectSubscriber,
+    toggleSelectAllSubscribers, clearSelectedSubscribers,
+    bulkUnsubscribeSelected, bulkResubscribeSelected,
+    bulkDeleteSelected, toggleSubscriberStatus,
+    deleteSubscriber, sendQuickTestEmail,
+    exportSubscribersCsv, openAddSubscriberModal,
+    saveNewSubscriberManual, openCampaignModal,
+    applyCampaignTemplate, handleSendCampaignSubmit,
+    closeNewsletterModal, handleStorefrontNewsletterSubmit
 });

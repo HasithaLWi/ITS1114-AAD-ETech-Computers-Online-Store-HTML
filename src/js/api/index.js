@@ -8,3 +8,5 @@ export { ProductsApi } from './productsApi.js';
 export { CategoriesApi } from './categoriesApi.js';
 export { BrandsApi } from './brandsApi.js';
 export { BadgesApi } from './badgesApi.js';
+export { WishlistApi } from './wishlistApi.js';
+export { NewsletterApi } from './newsletterApi.js';

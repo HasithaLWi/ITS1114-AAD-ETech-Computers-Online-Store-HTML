@@ -14,6 +14,7 @@ import { initShopLogic, renderFilteredProducts } from '../controller/shop_contro
 import { initHotDealsLogic } from '../controller/hot_deal_controller.js';
 import { getFeaturedBrands, syncBrandsFromApi } from '../models/brand_data.js';
 import { syncCategoriesFromApi, syncBadgesFromApi } from '../models/taxonomy_data.js';
+import { initWishlistLogic, updateWishlistBadge, isInWishlist, toggleWishlist } from '../controller/wishlist_controller.js';
 import { renderLoginPage } from './login/login.js';
 import { renderAdminPage } from './administrator/administrator.js';
 import { renderAboutPage } from './about/about.js';
@@ -43,6 +44,7 @@ export function initApp() {
 
   handleRoute();
   updateCartBadge();
+  updateWishlistBadge();
   updateHeaderAuthUI();
 }
 
@@ -222,6 +224,8 @@ function triggerPageHooks(pageName, queryPart) {
     initShopLogic(queryPart);
   } else if (pageName === 'deals' || pageName === 'hot-deals') {
     initHotDealsLogic(queryPart);
+  } else if (pageName === 'wishlist') {
+    initWishlistLogic();
   } else if (pageName === 'cart') {
     initCartLogic();
   } else if (pageName === 'checkout') {
@@ -852,11 +856,22 @@ function renderHomeFeaturedProducts() {
         <div>
           <p class="text-sm font-extrabold text-blue-600 font-sans tracking-tight">Rs. ${product.price ? product.price.toLocaleString() : ''}</p>
         </div>
-        <button onclick="addToCart(${product.id})" class="w-8 h-8 rounded-lg bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center transition-colors shadow-sm cursor-pointer" title="Add to Cart">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-          </svg>
-        </button>
+        <div class="flex items-center space-x-1.5">
+          <button 
+            data-wishlist-btn="${product.id}"
+            onclick="toggleWishlist(${product.id}, this)" 
+            class="w-8 h-8 rounded-lg bg-slate-50 hover:bg-rose-50 text-[#64748b] hover:text-rose-600 border border-slate-200 hover:border-rose-200 flex items-center justify-center transition-colors shadow-xs cursor-pointer" 
+            title="Add to Wishlist">
+            <svg class="w-4 h-4 ${isInWishlist(product.id) ? 'text-rose-600 fill-rose-600' : 'text-[#64748b]'}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+            </svg>
+          </button>
+          <button onclick="addToCart(${product.id})" class="w-8 h-8 rounded-lg bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center transition-colors shadow-sm cursor-pointer" title="Add to Cart">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+          </button>
+        </div>
       </div>
     </div>
   `).join('');
@@ -898,9 +913,20 @@ export function renderHomeNewArrivalsGrid() {
           ${product.originalPrice ? `<span class="text-[10px] text-[#94a3b8] line-through font-mono">Rs. ${product.originalPrice}</span>` : ''}
           <p class="text-sm font-extrabold text-[#0f172a] font-mono">Rs. ${product.price}</p>
         </div>
-        <button onclick="addToCart(${product.id})" class="p-2 bg-blue-600 hover:bg-blue-500 text-white rounded-md shadow-sm transition-all flex items-center justify-center" title="Add to Cart">
-          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-        </button>
+        <div class="flex items-center space-x-1.5">
+          <button 
+            data-wishlist-btn="${product.id}"
+            onclick="toggleWishlist(${product.id}, this)" 
+            class="p-2 bg-[#f8fafc] hover:bg-rose-50 text-[#64748b] hover:text-rose-600 rounded-md border border-[#e2e8f0] hover:border-rose-200 transition-all flex items-center justify-center cursor-pointer" 
+            title="Add to Wishlist">
+            <svg class="w-3.5 h-3.5 ${isInWishlist(product.id) ? 'text-rose-600 fill-rose-600' : 'text-[#64748b]'}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+            </svg>
+          </button>
+          <button onclick="addToCart(${product.id})" class="p-2 bg-blue-600 hover:bg-blue-500 text-white rounded-md shadow-sm transition-all flex items-center justify-center cursor-pointer" title="Add to Cart">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+          </button>
+        </div>
       </div>
     </div>
   `;

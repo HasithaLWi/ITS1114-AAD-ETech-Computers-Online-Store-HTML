@@ -7,8 +7,11 @@ import {
 } from '../models/deals_data.js';
 import { addToCart, addBundleToCart, showToast } from './cart_controller.js';
 import { viewProductDetails } from './product-details_controller.js';
+import { isInWishlist, toggleWishlist } from './wishlist_controller.js';
 
 import { DEFAULT_HOT_DEALS } from '../../data/deals.js';
+import { NewsletterApi } from '../api/newsletterApi.js';
+import { NEWSLETTER_SOURCE } from '../models/newsletter_model.js';
 
 export const HOT_DEALS_DATA = DEFAULT_HOT_DEALS;
 
@@ -255,7 +258,7 @@ export function renderFlashDealsGrid() {
 
   container.innerHTML = filtered.map(deal => {
     const dealProduct = allStoredProducts.find(p => p.id === deal.productId);
-    const isWishlisted = wishlistDeals.has(deal.id);
+    const isWishlisted = isInWishlist(deal.productId || deal.id);
     const remainingSecs = flashDealTimers.get(deal.id) || deal.timerSeconds;
     const hours = Math.floor(remainingSecs / 3600);
     const mins = Math.floor((remainingSecs % 3600) / 60);
@@ -343,10 +346,11 @@ export function renderFlashDealsGrid() {
           </button>
           
           <button 
+            data-wishlist-btn="${deal.productId || deal.id}"
             onclick="toggleDealWishlist(${deal.id}, this)" 
-            class="p-2.5 rounded-xl border border-[#e2e8f0] hover:border-rose-300 hover:bg-rose-50 transition-all text-[#64748b] hover:text-rose-600 flex items-center justify-center shadow-sm"
+            class="p-2.5 rounded-xl border border-[#e2e8f0] hover:border-rose-300 hover:bg-rose-50 transition-all text-[#64748b] hover:text-rose-600 flex items-center justify-center shadow-sm cursor-pointer"
             title="Add to Wishlist">
-            <svg class="w-4 h-4 ${isWishlisted ? 'text-rose-600 fill-rose-600' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-4 h-4 ${isWishlisted ? 'text-rose-600 fill-rose-600' : 'text-[#64748b]'}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
             </svg>
           </button>
@@ -362,16 +366,8 @@ export function renderFlashDealsGrid() {
  */
 export function toggleDealWishlist(dealId, btnElement) {
   const deal = HOT_DEALS_DATA.find(d => d.id === dealId);
-  if (!deal) return;
-
-  if (wishlistDeals.has(dealId)) {
-    wishlistDeals.delete(dealId);
-    showToast(`Removed "${deal.name.split(' ')[0]}" from wishlist.`);
-  } else {
-    wishlistDeals.add(dealId);
-    showToast(`Added "${deal.name.split(' ')[0]}" to your wishlist! ❤️`);
-  }
-
+  const targetId = deal ? (deal.productId || deal.id) : dealId;
+  toggleWishlist(targetId, btnElement);
   renderFlashDealsGrid();
 }
 
@@ -618,17 +614,31 @@ window.goToFeaturedBundle = goToFeaturedBundle;
 /**
  * Handles newsletter subscription submission
  */
-export function handleDealsNewsletter(event) {
+export async function handleDealsNewsletter(event) {
   if (event) event.preventDefault();
   const input = document.getElementById('deals-newsletter-email');
   if (!input) return;
 
   const email = input.value.trim();
   if (!email || !email.includes('@') || !email.includes('.')) {
-    showToast('Please enter a valid email address.');
+    showToast('Please enter a valid email address.', 'error');
     return;
   }
 
-  showToast('🎉 You are now subscribed to ETech VIP Deal Alerts!');
-  input.value = '';
+  try {
+    const res = await NewsletterApi.subscribe({
+      email,
+      source: NEWSLETTER_SOURCE.DEALS_PAGE,
+      tags: ['Deals Page', 'VIP Deal Alerts']
+    });
+
+    if (res.alreadySubscribed) {
+      showToast('ℹ️ You are already subscribed to ETech VIP Deal Alerts!', 'info');
+    } else {
+      showToast('🎉 You are now subscribed to ETech VIP Deal Alerts!', 'success');
+    }
+    input.value = '';
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
 }

@@ -152,15 +152,16 @@
         <!-- Right Action Controls (Wishlist, Cart, Admin Console) -->
         <div class="flex items-center space-x-3">
           <!-- Wishlist Button -->
-          <a href="#shop"
-            class="hidden sm:flex items-center space-x-1.5 p-2 rounded-lg text-[#475569] hover:text-blue-600 hover:bg-[#f1f5f9] transition-all relative">
+          <a href="#wishlist"
+            class="hidden sm:flex items-center space-x-1.5 p-2 rounded-lg text-[#475569] hover:text-blue-600 hover:bg-[#f1f5f9] transition-all relative"
+            title="My Saved Wishlist">
             <div class="relative">
               <svg class="w-5 h-5 text-[#475569]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
               </svg>
-              <span
-                class="absolute -top-1.5 -right-1.5 w-4 h-4 bg-blue-600 text-white text-[9px] font-extrabold rounded-full flex items-center justify-center">2</span>
+              <span id="wishlist-count-badge"
+                class="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 bg-rose-600 text-white text-[10px] font-extrabold rounded-full flex items-center justify-center ring-2 ring-white transition-transform">0</span>
             </div>
             <span class="text-xs font-bold hidden lg:inline">Wishlist</span>
           </a>
@@ -233,9 +234,6 @@
             <span>Deals</span>
             <span class="bg-rose-500 text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded uppercase">HOT</span>
           </a>
-          <a href="#shop?cat=components"
-            class="nav-tab-btn px-4 py-2 rounded-md font-bold text-xs text-[#475569] hover:text-blue-600 hover:bg-[#f8fafc] transition-all">Build
-            Your PC</a>
           <a href="#about"
             class="nav-tab-btn px-4 py-2 rounded-md font-bold text-xs text-[#475569] hover:text-blue-600 hover:bg-[#f8fafc] transition-all">About
             Us</a>
@@ -308,13 +306,17 @@
           <span class="bg-rose-500 text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded uppercase">HOT</span>
         </a>
 
-        <a href="#shop?cat=components" onclick="closeMobileMenu()"
-          class="nav-link flex items-center space-x-3 px-3.5 py-2.5 rounded-lg text-sm font-semibold text-[#475569] hover:bg-[#f8fafc] hover:text-blue-600 transition-all">
-          <svg class="w-4 h-4 text-[#64748b]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
-          </svg>
-          <span>Build Your PC</span>
+        <a href="#wishlist" onclick="closeMobileMenu()"
+          class="nav-link flex items-center justify-between px-3.5 py-2.5 rounded-lg text-sm font-semibold text-[#475569] hover:bg-[#f8fafc] hover:text-blue-600 transition-all">
+          <div class="flex items-center space-x-3">
+            <svg class="w-4 h-4 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+            </svg>
+            <span>My Wishlist</span>
+          </div>
+          <span id="mobile-wishlist-count-badge" class="bg-rose-100 text-rose-700 text-[10px] font-extrabold px-2 py-0.5 rounded-full font-mono">0</span>
         </a>
+
 
         <a href="#about" onclick="closeMobileMenu()"
           class="nav-link flex items-center space-x-3 px-3.5 py-2.5 rounded-lg text-sm font-semibold text-[#475569] hover:bg-[#f8fafc] hover:text-blue-600 transition-all">
@@ -381,15 +383,6 @@
                       d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
                   </svg>
                   <span>Shop Catalog</span>
-                </a>
-
-                <a href="#shop?cat=components"
-                  class="w-full sm:w-auto px-6 py-3 bg-white hover:bg-[#f8fafc] text-[#0f172a] font-bold text-xs sm:text-sm rounded-xl border border-[#cbd5e1] hover:border-[#94a3b8] transition-all flex items-center justify-center space-x-2 shadow-sm transform hover:-translate-y-0.5">
-                  <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
-                  </svg>
-                  <span>Build Your PC</span>
                 </a>
               </div>
 
@@ -526,7 +519,7 @@
               </div>
               <div>
                 <h4 class="text-sm font-bold text-[#0f172a]">24/7 Tech Advice</h4>
-                <p class="text-xs text-[#64748b] mt-0.5 leading-normal">Live PC builders ready to assist your build.</p>
+                <p class="text-xs text-[#64748b] mt-0.5 leading-normal">Expert technical specialists ready to assist you.</p>
               </div>
             </div>
 
@@ -771,80 +764,27 @@
         </div>
       </div>
 
-      <!-- NEW ARRIVALS & BUILD YOUR PC ROW -->
+      <!-- NEW ARRIVALS -->
       <div class="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-
-          <!-- New Arrivals (8 Cols) -->
-          <div class="lg:col-span-8 space-y-4">
-            <div class="flex items-center justify-between">
-              <div>
-                <h2 class="text-xl font-extrabold text-[#0f172a] tracking-tight">New Arrivals</h2>
-                <p class="text-xs text-[#64748b]">Check out the latest high-performance hardware</p>
-              </div>
-              <a href="#shop?sort=newest"
-                class="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center space-x-1">
-                <span>View All</span>
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                </svg>
-              </a>
+        <div class="space-y-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <h2 class="text-xl font-extrabold text-[#0f172a] tracking-tight">New Arrivals</h2>
+              <p class="text-xs text-[#64748b]">Check out the latest high-performance hardware</p>
             </div>
-
-            <!-- Dynamic New Arrivals Grid -->
-            <div id="home-new-arrivals-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <!-- Injected by JS -->
-            </div>
+            <a href="#shop?sort=newest"
+              class="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center space-x-1">
+              <span>View All</span>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+              </svg>
+            </a>
           </div>
 
-          <!-- Build Your Dream PC Banner Card (4 Cols) -->
-          <div class="lg:col-span-4">
-            <div
-              class="h-full bg-blue-50/70 border border-blue-100 rounded-xl p-6 flex flex-col justify-between shadow-sm">
-              <div class="space-y-3">
-                <h3 class="text-xl font-extrabold text-[#0f172a] tracking-tight">
-                  Build Your <span class="text-blue-600">Dream PC</span>
-                </h3>
-                <p class="text-xs text-[#64748b] leading-relaxed">
-                  Choose components, check compatibility, and build a system tailored precisely to your performance
-                  needs.
-                </p>
-
-                <!-- Blue Checklist Items -->
-                <ul class="space-y-2 pt-2 text-xs font-semibold text-[#0f172a]">
-                  <li class="flex items-center space-x-2">
-                    <div
-                      class="w-4 h-4 rounded-full bg-blue-600 text-white flex items-center justify-center text-[10px]">✓
-                    </div>
-                    <span>Smart Compatibility Check</span>
-                  </li>
-                  <li class="flex items-center space-x-2">
-                    <div
-                      class="w-4 h-4 rounded-full bg-blue-600 text-white flex items-center justify-center text-[10px]">✓
-                    </div>
-                    <span>Best Price Guarantee</span>
-                  </li>
-                  <li class="flex items-center space-x-2">
-                    <div
-                      class="w-4 h-4 rounded-full bg-blue-600 text-white flex items-center justify-center text-[10px]">✓
-                    </div>
-                    <span>Performance Guide</span>
-                  </li>
-                </ul>
-              </div>
-
-              <div class="pt-6">
-                <a href="#shop?cat=components"
-                  class="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-lg transition-all text-center shadow-md flex items-center justify-center space-x-2">
-                  <span>Start Building Now</span>
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7-7 7" />
-                  </svg>
-                </a>
-              </div>
-            </div>
+          <!-- Dynamic New Arrivals Grid -->
+          <div id="home-new-arrivals-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <!-- Injected by JS -->
           </div>
-
         </div>
       </div>
 
@@ -895,7 +835,7 @@
               </svg>
             </div>
             <h3 class="text-sm font-bold text-[#0f172a]">Expert Technical Support</h3>
-            <p class="text-xs text-[#64748b] leading-relaxed">Our experienced PC builders help you choose and configure
+            <p class="text-xs text-[#64748b] leading-relaxed">Our experienced tech specialists help you choose and configure
               the right hardware.</p>
           </div>
 
@@ -954,92 +894,6 @@
         </div>
       </div>
 
-      <!-- MEET E-T: YOUR AI TECHNICAL ADVISOR -->
-      <div class="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="bg-blue-50/60 border border-blue-100 rounded-2xl p-6 sm:p-8 shadow-sm">
-          <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-
-            <!-- Left Text & Mascot Callout -->
-            <div class="lg:col-span-5 space-y-4">
-              <div
-                class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-mono font-bold">
-                <span>🤖 AI TECH ASSISTANT</span>
-              </div>
-
-              <h2 class="text-3xl font-extrabold text-[#0f172a] tracking-tight leading-tight">
-                Meet E-T<br>
-                Your <span class="text-blue-600">AI Technical Advisor</span>
-              </h2>
-
-              <p class="text-xs text-[#475569] leading-relaxed">
-                Not sure which component is best for you? Ask E-T and get instant expert hardware recommendations for
-                your custom PC build.
-              </p>
-
-              <button onclick="if(window.ET_Chatbot) window.ET_Chatbot.open();"
-                class="px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-lg shadow-md transition-all inline-flex items-center space-x-2">
-                <span>Chat with E-T Now</span>
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7-7 7" />
-                </svg>
-              </button>
-            </div>
-
-            <!-- Right Interactive Chat Preview UI -->
-            <div class="lg:col-span-7">
-              <div class="bg-white border border-[#e2e8f0] rounded-xl p-5 shadow-md space-y-4">
-                <div class="flex items-center space-x-3 border-b border-[#e2e8f0] pb-3">
-                  <div
-                    class="w-8 h-8 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center text-xs">
-                    E-T</div>
-                  <div>
-                    <h4 class="text-xs font-bold text-[#0f172a]">Hello! I'm E-T 🤖</h4>
-                    <p class="text-[10px] text-[#64748b]">How can I help you build your dream PC today?</p>
-                  </div>
-                </div>
-
-                <!-- Clickable Quick Suggestion Chips -->
-                <div class="flex flex-wrap gap-2 text-xs">
-                  <button
-                    onclick="if(window.ET_Chatbot) { window.ET_Chatbot.open(); window.ET_Chatbot.send('Build a gaming PC under Rs. 300,000'); }"
-                    class="px-3 py-1.5 rounded-full bg-[#f8fafc] hover:bg-blue-50 text-blue-700 border border-blue-200 font-semibold transition-all">
-                    Build a gaming PC under Rs. 300,000
-                  </button>
-                  <button
-                    onclick="if(window.ET_Chatbot) { window.ET_Chatbot.open(); window.ET_Chatbot.send('Best GPU for 4K gaming?'); }"
-                    class="px-3 py-1.5 rounded-full bg-[#f8fafc] hover:bg-blue-50 text-blue-700 border border-blue-200 font-semibold transition-all">
-                    Best GPU for 4K gaming?
-                  </button>
-                  <button
-                    onclick="if(window.ET_Chatbot) { window.ET_Chatbot.open(); window.ET_Chatbot.send('Recommend a streaming PC setup'); }"
-                    class="px-3 py-1.5 rounded-full bg-[#f8fafc] hover:bg-blue-50 text-blue-700 border border-blue-200 font-semibold transition-all">
-                    Recommend a streaming PC setup
-                  </button>
-                  <button
-                    onclick="if(window.ET_Chatbot) { window.ET_Chatbot.open(); window.ET_Chatbot.send('What\'s new in graphics cards?'); }"
-                    class="px-3 py-1.5 rounded-full bg-[#f8fafc] hover:bg-blue-50 text-blue-700 border border-blue-200 font-semibold transition-all">
-                    What's new in graphics cards?
-                  </button>
-                </div>
-
-                <div class="flex items-center space-x-2 pt-2 border-t border-[#e2e8f0]">
-                  <input type="text" placeholder="Type your question here..."
-                    onkeypress="if(event.key==='Enter' && window.ET_Chatbot) { window.ET_Chatbot.open(); window.ET_Chatbot.send(this.value); this.value=''; }"
-                    class="w-full px-3.5 py-2 rounded-md bg-[#f8fafc] border border-[#e2e8f0] text-xs text-[#0f172a] placeholder-[#94a3b8] focus:border-blue-600 focus:outline-none">
-                  <button onclick="if(window.ET_Chatbot) { window.ET_Chatbot.open(); }"
-                    class="p-2 bg-blue-600 hover:bg-blue-500 text-white rounded-md flex-shrink-0">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            </div>
-
-          </div>
-        </div>
-      </div>
 
       <!-- NEWSLETTER BANNER -->
       <div class="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -1058,12 +912,12 @@
             </div>
 
             <form
-              onsubmit="event.preventDefault(); alert('Thank you for subscribing to ETech Computers tech updates!'); this.reset();"
+              onsubmit="handleStorefrontNewsletterSubmit(event)"
               class="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-2 w-full lg:w-auto">
-              <input type="email" required placeholder="Enter your email address..."
-                class="w-full sm:w-80 px-4 py-3 rounded-lg bg-slate-800 border border-slate-700 text-white placeholder-slate-400 text-xs focus:outline-none focus:border-blue-500">
+              <input type="email" id="home-newsletter-email" required placeholder="Enter your email address..."
+                class="w-full sm:w-80 px-4 py-3 rounded-lg bg-slate-800 border border-slate-700 text-white placeholder-slate-400 text-xs focus:outline-none focus:border-blue-500 shadow-inner">
               <button type="submit"
-                class="w-full sm:w-auto px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-lg transition-all shadow-md">
+                class="w-full sm:w-auto px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-lg transition-all shadow-md active:scale-95 cursor-pointer">
                 Subscribe
               </button>
             </form>
@@ -1533,6 +1387,11 @@
       </div>
     </section>
 
+    <!-- ================= SECTION: WISHLIST PAGE ================= -->
+    <section id="wishlist-page" class="page-section hidden min-h-[70vh]">
+      <!-- Dynamically rendered by renderWishlistPage() in wishlist_controller.js -->
+    </section>
+
     <!-- ================= SECTION 3: CART PAGE ================= -->
     <section id="cart-page" class="page-section hidden">
       <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
@@ -1887,6 +1746,26 @@
                   <span>Sign Out Account</span>
                 </button>
               </div>
+            </div>
+
+            <!-- Wishlist Summary Card -->
+            <div class="bg-white border border-[#e2e8f0] rounded-lg p-5 space-y-3 text-xs shadow-sm">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-2 text-rose-600 font-bold">
+                  <svg class="w-4 h-4 fill-rose-600" viewBox="0 0 24 24">
+                    <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                  </svg>
+                  <span>My Wishlist</span>
+                </div>
+                <span id="account-wishlist-count" class="font-mono font-bold text-xs bg-rose-50 text-rose-700 px-2 py-0.5 rounded border border-rose-200">0 Items</span>
+              </div>
+              <p class="text-[#64748b] leading-relaxed">
+                Save your dream PCs and high-end components to quickly purchase them whenever you're ready.
+              </p>
+              <a href="#wishlist" class="inline-flex items-center space-x-1.5 text-blue-600 hover:text-blue-700 font-bold text-xs">
+                <span>Open Wishlist</span>
+                <span>→</span>
+              </a>
             </div>
 
             <!-- Security & Privacy Info Card -->

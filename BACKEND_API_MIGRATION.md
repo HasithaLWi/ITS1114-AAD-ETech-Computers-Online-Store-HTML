@@ -13,6 +13,8 @@
 4. [MySQL Relational Database Schema (DDL)](#4-mysql-relational-database-schema-ddl)
 5. [Spring Boot REST Endpoints Specification](#5-spring-boot-rest-endpoints-specification)
    - [Auth & User Management (`/api/v1/auth`, `/api/v1/users`)](#auth--user-management)
+   - [Customer Wishlist (`/api/v1/wishlist`)](#customer-wishlist)
+   - [Newsletter & Email Marketing (`/api/v1/newsletter`)](#newsletter--email-marketing)
    - [Product Catalog & Gallery (`/api/v1/products`)](#product-catalog--gallery)
    - [Product Ratings & Reviews (`/api/v1/reviews`)](#product-ratings--reviews)
    - [Categories & Storefront Taxonomy (`/api/v1/categories`)](#categories--storefront-taxonomy)
@@ -42,13 +44,13 @@
 flowchart TD
     subgraph Frontend["Frontend SPA (HTML5 / Vanilla JS / Tailwind CSS / jQuery AJAX)"]
         UI["UI Layer (index.html, DOM Renderers, Modals, Drawers)"]
-        Controllers["Controllers (shop, cart, product-details, taxonomy, brand_management, promotion_management, hot_deal, transfer_management, stock_health, login, user_management, branch_management, policy_management, analytics)"]
-        APILayer["API Service Client Layer (src/js/api/apiClient.js, userApi.js, brandsApi.js, etc.)"]
+        Controllers["Controllers (shop, cart, wishlist, newsletter, product-details, taxonomy, brand_management, promotion_management, hot_deal, transfer_management, stock_health, login, user_management, branch_management, policy_management, analytics)"]
+        APILayer["API Service Client Layer (src/js/api/apiClient.js, userApi.js, brandsApi.js, newsletterApi.js, etc.)"]
     end
 
     subgraph Current["Current State (Mock / Centralized src/data/ + localStorage)"]
-        DataDir[("Central Data Seeds: src/data/\nproducts, brands, deals, transfers, taxonomy,\nbranches, users, orders, policies, ratings")]
-        LocalStorage[("Browser localStorage Cache\netech_products, etech_brands_data,\netech_deal_bundles, etech_hot_deals,\netech_stock_transfers, etech_taxonomy, etc.")]
+        DataDir[("Central Data Seeds: src/data/\nproducts, brands, deals, transfers, taxonomy,\nbranches, users, orders, policies, ratings, newsletter")]
+        LocalStorage[("Browser localStorage Cache\netech_products, etech_brands_data,\netech_deal_bundles, etech_hot_deals,\netech_wishlist, etech_newsletter_subscribers,\netech_stock_transfers, etech_taxonomy, etc.")]
         DataDir -.->|Hydrates on First Run| LocalStorage
     end
 
@@ -60,10 +62,11 @@ flowchart TD
         Services --> CompositeEngine["Deal Bundle Inventory & Bottleneck Engine"]
         Services --> TransferEngine["Inter-Branch Stock Movement Engine"]
         Services --> BrandEngine["Brand Showcase & Catalog Filter Engine"]
+        Services --> NewsletterEngine["Newsletter Broadcast & Template Engine"]
         Services --> GeminiProxy["Gemini 2.0 AI Proxy Service"]
         Services --> Repositories["Spring Data JPA Repositories"]
         Repositories --> Hibernate["Hibernate ORM"]
-        Hibernate --> MySQL[("MySQL 8.x Database Engine")]
+        Repositories --> MySQL[("MySQL 8.x Database Engine")]
     end
 
     Controllers -.->|Current Fallback Direct Access| LocalStorage
@@ -74,7 +77,7 @@ flowchart TD
 
 ## 2. Current `localStorage` Keys & Centralized Mock Repositories (`src/data/`)
 
-All mock data is centralized under `src/data/` as the single source of truth:
+All mock data is centralized under `src/data/` and `src/js/models/` as the single source of truth:
 
 | Key | Current Seed & Model Files | Purpose in Client App | Target Spring Boot Endpoint(s) | Action Upon Backend Switch |
 |---|---|---|---|---|
@@ -90,7 +93,10 @@ All mock data is centralized under `src/data/` as the single source of truth:
 | `etech_product_reviews` | `src/data/ratings_reviews.js`<br>`src/js/models/rating_data.js` | Stores 1–5 star customer text reviews, updating average ratings and review counts | `GET /api/v1/products/{id}/reviews`<br>`POST /api/v1/products/{id}/reviews`<br>`DELETE /api/v1/reviews/{id}` | **Replace completely** with database table. |
 | `etech_branches` | `src/data/branches.js`<br>`src/js/controller/branch_controller.js` | Stores regional warehouse hubs (Colombo, Galle, Matara, Kandy) with geo coordinates & base rates | `GET /api/v1/branches`<br>`POST /api/v1/branches`<br>`PUT /api/v1/branches/{id}`<br>`DELETE /api/v1/branches/{id}` | **Replace completely** with API fetch calls. |
 | `etech_orders` | `src/data/orders.js`<br>`src/js/controller/order_management_controller.js` | Stores customer orders, delivery distances, fulfillment branch, item arrays, and status | `GET /api/v1/orders`<br>`GET /api/v1/orders/my-orders`<br>`POST /api/v1/orders`<br>`PATCH /api/v1/orders/{id}/status` | **Replace completely** with API fetch calls. |
-| `etech_users` / `DEFAULT_USERS` | `src/data/users.js`<br>`src/js/controller/login_controller.js`<br>`src/js/models/user_model.js` | Stores user directory with unique username, 4-tier role (`SUPERADMIN`, `ADMIN`, `STAFF`, `CUSTOMER`), and branch assignments | `GET /api/v1/users`<br>`POST /api/v1/auth/register`<br>`POST /api/v1/users`<br>`PATCH /api/v1/users/{id}/role` | **Replace completely**. Spring Security manages BCrypt passwords & RBAC authorization. |
+| `etech_wishlist` | `src/js/controller/wishlist_controller.js` | Stores saved hardware items, fast bookmarks, and batch cart move operations | `GET /api/v1/wishlist`<br>`POST /api/v1/wishlist/toggle/{productId}`<br>`DELETE /api/v1/wishlist/remove/{productId}`<br>`DELETE /api/v1/wishlist/clear`<br>`POST /api/v1/wishlist/move-to-cart` | **Replace completely** with database table for authenticated users. |
+| `etech_newsletter_subscribers` | `src/js/models/newsletter_model.js`<br>`src/js/api/newsletterApi.js` | Stores audience subscriber emails, acquisition channel, tags, and lifecycle statuses | `GET /api/v1/newsletter/subscribers`<br>`POST /api/v1/newsletter/subscribe`<br>`POST /api/v1/newsletter/unsubscribe`<br>`PATCH /api/v1/newsletter/subscribers/{id}/status`<br>`DELETE /api/v1/newsletter/subscribers/{id}` | **Replace completely** with database table. |
+| `etech_newsletter_campaigns` | `src/js/models/newsletter_model.js`<br>`src/js/api/newsletterApi.js` | Stores broadcast marketing campaign logs, open rate analytics, and delivery timestamps | `GET /api/v1/newsletter/campaigns`<br>`POST /api/v1/newsletter/campaigns/send`<br>`GET /api/v1/newsletter/analytics` | **Replace completely** with database table. |
+| `etech_users` / `DEFAULT_USERS` | `src/data/users.js`<br>`src/js/controller/login_controller.js`<br>`src/js/models/user_model.js` | Stores user directory with unique username, status (`ACTIVE`, `INACTIVE`), 4-tier role (`SUPERADMIN`, `ADMIN`, `STAFF`, `CUSTOMER`), and branch assignments | `GET /api/v1/users`<br>`POST /api/v1/auth/register`<br>`POST /api/v1/users`<br>`PATCH /api/v1/users/{id}/status`<br>`PATCH /api/v1/users/{id}/role` | **Replace completely**. Spring Security manages BCrypt passwords, status guards, & RBAC. |
 | `etech_jwt_token` | `src/js/api/apiClient.js` | Stores active authentication JWT Bearer token | `POST /api/v1/auth/login`<br>`POST /api/v1/auth/register` | **Keep in `localStorage`** for stateless session authentication. |
 | `etech_current_user` | `src/js/controller/login_controller.js`<br>`src/js/models/user_model.js` | Stores current logged-in user profile & role session (`SUPERADMIN`, `ADMIN`, `STAFF`, `CUSTOMER`) | `POST /api/v1/auth/login`<br>`GET /api/v1/auth/me` | **Keep minimal**: Store only active user profile DTO. |
 | `etech_cart` | `src/js/controller/cart_controller.js` | Stores active shopping cart items and quantities | Optional: `GET/POST /api/v1/cart` (or keep in `localStorage` for guest sessions) | Can **remain in `localStorage`** for guest carts, syncing on checkout. |
@@ -105,6 +111,7 @@ All mock data is centralized under `src/data/` as the single source of truth:
 erDiagram
     USERS ||--o{ ORDERS : places
     USERS ||--o{ PRODUCT_REVIEWS : writes
+    USERS ||--o{ WISHLIST_ITEMS : saves
     USERS }o--o| BRANCHES : "assigned to (Staff)"
     
     BRANCHES ||--o{ BRANCH_INVENTORY : stocks
@@ -121,6 +128,7 @@ erDiagram
     PRODUCTS ||--o{ PRODUCT_BEHAVIOR_HISTORY : audits
     PRODUCTS ||--o{ ORDER_ITEMS : ordered_as
     PRODUCTS ||--o{ BUNDLE_ITEMS : packaged_in
+    PRODUCTS ||--o{ WISHLIST_ITEMS : "saved in"
     PRODUCTS ||--o| HOT_DEALS : promoted_as
     PRODUCTS ||--o{ STOCK_TRANSFERS : transferred_item
     
@@ -149,8 +157,44 @@ erDiagram
         varchar email UK
         varchar password_hash
         enum role "SUPERADMIN, ADMIN, STAFF, CUSTOMER"
+        enum status "ACTIVE, INACTIVE"
         varchar assigned_branch_id FK
         timestamp created_at
+    }
+
+    WISHLIST_ITEMS {
+        bigint id PK
+        bigint user_id FK
+        bigint product_id FK
+        timestamp created_at
+    }
+
+    NEWSLETTER_SUBSCRIBERS {
+        bigint id PK
+        varchar email UK
+        varchar name
+        enum status "SUBSCRIBED, UNSUBSCRIBED"
+        enum source "STOREFRONT_BANNER, DEALS_PAGE, CHECKOUT, MANUAL, ACCOUNT"
+        json tags_json
+        timestamp subscribed_at
+        timestamp unsubscribed_at
+        timestamp last_campaign_sent_at
+        varchar ip_address
+    }
+
+    NEWSLETTER_CAMPAIGNS {
+        varchar id PK "e.g. camp_20260825_01"
+        varchar subject
+        varchar preheader
+        varchar category
+        varchar target_segment
+        longtext content_html
+        timestamp sent_at
+        int recipients_count
+        varchar status
+        decimal open_rate
+        decimal click_rate
+        varchar author_name
     }
 
     BRANCHES {
@@ -402,13 +446,15 @@ CREATE TABLE users (
     email VARCHAR(150) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
     role ENUM('SUPERADMIN', 'ADMIN', 'STAFF', 'CUSTOMER') NOT NULL DEFAULT 'CUSTOMER',
+    status ENUM('ACTIVE', 'INACTIVE') NOT NULL DEFAULT 'ACTIVE',
     assigned_branch_id VARCHAR(20) NULL, -- NULL indicates Global / Cross-Branch Scope (e.g. Super Admin Owner)
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (assigned_branch_id) REFERENCES branches(id) ON DELETE SET NULL,
     INDEX idx_users_username (username),
     INDEX idx_users_email (email),
-    INDEX idx_users_role (role)
+    INDEX idx_users_role (role),
+    INDEX idx_users_status (status)
 ) ENGINE=InnoDB;
 
 -- 3. Categories Table (Storefront & Catalog Taxonomy)
@@ -711,6 +757,57 @@ CREATE TABLE legal_policies (
     sections_json JSON NOT NULL,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
+
+-- 20. Customer Wishlist Items Table
+CREATE TABLE wishlist_items (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    product_id BIGINT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+    UNIQUE KEY unique_user_wishlist_product (user_id, product_id),
+    INDEX idx_wishlist_user (user_id),
+    INDEX idx_wishlist_product (product_id)
+) ENGINE=InnoDB;
+
+-- 21. Newsletter & Email Marketing Subscribers Table
+CREATE TABLE newsletter_subscribers (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    email VARCHAR(150) NOT NULL UNIQUE,
+    name VARCHAR(100) NULL,
+    status ENUM('SUBSCRIBED', 'UNSUBSCRIBED') NOT NULL DEFAULT 'SUBSCRIBED',
+    source ENUM('STOREFRONT_BANNER', 'DEALS_PAGE', 'CHECKOUT', 'MANUAL', 'ACCOUNT') NOT NULL DEFAULT 'STOREFRONT_BANNER',
+    tags_json JSON NULL, -- e.g. ["VIP Gamer", "NVIDIA GPU Alerts"]
+    subscribed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    unsubscribed_at TIMESTAMP NULL,
+    last_campaign_sent_at TIMESTAMP NULL,
+    ip_address VARCHAR(45) DEFAULT '127.0.0.1',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_subscribers_email (email),
+    INDEX idx_subscribers_status (status),
+    INDEX idx_subscribers_source (source)
+) ENGINE=InnoDB;
+
+-- 22. Newsletter Marketing Broadcast Campaigns Log Table
+CREATE TABLE newsletter_campaigns (
+    id VARCHAR(100) PRIMARY KEY, -- e.g. 'camp_20260825_01'
+    subject VARCHAR(255) NOT NULL,
+    preheader VARCHAR(255) NULL,
+    category VARCHAR(50) NOT NULL DEFAULT 'GENERAL_NEWS',
+    target_segment VARCHAR(50) NOT NULL DEFAULT 'ALL_ACTIVE',
+    content_html LONGTEXT NULL,
+    sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    recipients_count INT NOT NULL DEFAULT 0,
+    status VARCHAR(50) NOT NULL DEFAULT 'DELIVERED',
+    open_rate DECIMAL(4, 1) DEFAULT 0.0,
+    click_rate DECIMAL(4, 1) DEFAULT 0.0,
+    author_name VARCHAR(100) NOT NULL DEFAULT 'Admin Team',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_campaigns_sent_at (sent_at),
+    INDEX idx_campaigns_category (category)
+) ENGINE=InnoDB;
 ```
 
 ---
@@ -733,8 +830,37 @@ All endpoints are prefixed with `/api/v1`.
 | `GET` | `/api/v1/users/roles` | Public / Auth | Fetch dynamic list of available system user roles configured in database | None | `[ "SUPERADMIN", "ADMIN", "STAFF", "CUSTOMER" ]` |
 | `POST` | `/api/v1/users` | `SUPERADMIN, ADMIN` | Create user account.<br>- **Superadmin**: Can create `ADMIN`, `STAFF`, `CUSTOMER`.<br>- **Admin**: Can only create `STAFF`, `CUSTOMER`. Attempt to create `ADMIN` or `SUPERADMIN` yields `403 Forbidden`. | `{ "name": "...", "username": "...", "email": "...", "password": "...", "role": "STAFF", "assignedBranch": "BR-GAL" }` | Created User DTO |
 | `PUT` | `/api/v1/users/{id}` | `SUPERADMIN, ADMIN` | Update user details & branch.<br>- **Superadmin**: Full update authority.<br>- **Admin**: Can only update `STAFF` and `CUSTOMER`. Modifying an `ADMIN` or `SUPERADMIN` yields `403 Forbidden`. | User Form DTO | Updated User DTO |
+| `PATCH` | `/api/v1/users/{id}/status` | `SUPERADMIN, ADMIN` | Change user lifecycle status (`ACTIVE` or `INACTIVE`).<br>- **Active**: User can log in and place orders.<br>- **Inactive**: User account is locked/disabled.<br>- **Protection**: Superadmin account status cannot be modified (`400 Bad Request`). Admin cannot disable other Admin accounts (`403 Forbidden`). | `{ "status": "INACTIVE" }` | Updated User DTO |
 | `PATCH` | `/api/v1/users/{id}/role` | `SUPERADMIN, ADMIN` | Change user role.<br>- **Superadmin**: Can switch between `ADMIN`, `STAFF`, `CUSTOMER`. (Superadmin account is immutable).<br>- **Admin**: Can only switch between `CUSTOMER` and `STAFF`. Promoting to or altering an `ADMIN` yields `403 Forbidden`. | `{ "role": "STAFF", "assignedBranch": "BR-COL" }` | Updated User DTO |
 | `DELETE` | `/api/v1/users/{id}` | `SUPERADMIN, ADMIN` | Delete user account.<br>- **Superadmin account (`USR-100000`) cannot be deleted by anyone** (`400 Bad Request`).<br>- **Admin cannot delete other Admin accounts** (`403 Forbidden`). Can only delete `STAFF` and `CUSTOMER`. | None | `{ "success": true, "message": "User account removed" }` |
+
+### Customer Wishlist
+
+| Method | Endpoint | Access | Description | Request Payload | Response Payload |
+|---|---|---|---|---|---|
+| `GET` | `/api/v1/wishlist` | Authenticated | Retrieve current user's saved wishlist products with live catalog prices, stock availability, and branch statuses | Headers: `Authorization: Bearer <token>` | `{ "success": true, "total": 3, "items": [ { "id": 1, "name": "Apex Raider", "sku": "ETC-1", "price": 259999, "image": "...", "category": "Laptops", "inStock": true, "savedAt": "..." } ] }` |
+| `POST` | `/api/v1/wishlist/toggle/{productId}` | Authenticated | Toggle bookmark status for a product. If in wishlist, removes it; if not, adds it. | None | `{ "success": true, "added": true, "productId": 1, "wishlistCount": 4 }` |
+| `POST` | `/api/v1/wishlist/add/{productId}` | Authenticated | Add product explicitly to customer's wishlist | None | `{ "success": true, "message": "Added to wishlist", "wishlistCount": 4 }` |
+| `DELETE` | `/api/v1/wishlist/remove/{productId}` | Authenticated | Remove specific product from customer's wishlist | None | `{ "success": true, "message": "Removed from wishlist", "wishlistCount": 3 }` |
+| `DELETE` | `/api/v1/wishlist/clear` | Authenticated | Clear all bookmarked items from customer's wishlist | None | `{ "success": true, "message": "Wishlist cleared" }` |
+| `POST` | `/api/v1/wishlist/move-to-cart` | Authenticated | Batch move all (or selected array of) wishlist items into active shopping cart | `{ "productIds": [1, 2, 5] }` (Optional: empty moves all) | `{ "success": true, "movedCount": 3, "cartTotal": 459997.00 }` |
+
+### Newsletter & Email Marketing
+
+| Method | Endpoint | Access | Description | Request Payload | Response Payload |
+|---|---|---|---|---|---|
+| `GET` | `/api/v1/newsletter/subscribers` | `SUPERADMIN, ADMIN, STAFF` | List newsletter subscribers with search query, status filter, channel filter, and pagination | Query: `?search=kasun&status=SUBSCRIBED&source=STOREFRONT_BANNER&page=0&size=20` | `{ "success": true, "total": 120, "analytics": { "totalSubscribers": 120, "activeSubscribers": 112, "unsubscribedCount": 8, "activeRate": "93.3", "totalCampaigns": 14, "avgOpenRate": "62.4" }, "data": [ { "id": 1001, "email": "kasun.perera@gmail.com", "name": "Kasun Perera", "status": "SUBSCRIBED", "source": "STOREFRONT_BANNER", "tags": ["VIP Gamer"], "subscribedAt": "..." } ] }` |
+| `GET` | `/api/v1/newsletter/subscribers/{id}` | `SUPERADMIN, ADMIN, STAFF` | Fetch single subscriber profile | None | `{ "success": true, "data": { ... } }` |
+| `POST` | `/api/v1/newsletter/subscribe` | Public | Storefront subscription from home page banner, hot deals page, checkout, or account. Automatically reactivates previously unsubscribed email addresses. | `{ "email": "user@domain.com", "name": "Kasun", "source": "STOREFRONT_BANNER", "tags": ["Storefront"] }` | `{ "success": true, "isNew": true, "message": "Thank you for subscribing!", "data": { ... } }` |
+| `POST` | `/api/v1/newsletter/unsubscribe` | Public | Public unsubscribe / email opt-out link handler | `{ "identifier": "user@domain.com" }` | `{ "success": true, "message": "Unsubscribed successfully" }` |
+| `PATCH` | `/api/v1/newsletter/subscribers/{id}/status` | `SUPERADMIN, ADMIN, STAFF` | Toggle or update subscriber status (`SUBSCRIBED` $\leftrightarrow$ `UNSUBSCRIBED`) | Query or Body: `?status=UNSUBSCRIBED` | `{ "success": true, "data": { ... } }` |
+| `PUT` | `/api/v1/newsletter/subscribers/{id}` | `SUPERADMIN, ADMIN, STAFF` | Update subscriber properties (Name, Email, Channel Source, Tags) | `{ "name": "...", "email": "...", "source": "MANUAL", "tags": ["VIP"] }` | `{ "success": true, "data": { ... } }` |
+| `DELETE` | `/api/v1/newsletter/subscribers/{id}` | `SUPERADMIN, ADMIN, STAFF` | Permanently delete subscriber record | None | `{ "success": true, "message": "Subscriber deleted" }` |
+| `PATCH` | `/api/v1/newsletter/subscribers/bulk-status` | `SUPERADMIN, ADMIN, STAFF` | Bulk update status for multiple selected subscriber IDs | `{ "ids": [1001, 1002, 1003], "status": "UNSUBSCRIBED" }` | `{ "success": true, "modifiedCount": 3 }` |
+| `DELETE` | `/api/v1/newsletter/subscribers/bulk-delete` | `SUPERADMIN, ADMIN, STAFF` | Bulk delete multiple selected subscriber records | `{ "ids": [1001, 1002] }` | `{ "success": true, "deletedCount": 2 }` |
+| `POST` | `/api/v1/newsletter/campaigns/send` | `SUPERADMIN, ADMIN, STAFF` | **Dispatch Marketing Email Broadcast**: Sends styled HTML email campaign to target audience segment and logs analytics performance metrics | `{ "subject": "🔥 Weekend Flash Deals: Up to 45% OFF!", "preheader": "Exclusive discounts...", "category": "FLASH_DEALS", "targetSegment": "ALL_ACTIVE", "contentHtml": "...", "authorName": "Admin Team" }` | `{ "success": true, "message": "Broadcast dispatched successfully!", "data": { "id": "camp_...", "recipientsCount": 112, "status": "DELIVERED", "sentAt": "..." } }` |
+| `GET` | `/api/v1/newsletter/campaigns` | `SUPERADMIN, ADMIN, STAFF` | List all historical marketing campaign broadcasts with delivery logs, open rates, and click metrics | None | `{ "success": true, "data": [ { "id": "camp_20260825_01", "subject": "...", "category": "FLASH_DEALS", "recipientsCount": 112, "openRate": 64.2, "clickRate": 31.8, "sentAt": "..." } ] }` |
+| `GET` | `/api/v1/newsletter/analytics` | `SUPERADMIN, ADMIN, STAFF` | Aggregate audience metrics (Total audience, active rate, channel distribution, campaign performance) | None | Audience Analytics DTO |
 
 ### Product Catalog & Gallery
 
@@ -986,6 +1112,8 @@ com.etech.store/
 │   ├── BranchController.java
 │   ├── InventoryController.java
 │   ├── OrderController.java
+│   ├── WishlistController.java       # Customer product wishlist & move-to-cart
+│   ├── NewsletterController.java     # Subscribers, bulk ops, campaign broadcasts & analytics
 │   ├── PolicyController.java
 │   ├── ChatbotController.java
 │   └── AnalyticsController.java
@@ -993,7 +1121,7 @@ com.etech.store/
 │   ├── request/
 │   └── response/
 ├── entity/                           # JPA Entities matching MySQL DDL
-│   ├── User.java
+│   ├── User.java                     # Includes status ENUM('ACTIVE', 'INACTIVE')
 │   ├── Branch.java
 │   ├── Category.java
 │   ├── Brand.java
@@ -1010,6 +1138,9 @@ com.etech.store/
 │   ├── ProductBehaviorHistory.java
 │   ├── Order.java
 │   ├── OrderItem.java
+│   ├── WishlistItem.java
+│   ├── NewsletterSubscriber.java
+│   ├── NewsletterCampaign.java
 │   ├── BusinessProfile.java
 │   └── LegalPolicy.java
 ├── repository/                       # Spring Data JPA Repositories
@@ -1030,11 +1161,14 @@ com.etech.store/
 │   ├── ProductBehaviorHistoryRepository.java
 │   ├── OrderRepository.java
 │   ├── OrderItemRepository.java
+│   ├── WishlistRepository.java
+│   ├── NewsletterSubscriberRepository.java
+│   ├── NewsletterCampaignRepository.java
 │   ├── BusinessProfileRepository.java
 │   └── LegalPolicyRepository.java
 ├── service/                          # Business logic & @Transactional rules
 │   ├── AuthService.java
-│   ├── UserService.java
+│   ├── UserService.java              # Profile, credential & status lifecycle management
 │   ├── ProductService.java
 │   ├── ReviewService.java
 │   ├── CategoryService.java
@@ -1045,6 +1179,8 @@ com.etech.store/
 │   ├── BranchService.java
 │   ├── InventoryService.java         # Restock, alerts & health metrics
 │   ├── OrderService.java             # Atomically places orders & decrements branch stock
+│   ├── WishlistService.java          # Wishlist toggle, item synchronization & transfer to cart
+│   ├── NewsletterService.java        # Subscriptions, email dispatch, bulk mutations & campaign metrics
 │   ├── PolicyService.java
 │   ├── ChatbotService.java           # Gemini API proxy with catalog grounding
 │   └── AnalyticsService.java
@@ -1062,26 +1198,26 @@ com.etech.store/
 ### Role-Based Access & Header Visibility Rules (4-Tier RBAC)
 - 👑👑 **`SUPERADMIN` Role (System Owner)**:
   - **Global Scope**: Cross-branch access (`assignedBranch: null`, displayed as `Global (Owner)`).
-  - **Full Authority**: Full authority over all console tabs (Products, Orders, Stock Health, Categories, Brands, Promotions, Transfers, Branches, Users, Financials, Policies).
-  - **User Management Authority**: Can create, edit, update, delete, and assign roles for `ADMIN`, `STAFF`, and `CUSTOMER` accounts.
-  - **Immutability**: Only **one** unique Superadmin account exists (`superadmin` / `USR-100000`). It cannot be deleted, renamed, or downgraded.
+  - **Full Authority**: Full authority over all console tabs (Products, Orders, Stock Health, Categories, Brands, Promotions, Transfers, Newsletter, Branches, Users, Financials, Policies).
+  - **User Management & Status Control**: Can create, edit, update status (`ACTIVE`/`INACTIVE`), and delete `ADMIN`, `STAFF`, and `CUSTOMER` accounts.
+  - **Immutability**: Only **one** unique Superadmin account exists (`superadmin` / `USR-100000`). It cannot be deleted, renamed, deactivated, or downgraded.
   - **Header & Badge**: Styled with a distinctive purple avatar and purple badge (`bg-purple-50 text-purple-700 border-purple-200`).
 - 👑 **`ADMIN` Role (Store Administrator)**:
-  - **Full Console Access**: Access to all management tabs (Products, Orders, Stock Health, Categories & Badges, Promotions & Deals, Transfers, Branches, Users, Analytics, Policies).
-  - **Staff & Customer Management**: Full management authority (create, edit, delete, role assignment) over `STAFF` and `CUSTOMER` accounts.
+  - **Full Console Access**: Access to management tabs (Products, Orders, Stock Health, Categories & Badges, Promotions & Deals, Transfers, Newsletter Management & Campaigns, Branches, Users, Analytics, Policies).
+  - **Staff & Customer Management**: Full management authority (create, edit, status toggle `ACTIVE`/`INACTIVE`, delete) over `STAFF` and `CUSTOMER` accounts.
   - **Admin-Admin & Superadmin Restrictions**:
     - **Cannot see or access `SUPERADMIN`**: Superadmin is completely filtered out from API query results and directory views.
-    - **Cannot manage other `ADMIN` accounts**: Cannot edit, delete, or change roles of other Admin accounts (rendered as "Admin Protected" / read-only).
-    - **Cannot assign Admin/Superadmin privileges**: Cannot create new `ADMIN` accounts or promote anyone to `ADMIN` or `SUPERADMIN`.
+    - **Cannot manage other `ADMIN` accounts**: Cannot edit, delete, or deactivate other Admin accounts (rendered as "Admin Protected" / read-only).
+    - **Status Lifecycle vs Role Mutation**: Role editing is locked to prevent privilege escalation; administrative control operates via status lifecycle management (`ACTIVE` / `INACTIVE`).
   - **Header & Badge**: Styled with a blue avatar and blue badge (`bg-blue-50 text-blue-700 border-blue-200`).
-- 🧑‍💼 **`STAFF` Role (Branch Operations)**:
-  - **Scoped Access**: Scoped to operational tabs (Products, Orders, Stock Health, Promotions, Transfers).
+- 🧑‍💼 **`STAFF` Role (Branch Operations & Marketing)**:
+  - **Scoped Access**: Scoped to operational and marketing tabs (Products, Orders, Stock Health, Promotions, Transfers, Newsletter Management & Broadcasts).
   - **Restricted**: System configuration tabs (Branches, Users, Financials, Policies) are hidden and guarded. Stock updates are scoped to their `assignedBranch`.
   - **Header & Badge**: Styled with a sky blue badge (`bg-sky-50 text-sky-700 border-sky-200`).
 - 👤 **`CUSTOMER` / Guest**:
-  - Storefront catalog, cart, checkout, profile portal, review submission, and order history tracking.
+  - Storefront catalog, product filtering, shopping cart, checkout, customer wishlist, profile portal, review submission, and order history tracking.
   - `Admin Console` button is **completely hidden** from both desktop header and mobile drawer. Direct URL navigation to `#admin` is blocked by route guards and redirects to `#home` or `#login`.
-  - Backend Spring Security enforces `@PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'STAFF')")` returning `403 Forbidden`.
+  - Backend Spring Security enforces `@PreAuthorize("hasAnyRole('SUPERADMIN', 'ADMIN', 'STAFF')")` returning `403 Forbidden` on administrative endpoints.
 
 ### What to Strip Out Upon Backend Integration
 When connecting the frontend to Spring Boot, the following complex client-side logic should be **stripped out** and left to the backend:
@@ -1108,23 +1244,23 @@ When connecting the frontend to Spring Boot, the following complex client-side l
 
 To ensure clean maintainability, prevent duplication, and avoid multi-file code drift whenever database schemas or roles change, adhere strictly to the following architectural regulations:
 
-1. **Centralized `USER_ROLE` Enum & `User` Class Model (`src/js/models/user_model.js`)**:
+1. **Centralized `USER_ROLE`, `USER_STATUS` Enum & `User` Class Model (`src/js/models/user_model.js`)**:
    - **Never** repeat role string arrays or switch cases across multiple controller or component files.
-   - **Single Point of Truth**: All dynamic role state, default fallbacks (`DEFAULT_ROLE = 'CUSTOMER'`), badge formatters (`getRoleBadge(role)`), and `<select>` builders (`buildRoleOptionsHtml(selectedRole)`) are strictly centralized in `user_model.js`.
-   - **Industry-Standard ES6 `User` Class**: Represents user entities throughout the application (`id`, `username`, `name`, `email`, `password`, `role`, `assignedBranch`, `createdAt`) with encapsulated helper methods (`isAdmin()`, `isSuperAdmin()`, `isStaff()`, `isCustomer()`, `getInitial()`).
+   - **Single Point of Truth**: All dynamic role state, status state (`ACTIVE`/`INACTIVE`), default fallbacks (`DEFAULT_ROLE = 'CUSTOMER'`), badge formatters (`getRoleBadge(role)`, `getStatusBadge(status)`), and UI select builders are strictly centralized in `user_model.js`.
+   - **Industry-Standard ES6 `User` Class**: Represents user entities throughout the application (`id`, `username`, `name`, `email`, `password`, `role`, `status`, `assignedBranch`, `createdAt`) with encapsulated helper methods (`isAdmin()`, `isSuperAdmin()`, `isStaff()`, `isCustomer()`, `isActive()`, `getInitial()`).
    - `getCurrentUser()` automatically returns a `User` instance, ensuring instant access to domain helper methods across all controllers.
 
 2. **Zero Redundant / Rigid Frontend Validation**:
-   - **Database & Backend Authority**: The Spring Boot backend and database schema are the single source of truth for validation rules (email regex, username format, password strength, role authorization, and uniqueness constraints).
+   - **Database & Backend Authority**: The Spring Boot backend and database schema are the single source of truth for validation rules (email regex, username format, password strength, role authorization, status verification, and uniqueness constraints).
    - **Minimal Client-Side Sanity Checks Only**: The frontend performs only basic checks for presence of required inputs and UI password confirmation matching.
    - **Direct Error Surfacing**: Backend validation errors (HTTP 400 Bad Request, HTTP 403 Forbidden, HTTP 422 Unprocessable Entity) returned in JSON responses are surfaced directly to the user in the UI without intermediate frontend filtering.
 
 3. **Zero Mock Storage Replication for Database Entities**:
-   - When communicating with the backend API, the frontend MUST NOT replicate database tables into `localStorage` (e.g., no `etech_users` mock arrays).
+   - When communicating with the backend API, the frontend MUST NOT replicate database tables into `localStorage` (e.g., no `etech_users`, `etech_products`, or `etech_newsletter_subscribers` mock arrays).
    - The frontend maintains only the active session token (`etech_jwt_token`) and sanitized active profile (`etech_current_user`).
 
 4. **Sanitized Debug Logging Standard**:
-   - All API client operations (`apiClient.js`, `userApi.js`, `brandsApi.js`, etc.) must log method, endpoint, roundtrip duration (ms), status codes, and payload/response data for debugging.
+   - All API client operations (`apiClient.js`, `userApi.js`, `brandsApi.js`, `newsletterApi.js`, etc.) must log method, endpoint, roundtrip duration (ms), status codes, and payload/response data for debugging.
    - **Credential Redaction**: Sensitive attributes (`password`, `currentPassword`, `newPassword`, `confirmPassword`, `token`, `jwt`, `secret`, `cvv`, `cardNumber`) MUST be sanitized and redacted as `[REDACTED]` prior to printing to browser console.
 
 ---
@@ -1203,7 +1339,7 @@ export const UserApi = {
   getUserById: (id) => ajaxRequest({ endpoint: `/users/${encodeURIComponent(id)}`, method: 'GET' }),
   createUser: (payload) => ajaxRequest({ endpoint: '/users', method: 'POST', data: payload }),
   updateUser: (id, payload) => ajaxRequest({ endpoint: `/users/${encodeURIComponent(id)}`, method: 'PUT', data: payload }),
-  updateUserRole: (id, payload) => ajaxRequest({ endpoint: `/users/${encodeURIComponent(id)}/role`, method: 'PATCH', data: payload }),
+  updateUserStatus: (id, status) => ajaxRequest({ endpoint: `/users/${encodeURIComponent(id)}/status`, method: 'PATCH', data: { status } }),
   deleteUser: (id) => ajaxRequest({ endpoint: `/users/${encodeURIComponent(id)}`, method: 'DELETE' }),
   updateSelfProfile: (payload) => ajaxRequest({ endpoint: '/users/me/profile', method: 'PUT', data: payload }),
   changePassword: (payload) => ajaxRequest({ endpoint: '/users/me/password', method: 'PUT', data: payload })
@@ -1244,7 +1380,62 @@ export const ProductApi = {
 };
 ```
 
-### 5. Promotions & Deals API (`src/js/api/promotionsApi.js`):
+### 5. Customer Wishlist API (`src/js/api/wishlistApi.js`):
+```javascript
+import { ajaxRequest } from './apiClient.js';
+
+export const WishlistApi = {
+  getWishlist: () => ajaxRequest({ endpoint: '/wishlist', method: 'GET' }),
+  toggleWishlist: (productId) => ajaxRequest({ endpoint: `/wishlist/toggle/${encodeURIComponent(productId)}`, method: 'POST' }),
+  addToWishlist: (productId) => ajaxRequest({ endpoint: `/wishlist/add/${encodeURIComponent(productId)}`, method: 'POST' }),
+  removeFromWishlist: (productId) => ajaxRequest({ endpoint: `/wishlist/remove/${encodeURIComponent(productId)}`, method: 'DELETE' }),
+  clearWishlist: () => ajaxRequest({ endpoint: '/wishlist/clear', method: 'DELETE' }),
+  moveToCart: (productId) => ajaxRequest({ endpoint: '/wishlist/move-to-cart', method: 'POST', data: { productId } })
+};
+```
+
+### 6. Newsletter & Email Marketing API (`src/js/api/newsletterApi.js`):
+```javascript
+import { ajaxRequest } from './apiClient.js';
+
+export const NewsletterApi = {
+  // Public Storefront Endpoints
+  subscribe: (email, source = 'FOOTER', fullName = '', preferences = ['PRODUCT_UPDATES', 'HOT_DEALS']) => 
+    ajaxRequest({ endpoint: '/newsletter/subscribe', method: 'POST', data: { email, source, fullName, preferences } }),
+  unsubscribe: (email, reason = '') => 
+    ajaxRequest({ endpoint: '/newsletter/unsubscribe', method: 'POST', data: { email, reason } }),
+
+  // Administrative Management Endpoints (Staff, Admin, Superadmin)
+  getSubscribers: (params = {}) => 
+    ajaxRequest({ endpoint: '/newsletter/subscribers', method: 'GET', data: params }),
+  getSubscriberById: (id) => 
+    ajaxRequest({ endpoint: `/newsletter/subscribers/${encodeURIComponent(id)}`, method: 'GET' }),
+  updateSubscriberStatus: (id, status) => 
+    ajaxRequest({ endpoint: `/newsletter/subscribers/${encodeURIComponent(id)}/status`, method: 'PATCH', data: { status } }),
+  updateSubscriber: (id, data) => 
+    ajaxRequest({ endpoint: `/newsletter/subscribers/${encodeURIComponent(id)}`, method: 'PUT', data }),
+  deleteSubscriber: (id) => 
+    ajaxRequest({ endpoint: `/newsletter/subscribers/${encodeURIComponent(id)}`, method: 'DELETE' }),
+
+  // Bulk Subscriber Actions
+  bulkUpdateStatus: (ids, status) => 
+    ajaxRequest({ endpoint: '/newsletter/subscribers/bulk-status', method: 'PATCH', data: { ids, status } }),
+  bulkDeleteSubscribers: (ids) => 
+    ajaxRequest({ endpoint: '/newsletter/subscribers/bulk-delete', method: 'DELETE', data: { ids } }),
+
+  // Marketing Campaigns & Broadcasts
+  sendCampaign: (campaignData) => 
+    ajaxRequest({ endpoint: '/newsletter/campaigns/send', method: 'POST', data: campaignData }),
+  getCampaigns: (params = {}) => 
+    ajaxRequest({ endpoint: '/newsletter/campaigns', method: 'GET', data: params }),
+
+  // Analytics & Aggregated Performance
+  getAnalytics: () => 
+    ajaxRequest({ endpoint: '/newsletter/analytics', method: 'GET' })
+};
+```
+
+### 7. Promotions & Deals API (`src/js/api/promotionsApi.js`):
 ```javascript
 import { ajaxRequest } from './apiClient.js';
 
@@ -1268,7 +1459,7 @@ export const PromotionsApi = {
 };
 ```
 
-### 6. Inter-Branch Stock Transfers API (`src/js/api/transfersApi.js`):
+### 8. Inter-Branch Stock Transfers API (`src/js/api/transfersApi.js`):
 ```javascript
 import { ajaxRequest } from './apiClient.js';
 
@@ -1280,7 +1471,7 @@ export const TransfersApi = {
 };
 ```
 
-### 7. Storefront Taxonomy & Badges API (`src/js/api/taxonomyApi.js`):
+### 9. Storefront Taxonomy & Badges API (`src/js/api/taxonomyApi.js`):
 ```javascript
 import { ajaxRequest } from './apiClient.js';
 
@@ -1308,7 +1499,7 @@ export const ProductBehaviorHistoryApi = {
 };
 ```
 
-### 8. Orders & Inventory API (`src/js/api/orderApi.js`, `src/js/api/inventoryApi.js`):
+### 10. Orders & Inventory API (`src/js/api/orderApi.js`, `src/js/api/inventoryApi.js`):
 ```javascript
 import { ajaxRequest } from './apiClient.js';
 
@@ -1327,7 +1518,7 @@ export const InventoryApi = {
 };
 ```
 
-### 9. Chatbot AI Proxy API (`src/js/api/chatApi.js`):
+### 11. Chatbot AI Proxy API (`src/js/api/chatApi.js`):
 ```javascript
 import { ajaxRequest } from './apiClient.js';
 
@@ -1341,7 +1532,7 @@ export const ChatApi = {
 };
 ```
 
-### 10. Corporate Profile & Legal Policies API (`src/js/api/policyApi.js`):
+### 12. Corporate Profile & Legal Policies API (`src/js/api/policyApi.js`):
 ```javascript
 import { ajaxRequest } from './apiClient.js';
 
@@ -1360,21 +1551,23 @@ export const PolicyApi = {
 
 ### Phase 1: Database Initialization
 - [ ] Install MySQL Server 8.0+ locally or spin up a cloud RDS instance.
-- [ ] Run the complete DDL script from [Section 4](#4-mysql-relational-database-schema-ddl).
-- [ ] Seed initial branches (`BR-COL`, `BR-GAL`, `BR-MAT`, `BR-KAN`), categories, default badges (`Hot Deal`, `Top Rated`, `New Arrival`, `Bestseller`), default hardware partner brands, default deal bundles, and the default `SUPERADMIN` (`superadmin`) and `ADMIN` (`admin`) users with BCrypt hashed passwords from `src/data/`.
+- [ ] Run the complete DDL script from [Section 4](#4-mysql-relational-database-schema-ddl) (22 tables including `wishlist_items`, `newsletter_subscribers`, and `newsletter_campaigns`).
+- [ ] Seed initial branches (`BR-COL`, `BR-GAL`, `BR-MAT`, `BR-KAN`), categories, default badges (`Hot Deal`, `Top Rated`, `New Arrival`, `Bestseller`), default hardware partner brands, default deal bundles, and default user credentials (`superadmin` / `admin`) with BCrypt hashed passwords and `ACTIVE` status.
 
 ### Phase 2: Spring Boot API Implementation
 - [ ] Initialize Spring Boot 3.3+ project with Maven / Gradle.
-- [ ] Configure `application.yml` with MySQL datasource and JWT secret keys.
-- [ ] Implement JPA Entities, Repositories, Services, and REST Controllers.
+- [ ] Configure `application.yml` with MySQL datasource, JWT secret keys, and SMTP email server settings.
+- [ ] Implement JPA Entities, Repositories, Services, and REST Controllers across all modules.
 - [ ] Implement `JwtAuthenticationFilter` and configure CORS headers for frontend origins (`http://localhost:5500`, `http://127.0.0.1:5500`).
 - [ ] Implement `@Transactional` `OrderService.createOrder(...)` with atomic branch stock decrement.
 - [ ] Implement `PromotionService` to handle dynamic deal bundle bottleneck evaluation across multi-branch inventory.
 - [ ] Implement `TransferService` with `@Transactional` stock movement across branches.
+- [ ] Implement `WishlistService` handling customer wishlist persistence and seamless cart transfer.
+- [ ] Implement `NewsletterService` handling subscription validation, duplicate checking, batch email broadcasting, and metrics tracking.
 - [ ] Implement `BadgeRuleEngineService` evaluating auto-assignment rules against live database statistics.
 
 ### Phase 3: Frontend API Client Layer Integration
-- [ ] Create all API client modules in `src/js/api/` using `ajaxRequest` from `apiClient.js`.
+- [ ] Ensure all API client modules in `src/js/api/` are exported through `src/js/api/index.js` using `ajaxRequest` from `apiClient.js`.
 - [ ] Update `src/js/controller/login_controller.js` to store and attach JWT token upon login.
 - [ ] Update `src/js/models/data.js` and `src/js/controller/shop_controller.js` to fetch products asynchronously from `ProductApi.getAll()`.
 - [ ] Update `src/js/controller/brand_management_controller.js` to use `BrandsApi`.
@@ -1383,19 +1576,24 @@ export const PolicyApi = {
 - [ ] Update `src/js/controller/taxonomy_controller.js` to use `CategoryApi` and `BadgeApi`.
 - [ ] Update `src/js/controller/stock_health_controller.js` to interact with `InventoryApi`.
 - [ ] Update `src/js/controller/product-details_controller.js` and `rating_data.js` to use `ProductApi.getReviews()` and `submitReview()`.
+- [ ] Connect `wishlist_controller.js` to `WishlistApi` for persistent cloud synchronization.
+- [ ] Connect `newsletter_controller.js` and `newsletter_management_controller.js` to `NewsletterApi`.
 - [ ] Update `src/js/controller/chatbot_controller.js` to dispatch messages to `ChatApi.sendMessage()`.
 
 ### Phase 4: Validation & Cutover Testing
-- [ ] Test customer registration, login, and token refresh workflows.
+- [ ] Test customer registration, login, token refresh, and account status validation (`ACTIVE` vs `INACTIVE`).
 - [ ] Test product creation, editing (with 5-image gallery), and stock matrix adjustments across branches.
 - [ ] Test hardware partner brands management, logo presets, and homepage featured showcase toggles.
 - [ ] Test deal bundle composite inventory bottlenecks and live MSRP savings calculations.
 - [ ] Test inter-branch stock transfers and verify atomic source decrement & destination increment.
 - [ ] Test order checkout with multi-item stock deduction and out-of-stock validation.
+- [ ] Test customer wishlist toggle, remove, clear, and move-to-cart operations.
+- [ ] Test newsletter subscriber opt-in, duplicate protection, status toggling, bulk delete, and campaign broadcast dispatch.
 - [ ] Verify review submission recalculates product ratings and triggers badge reach rules in audit log.
 - [ ] Verify system default badges (`Hot Deal`, `Top Rated`, `New Arrival`, `Bestseller`) are protected from accidental deletion.
 - [ ] Verify role-based access control (`SUPERADMIN` vs `ADMIN` vs `STAFF` vs `CUSTOMER`) across all restricted endpoints.
 
 ---
-*Specification Master Version: 3.5 (Full Architecture & Module Alignment Audit)*  
+*Specification Master Version: 4.0 (Full Architecture, Wishlist, User Status & Newsletter Alignment Audit)*  
 *Target: ETech Computers Online Store — Coursework ITS 1114 (Advanced Application Development)*
+

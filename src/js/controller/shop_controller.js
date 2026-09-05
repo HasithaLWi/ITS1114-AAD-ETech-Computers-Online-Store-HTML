@@ -6,6 +6,7 @@ import { addToCart } from './cart_controller.js';
 import { viewProductDetails } from './product-details_controller.js';
 import { getCategories, syncCategoriesFromApi } from '../models/taxonomy_data.js';
 import { getBrands, getBrandBySlug, syncBrandsFromApi } from '../models/brand_data.js';
+import { isInWishlist, toggleWishlist } from './wishlist_controller.js';
 
 // Module-level state for multi-selected filters
 let selectedCategorySlugs = [];
@@ -600,6 +601,16 @@ export function renderFilteredProducts() {
           </div>
           
           <div class="flex items-center space-x-1.5">
+            <button 
+              data-wishlist-btn="${product.id}"
+              onclick="toggleWishlist(${product.id}, this)" 
+              class="p-2 bg-[#f8fafc] hover:bg-rose-50 text-[#475569] hover:text-rose-600 rounded-xl border border-[#e2e8f0] hover:border-rose-200 transition-all shadow-sm flex items-center justify-center cursor-pointer" 
+              title="Add to Wishlist">
+              <svg class="w-3.5 h-3.5 ${isInWishlist(product.id) ? 'text-rose-600 fill-rose-600' : 'text-[#64748b]'}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+              </svg>
+            </button>
+
             <button onclick="viewProductDetails(${product.id})" class="p-2 bg-[#f8fafc] hover:bg-[#f1f5f9] text-[#475569] hover:text-[#0f172a] rounded-xl border border-[#e2e8f0] transition-all shadow-sm" title="View Product Details">
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
             </button>

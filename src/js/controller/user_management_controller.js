@@ -61,15 +61,21 @@ export async function renderUsersTab() {
         ? (branches.find(b => b.id === u.assignedBranch)?.name || u.assignedBranch) 
         : '<span class="text-[#94a3b8]">-</span>';
 
+      const userStatus = (u.status || 'ACTIVE').toUpperCase();
+      const isStatusActive = userStatus === 'ACTIVE';
+
       return `
         <tr class="hover:bg-[#f8fafc] transition-colors">
           <td class="py-3 px-3.5">
             <div class="flex items-center space-x-2.5">
-              <div class="w-7 h-7 rounded font-bold text-xs flex items-center justify-center border shadow-sm bg-blue-50 text-blue-600 border-blue-200">
+              <div class="w-7 h-7 rounded font-bold text-xs flex items-center justify-center border shadow-sm ${isStatusActive ? 'bg-blue-50 text-blue-600 border-blue-200' : 'bg-slate-100 text-slate-400 border-slate-200 opacity-60'}">
                 ${u.getInitial()}
               </div>
               <div>
-                <p class="font-bold text-[#0f172a] text-xs">${u.name || 'Unnamed'}</p>
+                <p class="font-bold text-[#0f172a] text-xs flex items-center gap-1.5">
+                  <span>${u.name || 'Unnamed'}</span>
+                  ${!isStatusActive ? `<span class="text-[9px] font-bold text-rose-600 bg-rose-50 border border-rose-200 px-1 rounded">INACTIVE</span>` : ''}
+                </p>
                 <p class="text-[10px] text-blue-600 font-mono">@${u.username || u.id}</p>
               </div>
             </div>
@@ -84,11 +90,12 @@ export async function renderUsersTab() {
           <td class="py-3 px-3.5 text-[#64748b] text-xs">${formattedDate}</td>
           <td class="py-3 px-3.5 text-right">
             <div class="flex items-center justify-end space-x-1.5">
-              <button onclick="openUserModal('${u.id}')" class="p-1.5 bg-[#f8fafc] hover:bg-[#f1f5f9] text-blue-600 rounded border border-[#e2e8f0] transition-colors shadow-sm" title="Edit User Details">
+              <button onclick="openUserModal('${u.id}')" class="p-1.5 bg-[#f8fafc] hover:bg-[#f1f5f9] text-blue-600 rounded border border-[#e2e8f0] transition-colors shadow-sm" title="Edit User Details & Role">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
               </button>
-              <select onchange="changeUserRole('${u.id}', this.value)" class="bg-[#f8fafc] border border-[#e2e8f0] text-[#0f172a] rounded px-2 py-1 text-xs focus:border-blue-600 cursor-pointer shadow-sm">
-                ${buildRoleOptionsHtml(u.role)}
+              <select onchange="changeUserStatus('${u.id}', this.value)" class="bg-[#f8fafc] border ${isStatusActive ? 'border-emerald-300 text-emerald-700 bg-emerald-50/60' : 'border-rose-300 text-rose-700 bg-rose-50/60'} rounded px-2 py-1 text-xs font-mono font-bold focus:border-blue-600 cursor-pointer shadow-sm" title="Change Account Status">
+                <option value="ACTIVE" ${isStatusActive ? 'selected' : ''}>ACTIVE</option>
+                <option value="INACTIVE" ${!isStatusActive ? 'selected' : ''}>INACTIVE</option>
               </select>
               <button onclick="confirmDeleteUser('${u.id}')" ${isSelf ? 'disabled' : ''} title="${isSelf ? 'Cannot delete active account' : 'Delete User Account'}"
                 class="p-1.5 ${isSelf ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed' : 'bg-rose-50 hover:bg-rose-100 text-rose-700 border-rose-200'} rounded border transition-colors shadow-sm">
@@ -107,6 +114,33 @@ export async function renderUsersTab() {
         </td>
       </tr>
     `;
+  }
+}
+
+/**
+ * Change a user's account status (ACTIVE / INACTIVE) via Backend API
+ * @param {number|string} userId
+ * @param {string} newStatus
+ */
+export async function changeUserStatus(userId, newStatus) {
+  const activeUser = getCurrentUser();
+  if (activeUser && String(activeUser.id) === String(userId) && newStatus === 'INACTIVE') {
+    alert('Action Denied: You cannot set your currently logged-in account to INACTIVE.');
+    await renderUsersTab();
+    return;
+  }
+
+  try {
+    const user = cachedUsers.find(u => String(u.id) === String(userId));
+    if (user) {
+      user.status = newStatus;
+    }
+
+    await UserApi.updateUserStatus(userId, newStatus);
+    await renderUsersTab();
+  } catch (err) {
+    alert(err.message || 'Failed to update user status.');
+    await renderUsersTab();
   }
 }
 
@@ -229,15 +263,23 @@ export async function openUserModal(userId = null) {
               </select>
             </div>
             <div>
-              <label id="modal-u-branch-label" class="block text-[#475569] font-bold mb-1">
-                Assigned Branch <span id="modal-u-branch-req" class="${isStaff ? 'text-rose-600 font-bold' : 'hidden'}">*</span>
-              </label>
-              <select id="modal-u-branch" class="w-full px-3 py-2 rounded-md bg-[#f8fafc] border border-[#e2e8f0] text-[#0f172a] focus:border-blue-600 font-medium">
-                <option value="" ${!targetUser || !targetUser.assignedBranch ? 'selected' : ''}>None (Global / Headquarters)</option>
-                ${branches.map(b => `<option value="${b.id}" ${targetUser && targetUser.assignedBranch === b.id ? 'selected' : ''}>${b.name} (${b.city})</option>`).join('')}
+              <label class="block text-[#475569] font-bold mb-1">Account Status *</label>
+              <select id="modal-u-status" required class="w-full px-3 py-2 rounded-md bg-[#f8fafc] border border-[#e2e8f0] text-[#0f172a] focus:border-blue-600 font-medium">
+                <option value="ACTIVE" ${!targetUser || targetUser.status !== 'INACTIVE' ? 'selected' : ''}>ACTIVE</option>
+                <option value="INACTIVE" ${targetUser && targetUser.status === 'INACTIVE' ? 'selected' : ''}>INACTIVE</option>
               </select>
-              <p id="modal-u-branch-hint" class="text-[10px] text-amber-600 mt-1 font-medium ${isStaff ? '' : 'hidden'}">Staff members must be assigned to a branch warehouse.</p>
             </div>
+          </div>
+
+          <div>
+            <label id="modal-u-branch-label" class="block text-[#475569] font-bold mb-1">
+              Assigned Branch <span id="modal-u-branch-req" class="${isStaff ? 'text-rose-600 font-bold' : 'hidden'}">*</span>
+            </label>
+            <select id="modal-u-branch" class="w-full px-3 py-2 rounded-md bg-[#f8fafc] border border-[#e2e8f0] text-[#0f172a] focus:border-blue-600 font-medium">
+              <option value="" ${!targetUser || !targetUser.assignedBranch ? 'selected' : ''}>None (Global / Headquarters)</option>
+              ${branches.map(b => `<option value="${b.id}" ${targetUser && targetUser.assignedBranch === b.id ? 'selected' : ''}>${b.name} (${b.city})</option>`).join('')}
+            </select>
+            <p id="modal-u-branch-hint" class="text-[10px] text-amber-600 mt-1 font-medium ${isStaff ? '' : 'hidden'}">Staff members must be assigned to a branch warehouse.</p>
           </div>
 
           <div class="pt-2 flex items-center justify-end space-x-2.5">
@@ -284,6 +326,8 @@ export async function handleSaveUserSubmit(e, userId) {
   const password = document.getElementById('modal-u-password').value;
   const roleEl = document.getElementById('modal-u-role');
   const role = roleEl ? roleEl.value : 'CUSTOMER';
+  const statusEl = document.getElementById('modal-u-status');
+  const status = statusEl ? statusEl.value : 'ACTIVE';
   const branchEl = document.getElementById('modal-u-branch');
   const branch = branchEl ? (branchEl.value || null) : null;
   const submitBtn = document.getElementById('modal-user-submit-btn');
@@ -305,6 +349,7 @@ export async function handleSaveUserSubmit(e, userId) {
     username,
     email,
     role,
+    status,
     assignedBranch: branch
   });
 
@@ -313,6 +358,7 @@ export async function handleSaveUserSubmit(e, userId) {
     username: userPayload.username,
     email: userPayload.email,
     role: userPayload.role,
+    status: userPayload.status,
     assignedBranch: userPayload.assignedBranch
   };
 
